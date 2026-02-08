@@ -1,0 +1,42 @@
+# Core dependencies
+# 핵심 의존성
+openai
+python-dotenv
+flask
+duckdb>=1.4.0
+numpy
+pypdf
+scikit-learn
+pandas
+sentence-transformers
+torch
+cryptography>=41.0.0  # For encryption support (AES-256, Fernet)
+
+# Optional: For production database support
+# 선택사항: 프로덕션 데이터베이스 지원용
+# cx_Oracle>=8.3.0  # Uncomment for Oracle support
+# pymysql>=1.1.0    # Uncomment for MariaDB/MySQL support
+
+# pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org  --trusted-host pypi.python.org -r requirements.txt
+# -m autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive code -all-unused-imports --remove-unused-variables --recursive code
+
+# serena
+# powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+# uv run --native-tls --allow-insecure-host github.com serena start-mcp-server
+# {
+#   "serena": {
+#     "command": "uvx",
+#     "args": [
+#       "--from",
+#       "git+https://github.com/oraios/serena",
+#       "serena",
+#       "start-mcp-server",
+#       "--context",
+#       "ide-assistant"
+#     ]
+#   }
+# }
+
+# vscode claude 접속 설정 윈도우키 -> 시스템환경변수편집 -> 환경변수 -> 시스템변수 -> 새로만들기
+# 변수이름: NODE_TLS_REJECT_UNAUTHORIZED
+# 변수값: 0

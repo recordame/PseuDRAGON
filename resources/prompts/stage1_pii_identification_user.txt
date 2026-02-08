@@ -1,0 +1,21 @@
+Context from law sources: {context}
+
+Task: Analyze if the following database column is PII.
+
+Table Name: {table_name}
+Column Information: {column_desc}
+Data Type: {data_type}
+Sample Value: {sample_value}
+
+IMPORTANT: You have been provided with complete column information above. Analyze the column name, data type, description, and sample value to determine if this is PII. The data type can provide valuable hints about the nature of the data (e.g., VARCHAR for text, INTEGER for IDs, DATE for dates).
+
+# 법률 소스 문맥: {context}
+#
+# 작업: 다음 데이터베이스 컬럼이 개인정보(PII)인지 분석하세요.
+#
+# 테이블명: {table_name}
+# 컬럼 정보: {column_desc}
+# 테이터 타입: {data_type}
+# 샘플 값: {sample_value}
+#
+# 중요: 위에 전체 컬럼 정보가 제공되었습니다. 컬럼명, 데이터 타입, 설명, 샘플 값을 분석하여 이것이 개인정보인지 판단하세요. 데이터 타입은 데이터의 성격에 대한 중요한 힌트를 제공합니다 (예: VARCHAR는 텍스트, INTEGER는 ID, DATE는 날짜).

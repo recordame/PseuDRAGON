@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PseuDRAGON - PseuDonymizing RAG is ON for Sensitive Data">
+    <title>🐲 PseuDRAGON - Privacy-Preserving Data Pseudonymization</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+            rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body>
+<!-- Header -->
+<header class="app-header">
+    <div class="header-content">
+        <div class="logo-section" style="cursor: pointer;" onclick="app.handleLogoClick()">
+            <div class="logo-icon">🐲</div>
+            <div class="logo-text">
+                <h1>PseuDRAGON</h1>
+                <p>PseuDonymizing RAG is ON for Security Constrained Financial Industries</p>
+            </div>
+        </div>
+        <div class="header-status">
+            <div class="status-badge" id="statusBadge">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span>IDLE</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Container (IDE-style: Top + Bottom) -->
+<div class="app-container-ide">
+    <!-- Top Section: Control Panel + Main Content -->
+    <div class="top-section">
+        <!-- Left Panel: Control Panel -->
+        <aside class="control-panel-compact">
+            <!-- Configuration Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">⚙️</span>
+                    <h2 class="card-title">Pipeline Configuration</h2>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <button type="button" class="btn btn-sm btn-secondary" id="addTableBtn" style="flex: 1; margin: 0;">
+                            <span class="btn-icon">+</span>
+                            <span>Add Table</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" id="dropTableBtn" style="flex: 1; margin: 0;" disabled>
+                            <span class="btn-icon">-</span>
+                            <span>Drop Table</span>
+                        </button>
+                    </div>
+                    <label class="form-label" for="tableSelect">
+                        📊 Select Database Table(s)
+                    </label>
+                    <select id="tableSelect" class="form-select" multiple>
+                        <option disabled>Loading tables...</option>
+                    </select>
+                    <small class="form-hint">
+                        💡 Hold Ctrl/Cmd to select multiple tables
+                    </small>
+                    <small class="form-hint">
+                        🔍 Double-click a table to view its schema
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="purposeGoalInput">
+                        🎯 Pseudonymization Purpose
+                    </label>
+                    <input type="text" id="purposeGoalInput" class="form-input"
+                           placeholder="e.g., Statistical analysis, Machine learning, Research, Marketing...">
+                    <small class="form-hint">
+                        💡 Specify the purpose of data pseudonymization (optional)
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="preferredMethodInput">
+                        🛠️ Preferred Method
+                    </label>
+                    <input type="text" id="preferredMethodInput" class="form-input"
+                           placeholder="e.g., Hashing, Tokenization, Masking, Generalization, Encryption...">
+                    <small class="form-hint">
+                        💡 Specify your preferred pseudonymization method (optional)
+                    </small>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                <button id="startBtn" class="btn btn-primary" style="flex: 1; margin: 0;">
+                    <span class="btn-icon">🚀</span>
+                    <span>Start Pipeline</span>
+                </button>
+                <button id="stopBtn" class="btn btn-danger hidden" style="flex: 1; margin: 0;">
+                    <span class="btn-icon">⛔</span>
+                    <span>Stop Pipeline</span>
+                </button>
+            </div>
+            <button id="reopenPolicyBtn" class="btn btn-reopen hidden">
+                <span class="btn-icon">🔄</span>
+                <span>Reopen Policy Selection</span>
+            </button>
+        </aside>
+
+        <!-- Right Panel: Main Content -->
+        <main class="main-content-ide">
+            <!-- Tab Navigation -->
+            <div class="tabs-container">
+                <div class="tabs-header" id="tabsContainer">
+                    <button class="tab-btn active tab-nav-btn" data-tab="logs">
+                        📋 Execution Logs
+                    </button>
+                    <button class="tab-btn tab-nav-btn" data-tab="reports">
+                        📊 Reports
+                    </button>
+                    <button class="tab-btn tab-nav-btn" data-tab="code">
+                        📝 Generated Code
+                    </button>
+                    <button class="tab-btn tab-nav-btn" data-tab="heuristics">
+                        🔍 Heuristics
+                    </button>
+                    <button class="tab-btn tab-nav-btn" data-tab="expert-feedback">
+                        🧠 Expert Feedback
+                    </button>
+                    <button class="tab-btn tab-nav-btn" data-tab="audit">
+                        📜 Audit Log
+                    </button>
+                    <button class="tab-btn tab-nav-btn" data-tab="sessions" id="sessionsTabBtn">
+                        👥 Sessions <span id="sessionCount" class="session-count-badge">0</span>
+                    </button>
+                </div>
+
+                <!-- Logs Tab Content -->
+                <div id="logsTab" class="main-tab-content active">
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <h3 class="empty-title">Real-time Execution Logs</h3>
+                        <p class="empty-description">
+                            Pipeline execution logs will appear here in real-time.
+                            Start the pipeline to see the progress.
+                        </p>
+                    </div>
+                    <div id="logsContent" class="terminal-ide"
+                         style="display: none;"></div>
+                </div>
+
+                <!-- Reports Tab Content -->
+                <div id="reportsTab" class="main-tab-content">
+                    <div id="emptyStateReports" class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <h3 class="empty-title">No Reports Available</h3>
+                        <p class="empty-description">
+                            Reports will be generated after pipeline execution completes.
+                        </p>
+                    </div>
+                    <div id="reportsContent" style="display: none;">
+                        <div id="reportTabsContainer" class="tabs-header" style="display: none;"></div>
+                        <div id="reportViewers"></div>
+                    </div>
+                </div>
+
+                <!-- Code Tab Content -->
+                <div id="codeTab" class="main-tab-content">
+                    <div id="emptyState" class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <h3 class="empty-title">No Code Generated Yet</h3>
+                        <p class="empty-description">
+                            Run the pipeline to generate pseudonymization code for your selected tables.
+                        </p>
+                    </div>
+                    <div id="codeContent" style="display: none;">
+                        <div id="codeTabsContainer" class="tabs-header" style="display: none;"></div>
+                        <div id="codeViewers"></div>
+                    </div>
+                </div>
+
+                <!-- Heuristics Tab Content -->
+                <div id="heuristicsTab" class="main-tab-content">
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div class="card-header">
+                            <span class="card-icon">🔍</span>
+                            <h2 class="card-title">Heuristic Pattern Management</h2>
+                            <button class="btn btn-primary" id="addHeuristicBtn" style="margin-left: auto; width: fit-content; padding: 8px 16px;">
+                                <span class="btn-icon">+</span>
+                                <span>Add New Heuristic</span>
+                            </button>
+                        </div>
+
+                        <!-- Heuristics Statistics Summary -->
+                        <div id="heuristicsStats" style="padding: 15px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                                <div>
+                                    <span style="color: var(--text-secondary);">Total Patterns:</span>
+                                    <strong id="heurTotalPatterns">0</strong>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-secondary);">Manual:</span>
+                                    <strong id="heurManualPatterns" style="color: #2196F3;">0</strong>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-secondary);">Auto-Learned:</span>
+                                    <strong id="heurAutoPatterns" style="color: #4CAF50;">0</strong>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-secondary);">Last Updated:</span>
+                                    <strong id="heurLastUpdated">-</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="heuristicsListContainer">
+                            <div class="empty-state">
+                                <div class="empty-icon">⏳</div>
+                                <h3 class="empty-title">Loading Heuristics...</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expert Feedback Tab Content -->
+                <div id="expert-feedbackTab" class="main-tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">🧠</span>
+                            <h2 class="card-title">Expert Feedback</h2>
+                            <button class="btn btn-sm" id="refreshExpertFeedback" style="margin-left: auto;">
+                                <span class="btn-icon">🔄</span>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+
+                        <!-- Statistics Summary -->
+                        <div id="expertFeedbackStats" style="padding: 15px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; gap: 30px;">
+                                <div>
+                                    <span style="color: var(--text-secondary);">Total Selections:</span>
+                                    <strong id="efTotalSelections">0</strong>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-secondary);">Unique Columns:</span>
+                                    <strong id="efUniqueColumns">0</strong>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-secondary);">PII Classifications:</span>
+                                    <strong id="efPiiClassifications">0</strong>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-secondary);">Last Updated:</span>
+                                    <strong id="efLastUpdated">-</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable Content Container -->
+                        <div id="expertFeedbackContent">
+                            <!-- Method Preferences Section -->
+                            <div style="padding: 20px;">
+                                <h3 style="margin-bottom: 15px; color: var(--text-primary);">📊 Method Preferences</h3>
+                                <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                                    Expert-selected pseudonymization methods that will be prioritized in future runs.
+                                </p>
+                                <div id="methodPreferencesContainer">
+                                    <div class="empty-state" style="padding: 30px;">
+                                        <div class="empty-icon">📊</div>
+                                        <h3 class="empty-title">No Method Preferences</h3>
+                                        <p class="empty-description">
+                                            Method preferences will appear here after experts modify default selections in Stage 3.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PII Classification Changes Section -->
+                            <div style="padding: 20px; border-top: 1px solid var(--border-color);">
+                                <h3 style="margin-bottom: 15px; color: var(--text-primary);">🏷️ PII Classification Changes</h3>
+                                <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                                    Columns where experts changed PII classification (PII ↔ Non-PII).
+                                </p>
+                                <div id="piiClassificationContainer">
+                                    <div class="empty-state" style="padding: 30px;">
+                                        <div class="empty-icon">🏷️</div>
+                                        <h3 class="empty-title">No PII Classification Changes</h3>
+                                        <p class="empty-description">
+                                            PII classification changes will appear here after experts reclassify columns in Stage 3.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Log Tab Content -->
+                <div id="auditTab" class="main-tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">📜</span>
+                            <h2 class="card-title">Audit Log</h2>
+                        </div>
+
+                        <!-- Filters -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; padding: 0 20px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label">Event Type</label>
+                                <select id="auditEventTypeFilter" class="form-select">
+                                    <option value="">All Events</option>
+                                    <option value="USER_EDIT">User Edits</option>
+                                    <option value="HEURISTIC_CHANGE">Heuristic Changes</option>
+                                    <option value="PII_CLASSIFICATION_CHANGE">PII Classification Changes</option>
+                                    <option value="POLICY_APPROVED">Policy Approvals</option>
+                                    <option value="STAGE_START">Stage Starts</option>
+                                    <option value="STAGE_COMPLETE">Stage Completions</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" id="auditStartDate" class="form-input">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label">End Date</label>
+                                <input type="date" id="auditEndDate" class="form-input">
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: flex-end;">
+                                <button class="btn btn-primary" id="applyAuditFilters">
+                                    <span class="btn-icon">🔍</span>
+                                    <span>Apply Filters</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="auditLogContainer">
+                            <div class="empty-state">
+                                <div class="empty-icon">📜</div>
+                                <h3 class="empty-title">No Audit Logs Available</h3>
+                                <p class="empty-description">
+                                    Audit logs will appear here after pipeline execution.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Tab Content -->
+                <div id="sessionsTab" class="main-tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-icon">👥</span>
+                            <h2 class="card-title">Active Sessions Monitor</h2>
+                            <button class="btn btn-sm" id="refreshSessionsBtn" style="margin-left: auto;">
+                                <span class="btn-icon">🔄</span>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+
+                        <!-- Session List -->
+                        <div id="sessionListContainer" style="padding: 0 20px 20px;">
+                            <div class="empty-state" id="noSessionsState">
+                                <div class="empty-icon">👥</div>
+                                <h3 class="empty-title">No Active Sessions</h3>
+                                <p class="empty-description">
+                                    Active sessions from other users will appear here for monitoring.
+                                </p>
+                            </div>
+
+                            <!-- Session Tabs (dynamically generated) -->
+                            <div id="sessionTabsContainer" class="session-tabs-container" style="display: none;">
+                                <div id="sessionTabsList" class="session-tabs-list"></div>
+                            </div>
+
+                            <!-- Session Details Viewer -->
+                            <div id="sessionDetailsViewer" class="session-details-viewer" style="display: none;">
+                                <div class="session-details-header">
+                                    <div class="session-details-info">
+                                        <h3 id="selectedSessionTitle">Session Details</h3>
+                                        <div class="session-meta">
+                                            <span id="selectedSessionStatus" class="session-status-badge">Unknown</span>
+                                            <span id="selectedSessionStep" class="session-step-badge">-</span>
+                                            <span id="selectedSessionTables" class="session-tables-badge">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="session-details-actions">
+                                        <button class="btn btn-sm" id="autoRefreshToggle">
+                                            <span class="btn-icon">⏱️</span>
+                                            <span>Auto-refresh: OFF</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="sessionLogsViewer" class="terminal-ide session-logs-viewer">
+                                    <!-- Session logs will be displayed here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom Section: Terminal (Hidden - logs moved to main content) -->
+    <div class="bottom-section" style="display: none;">
+        <div class="terminal-panel">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <span class="terminal-icon">💻</span>
+                    <span>Execution Terminal</span>
+                </div>
+                <div class="terminal-actions">
+                    <button class="btn-terminal-action" id="clearLogBtn" title="Clear logs">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+            <div class="terminal-ide" id="terminal"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Stage 3 Modal (HITL Refinement) -->
+<div class="modal-overlay" id="stage3Modal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <h2 class="modal-title">🔍 Stage 3: Human-in-the-Loop Policy Refinement</h2>
+                <p class="modal-subtitle">
+                    Review and select the most appropriate pseudonymization method for each PII column
+                </p>
+            </div>
+            <button class="modal-close-btn" id="closeModalBtn" title="Close">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body" id="stage3Content">
+            <!-- Dynamically populated with policy options -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" id="submitPoliciesBtn">
+                <span class="btn-icon">✅</span>
+                <span>Confirm & Generate Code</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Heuristic Add/Edit Modal -->
+<div class="modal-overlay" id="heuristicModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <h2 class="modal-title" id="heuristicModalTitle">Add New Heuristic</h2>
+                <p class="modal-subtitle">
+                    Define a pattern to automatically detect PII columns
+                </p>
+            </div>
+            <button class="modal-close-btn" id="closeHeuristicModalBtn" title="Close">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="heuristicForm">
+                <input type="hidden" id="heuristicId" value="">
+                <input type="hidden" id="heuristicSource" value="manual">
+
+                <!-- Source Badge (read-only, shown for auto-learned) -->
+                <div class="form-group" id="heuristicSourceDisplay" style="display: none;">
+                    <label class="form-label">Source</label>
+                    <div id="heuristicSourceBadge"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label" for="heuristicName">Pattern Name *</label>
+                        <input type="text" id="heuristicName" class="form-input" required
+                               placeholder="e.g., Email Pattern">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="heuristicPatternType">Pattern Type</label>
+                        <select id="heuristicPatternType" class="form-select">
+                            <option value="">Select Type</option>
+                            <option value="suffix">Suffix (e.g., _NO$)</option>
+                            <option value="prefix">Prefix (e.g., ^USR_)</option>
+                            <option value="keyword">Keyword (e.g., .*email.*)</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="heuristicRegex">Regular Expression *</label>
+                    <input type="text" id="heuristicRegex" class="form-input" required
+                           placeholder="e.g., .*email.*|.*mail.*">
+                    <small class="form-hint">
+                        💡 Use regex syntax. Patterns are case-insensitive.
+                        Examples: _NO$ (suffix), ^USR_ (prefix), (?i).*email.* (keyword)
+                    </small>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label" for="heuristicPiiType">PII Type *</label>
+                        <select id="heuristicPiiType" class="form-select" required>
+                            <option value="">Select PII Type</option>
+                            <option value="PII">PII</option>
+                            <option value="Non-PII">Non-PII</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="heuristicPriority">Priority</label>
+                        <input type="number" id="heuristicPriority" class="form-input"
+                               value="50" min="1" max="100">
+                        <small class="form-hint">
+                            💡 Higher = higher priority (1-100)
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="heuristicRationale">Rationale *</label>
+                    <textarea id="heuristicRationale" class="form-input" required rows="3"
+                              placeholder="Explain why this pattern identifies the specified PII type"></textarea>
+                </div>
+
+                <!-- Sample Columns (read-only, shown for auto-learned) -->
+                <div class="form-group" id="heuristicSampleColumnsGroup" style="display: none;">
+                    <label class="form-label">Sample Columns</label>
+                    <div id="heuristicSampleColumns" style="font-family: monospace; font-size: 12px; color: var(--text-secondary);"></div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 20px; margin-top: 10px;">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="heuristicEnabled" checked>
+                        <span>Enabled</span>
+                    </label>
+
+                    <button type="button" class="btn btn-secondary" id="testRegexBtn">
+                        <span class="btn-icon">🧪</span>
+                        <span>Test Pattern</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelHeuristicBtn">
+                Cancel
+            </button>
+            <button class="btn btn-primary" id="saveHeuristicBtn">
+                <span class="btn-icon">💾</span>
+                <span>Save Heuristic</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Regex Tester Modal -->
+<div class="modal-overlay" id="regexTesterModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <h2 class="modal-title">🧪 Test Regular Expression Pattern</h2>
+                <p class="modal-subtitle">
+                    Test your regex pattern against sample column names
+                </p>
+            </div>
+            <button class="modal-close-btn" id="closeRegexTesterBtn" title="Close">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Pattern to Test</label>
+                <input type="text" id="regexTestPattern" class="form-input" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Test Strings (one per line)</label>
+                <textarea id="regexTestStrings" class="form-input" rows="8"
+                          placeholder="user_email&#10;email_address&#10;username&#10;phone_number&#10;user_id"></textarea>
+                <small class="form-hint">
+                    💡 Enter column names to test, one per line
+                </small>
+            </div>
+
+            <div id="regexTestResults" style="margin-top: 20px; display: none;">
+                <h3 style="margin-bottom: 10px;">Test Results</h3>
+                <div id="regexTestResultsContent"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="closeRegexTesterModalBtn">
+                Close
+            </button>
+            <button class="btn btn-primary" id="runRegexTestBtn">
+                <span class="btn-icon">▶️</span>
+                <span>Run Test</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Table Schema Modal -->
+<div class="modal-overlay" id="tableSchemaModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <h2 class="modal-title" id="schemaModalTitle">📊 Table Schema</h2>
+                <p class="modal-subtitle" id="schemaModalSubtitle">
+                    View detailed schema information for the selected table
+                </p>
+            </div>
+            <button class="modal-close-btn" id="closeSchemaModalBtn" title="Close">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="schemaLoadingState" style="text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+                <h3>Loading schema...</h3>
+            </div>
+            <div id="schemaContent" style="display: none;">
+                <div style="margin-bottom: 20px;">
+                    <strong>Table Name:</strong> <span id="schemaTableName"></span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                        <thead style="background: #f8f9fa;">
+                        <tr>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600;">#</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600;">Column Name</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600;">Data Type</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600;">Nullable</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600;">Primary Key</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600;">Description</th>
+                        </tr>
+                        </thead>
+                        <tbody id="schemaTableBody">
+                        <!-- Schema rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="schemaErrorState" style="display: none; text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                <h3>Failed to load schema</h3>
+                <p id="schemaErrorMessage"></p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="closeSchemaModalFooterBtn">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Table DDL Modal -->
+<div class="modal-overlay" id="addTableModal">
+    <div class="modal" style="width: 90%; max-width: 900px; height: 80vh; display: flex; flex-direction: column;">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <h2 class="modal-title">+ Add New Table</h2>
+                <p class="modal-subtitle">
+                    Enter CREATE TABLE and/or INSERT statements to create and populate a new table
+                </p>
+            </div>
+            <button class="modal-close-btn" id="closeAddTableModalBtn" title="Close">
+                ✕
+            </button>
+        </div>
+        <div class="modal-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px;">
+            <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                <label class="form-label">SQL Statements (CREATE TABLE / CREATE INDEX / INSERT)</label>
+                <textarea id="ddlInput" class="form-textarea ddl-input" placeholder="-- 테이블 생성 예시
+CREATE TABLE example_table (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(20)
+);
+
+-- 인덱스 생성 예시
+CREATE INDEX idx_example_name ON example_table(name);
+
+-- 데이터 삽입 예시
+INSERT INTO example_table VALUES (1, 'John Doe', 'john@example.com', '010-1234-5678');
+INSERT INTO example_table VALUES (2, 'Jane Smith', 'jane@example.com', '010-9876-5432');" style="flex: 1; resize: none; font-family: 'Fira Code', monospace; font-size: 13px;"></textarea>
+                <small class="form-hint" style="margin-top: 8px;">
+                    💡 CREATE TABLE, CREATE INDEX, INSERT 문을 지원합니다. SQL 주석(--)도 사용 가능합니다.
+                </small>
+            </div>
+            <div id="ddlErrorMessage" class="error-message" style="display: none; margin-top: 10px; padding: 10px; background: #fee2e2; border-radius: 6px; color: #dc2626;">
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: flex-end;">
+            <button class="btn btn-secondary" id="cancelAddTableBtn" style="margin-right: 10px;">
+                Cancel
+            </button>
+            <button class="btn btn-primary" id="executeAddTableBtn">
+                <span class="btn-icon">💾</span>
+                <span>Execute</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<!-- Marked.js for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

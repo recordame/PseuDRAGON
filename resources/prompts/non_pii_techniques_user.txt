@@ -1,0 +1,39 @@
+Column Name: {column}
+Column Description: {column_desc}
+Data Type: {data_type}
+
+Based on the column name, description, and data type, recommend appropriate pseudonymization methods for this Non-PII column.
+
+Focus on methods that:
+1. Preserve data utility for analysis
+2. Provide additional privacy protection if beneficial
+3. Are proportionate to the data type and sensitivity
+
+For numeric columns (amounts, balances, counts), prioritize ROUND or GENERALIZATION over KEEP if the data may benefit from precision reduction.
+For date/time columns, consider temporal generalization.
+For other types, KEEP is usually the best option.
+
+Always include KEEP and DELETE as options, with KEEP typically having higher priority than DELETE.
+
+Return your recommendations as a JSON response following the format specified in the system prompt.
+Return ONLY the JSON response, no additional text.
+
+# 컬럼명: {column}
+# 컬럼 설명: {column_desc}
+# 데이터 타입: {data_type}
+# 
+# 컬럼명, 설명, 데이터 타입을 바탕으로 이 비식별(Non-PII) 컬럼에 적합한 가명처리 기술을 권장해 주세요.
+# 
+# 다음 사항에 집중하세요:
+# 1. 분석을 위한 데이터 유용성 보존
+# 2. 유익한 경우 추가적인 프라이버시 보호 제공
+# 3. 데이터 유형 및 민감도에 비례하는 기술 적용
+# 
+# 숫자 컬럼(금액, 잔액, 건수)의 경우, 데이터가 정밀도 감소의 혜택을 볼 수 있다면 KEEP보다 ROUND 또는 GENERALIZATION을 우선시하세요.
+# 날짜/시간 컬럼의 경우, 시간적 일반화를 고려하세요.
+# 기타 유형의 경우, 보통 KEEP이 최선의 옵션입니다.
+# 
+# 항상 KEEP과 DELETE를 옵션으로 포함하되, 일반적으로 KEEP이 DELETE보다 높은 우선순위를 갖도록 하세요.
+# 
+# 시스템 프롬프트에 지정된 형식을 따라 JSON 응답으로 권장 사항을 반환하세요.
+# 추가 텍스트 없이 JSON 응답만 반환하세요.
