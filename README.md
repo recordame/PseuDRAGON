@@ -14,20 +14,19 @@ Feed it a database schema, and it will:
 3. Let domain experts review and tweak the policies (Stage 3)
 4. Spit out ready-to-run Python code (Stage 4)
 
-It references legal documents (GDPR, local privacy laws, etc.) via RAG to back up its decisions with actual legal grounds.
+It references legal documents (Institution Policy, PIPA in South Korea, GDPR in EU, etc.) via RAG to back up its decisions with actual legal grounds.
 
 ---
 
 ## Installation
 
 ```bash
-cd code
 pip install -r requirements.txt
 ```
 
 ### Environment Variables
 
-Create a `.env` file in the `code/` directory:
+Edit `.env` file in the directory:
 
 ```bash
 # OpenAI API key (required)
@@ -53,7 +52,6 @@ HEURISTICS_ENABLED=true
 ## Running
 
 ```bash
-cd code
 python PseuDRAGON.py
 ```
 
@@ -64,7 +62,7 @@ Then open `http://localhost:5000` in your browser.
 ## Project Structure
 
 ```
-code/
+/
 ├── PseuDRAGON.py              # Entry point
 ├── config/config.py           # Configuration
 ├── pseudragon/
