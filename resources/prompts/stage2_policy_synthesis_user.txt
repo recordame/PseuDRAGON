@@ -1,0 +1,18 @@
+Legal Context (Prioritized): {context}
+
+Column Name: {column}
+Column Description: {column_desc}
+Data Type: {data_type}
+PII Type: {pii_type}
+Pseudonymization Purpose: {purpose_goal}
+Preferred Method: {preferred_method}
+
+# 법적 문맥 (우선순위 적용):
+# {context}
+# 
+# 컬럼명: {column}
+# 컬럼 설명: {column_desc}
+# 데이터 타입: {data_type}
+# 개인정보 유형: {pii_type}
+# 가명처리 목적: {purpose_goal}
+# 선호하는 기술: {preferred_method}

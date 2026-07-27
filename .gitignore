@@ -1,0 +1,61 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+*venv/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+
+# Runtime artifacts
+output/
+logs/
+tmp/
+*.log
+*.jsonl
+
+# Local knowledge and generated retrieval caches
+expert_feedback.json
+heuristics.json
+resources/heuristics.json
+resources/legal_documents/**/*.pdf
+resources/legal_documents/**/*.pkl
+resources/legal_documents/**/*.faiss
+resources/legal_documents/**/*.npy
+
+# Locally generated sample databases
+*.duckdb
+*.duckdb.wal
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Local benchmarks and caches
+benchmark/
+.cache/

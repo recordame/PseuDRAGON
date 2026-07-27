@@ -1,0 +1,12 @@
+openai
+httpx
+python-dotenv
+flask
+duckdb>=1.4.0
+numpy
+pypdf
+scikit-learn
+pandas
+sentence-transformers
+torch
+cryptography>=41.0.0
