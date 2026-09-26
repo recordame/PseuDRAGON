@@ -1,5 +1,4 @@
-"""
-Test Database Setup (DuckDB)
+"""Test Database Setup (DuckDB)
 
 Using DuckDB for COMMENT support in database schema
 """
@@ -8,52 +7,48 @@ import os
 import random
 from datetime import datetime, timedelta
 
-try:
-    import duckdb
-except ImportError:
-    print("DuckDB is not installed. Installing...")
-    import subprocess
+import duckdb
 
-    subprocess.check_call(["pip", "install", "duckdb"])
-    import duckdb
+from schema_comments_ko import apply_korean_comments
 
-# Sample surname and given-name data
-SAMPLE_SURNAMES = ["김", "이", "박", "최", "정", "강", "조", "윤", "장", "임", "한", "오", "서", "신", "권", "황", "안", "송", "류", "홍", ]
-SAMPLE_GIVEN_NAMES_1 = ["민", "서", "지", "하", "예", "도", "수", "은", "현", "준", "우", "진", "영", "재", "성", "태", "승", "경", "동", "철", ]
-SAMPLE_GIVEN_NAMES_2 = ["준", "윤", "호", "우", "진", "민", "서", "영", "수", "현", "아", "연", "희", "정", "미", "선", "혁", "석", "훈", "빈", ]
+
+KOREAN_SURNAMES = ["김", "이", "박", "최", "정", "강", "조", "윤", "장", "임", "한", "오", "서", "신", "권", "황", "안", "송", "류", "홍", ]
+KOREAN_GIVEN_NAMES_1 = ["민", "서", "지", "하", "예", "도", "수", "은", "현", "준", "우", "진", "영", "재", "성", "태", "승", "경", "동", "철", ]
+KOREAN_GIVEN_NAMES_2 = ["준", "윤", "호", "우", "진", "민", "서", "영", "수", "현", "아", "연", "희", "정", "미", "선", "혁", "석", "훈", "빈", ]
+
 
 BANK_CODES = {
-    "004": "BankA",
-    "088": "BankB",
-    "020": "BankC",
-    "081": "BankD",
-    "003": "BankE",
-    "011": "BankF",
-    "023": "BankG",
-    "027": "BankH",
-    "031": "BankI",
-    "032": "BankJ",
-    "034": "BankK",
-    "035": "BankL",
-    "037": "BankM",
-    "039": "BankN",
-    "045": "BankO",
-    "048": "BankP",
-    "050": "BankQ",
-    "071": "BankR",
-    "089": "BankS",
-    "090": "BankT",
-    "092": "BankU",
+    "004": "KB국민은행",
+    "088": "신한은행",
+    "020": "우리은행",
+    "081": "하나은행",
+    "003": "IBK기업은행",
+    "011": "NH농협은행",
+    "023": "SC제일은행",
+    "027": "한국씨티은행",
+    "031": "대구은행",
+    "032": "부산은행",
+    "034": "광주은행",
+    "035": "제주은행",
+    "037": "전북은행",
+    "039": "경남은행",
+    "045": "새마을금고",
+    "048": "신협",
+    "050": "상호저축은행",
+    "071": "우체국",
+    "089": "케이뱅크",
+    "090": "카카오뱅크",
+    "092": "토스뱅크",
 }
 
 
-def generate_person_name():
-    """Generate a sample person name"""
-    return (random.choice(SAMPLE_SURNAMES) + random.choice(SAMPLE_GIVEN_NAMES_1) + random.choice(SAMPLE_GIVEN_NAMES_2))
+def generate_korean_name():
+    """한국 이름 생성"""
+    return (random.choice(KOREAN_SURNAMES) + random.choice(KOREAN_GIVEN_NAMES_1) + random.choice(KOREAN_GIVEN_NAMES_2))
 
 
 def generate_bank_tran_id():
-    """Generate a bank transaction identifier (20 alphanumeric characters)"""
+    """은행거래고유번호 생성 (AN 20자)"""
     prefix = "F"
     random_part = "".join([str(random.randint(0, 9)) for _ in range(9)])
     suffix = "".join([random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") for _ in range(10)])
@@ -61,22 +56,22 @@ def generate_bank_tran_id():
 
 
 def generate_fintech_use_num():
-    """Generate a fintech service number (24 alphanumeric characters)"""
+    """핀테크이용번호 생성 (AN 24자)"""
     return "".join([str(random.randint(0, 9)) for _ in range(24)])
 
 
 def generate_account_num():
-    """Generate an account number (16 numeric characters)"""
+    """계좌번호 생성 (N 16자)"""
     return "".join([str(random.randint(0, 9)) for _ in range(16)])
 
 
 def generate_business_num():
-    """Generate a business registration number (10 numeric characters)"""
+    """사업자등록번호 생성 (N 10자)"""
     return "".join([str(random.randint(0, 9)) for _ in range(10)])
 
 
 def generate_datetime(days_ago_max=365):
-    """Generate a random date and time"""
+    """랜덤 날짜/시간 생성"""
     days_ago = random.randint(0, days_ago_max)
     hours = random.randint(0, 23)
     minutes = random.randint(0, 59)
@@ -86,8 +81,7 @@ def generate_datetime(days_ago_max=365):
 
 
 def initialize_sample_database(db_path: str, num_records: int = 1000):
-    """
-    Initialize database based on Financial Transfer Information (DuckDB)
+    """Initialize the Institution-A synthetic transfer database (DuckDB)
 
                GR_JC_TRAN, GR_NJ_TRAN, CMS_REQ_TRAN, CMS_RES_TRAN
 
@@ -101,11 +95,12 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         except PermissionError:
             print(f"Warning: Could not remove existing DB. Using existing file.")
 
+    # DuckDB 연결
     conn = duckdb.connect(db_path)
 
     print("=" * 80)
-    print("금융 이체 정보 데이터베이스 생성 (DuckDB)")
-    print("Financial Transfer Information Database Setup (DuckDB)")
+    print("기관 A 합성 금융 이체 데이터베이스 생성 (DuckDB)")
+    print("Institution-A Synthetic Transfer Database Setup (DuckDB)")
     print("=" * 80)
 
     # 1. HF_TRNS_TRAN (Home/Firm Banking Transfer Information)
@@ -427,6 +422,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     for col, comment in cms_res_comments:
         conn.execute(f"COMMENT ON COLUMN CMS_RES_TRAN.{col} IS '{comment}'")
 
+    apply_korean_comments(conn)
+
     print("\n[INDEX] Creating indexes for all tables...")
     # HF_TRNS_TRAN indexes
     conn.execute("CREATE INDEX idx_hf_trns_dtime ON HF_TRNS_TRAN(TRNS_DTIME)")
@@ -466,7 +463,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     conn.execute("CREATE INDEX idx_cms_res_pyr_no ON CMS_RES_TRAN(PYR_NO)")
 
     print(f"\n[DATA] Generating {num_records} sample records for each table...")
-    print("      Using sample names and realistic financial data")
+    print("      Using Korean names and realistic financial data")
 
     # Generate sample data for HF_TRNS_TRAN
     print("\n   Generating HF_TRNS_TRAN records...")
@@ -482,7 +479,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             f"CUST{random.randint(1000000, 9999999)}",  # CUST_ID
             random.choice(list(BANK_CODES.keys())),  # WD_BANK_CD
             generate_account_num(),  # WD_ACNT_NO
-            generate_person_name(),  # USR_NAME
+            generate_korean_name(),  # USR_NAME
             random.choice(list(BANK_CODES.keys())),  # DPS_BANK_CD
             generate_account_num(),  # DPS_ACNT_NO
             int(random.uniform(10000, 5000000)),  # WD_MN
@@ -510,7 +507,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             f"CUST{random.randint(1000000, 9999999)}",
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
-            generate_person_name(),
+            generate_korean_name(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 2000000)),
@@ -559,7 +556,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             "".join([random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/") for _ in range(88)]),
             random.choice(list(BANK_CODES.keys())),
             generate_fintech_use_num(),
-            generate_person_name(),
+            generate_korean_name(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 5000000))
@@ -586,7 +583,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             "".join([random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/") for _ in range(88)]),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
-            generate_person_name(),
+            generate_korean_name(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 3000000))
@@ -612,7 +609,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             wd_dt,
             f"CMS{random.randint(1000000000, 9999999999)}",
             generate_business_num(),
-            generate_person_name(),
+            generate_korean_name(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 1000000)),
@@ -638,7 +635,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             wd_dt,
             f"CMS{random.randint(1000000000, 9999999999)}",
             generate_business_num(),
-            generate_person_name(),
+            generate_korean_name(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 1000000)),
@@ -704,6 +701,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     print("Database Setup Complete!")
     print("=" * 80)
 
+
     print(f"\n Database Statistics:")
     print(f"   - Database Path: {db_path}")
     print(f"   - Database Type: DuckDB (supports COMMENT)")
@@ -735,7 +733,10 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
 
 
 if __name__ == "__main__":
-    db_path = os.path.join(os.path.dirname(__file__), "sample_table_schemas.duckdb")
+    db_path = os.path.join(
+        os.path.dirname(__file__),
+        "institution_a_synthetic_schema.duckdb",
+    )
     initialize_sample_database(db_path, num_records=1000)
     print("\n Setup complete! You can now use this DuckDB database for testing PseuDRAGON.")
     print(f"   Database location: {db_path}")

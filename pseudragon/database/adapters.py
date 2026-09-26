@@ -1,5 +1,4 @@
-"""
-Database Utility Module for PseuDRAGON Framework
+"""Database Utility Module for PseuDRAGON Framework
 
 This module provides utilities for interacting with databases (DuckDB, Oracle, MariaDB),
 including connection management, schema extraction with COMMENT support, and data sampling.
@@ -17,53 +16,47 @@ except ImportError:
 
 
 class DatabaseError(Exception):
-    """
-    Custom exception for database operations
-    """
+    """Custom exception for database operations"""
 
 
 class DatabaseConnector(ABC):
-    """
-    Abstract base class for database connectors
+    """Abstract base class for database connectors
 
     Provides a unified interface for different database types.
     """
 
     @abstractmethod
     def connect(self):
-        """Establish database connection"""
+        """Establish database connection / 데이터베이스 연결 수립"""
 
     @abstractmethod
     def get_table_names(self) -> List[str]:
-        """Get all table names"""
+        """Get all table names / 모든 테이블 이름 가져오기"""
 
     @abstractmethod
     def get_table_schema(self, table_name: str) -> List[Dict[str, Any]]:
-        """Get table schema"""
+        """Get table schema / 테이블 스키마 가져오기"""
 
     @abstractmethod
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """Get column comments"""
+        """Get column comments / 컬럼 COMMENT 가져오기"""
 
     @abstractmethod
     def get_table_sample(self, table_name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
-        """Get sample row from table"""
+        """Get sample row from table / 테이블에서 샘플 행 가져오기"""
 
     @abstractmethod
     def close(self):
-        """Close database connection"""
+        """Close database connection / 데이터베이스 연결 종료"""
 
 
 class DuckDBConnector(DatabaseConnector):
-    """
-    DuckDB database connector with COMMENT support
-    """
+    """DuckDB database connector with COMMENT support"""
 
     SYSTEM_TABLES = {"information_schema", "pg_catalog"}
 
     def __init__(self, db_path: str):
-        """
-        Initialize DuckDB connector
+        """Initialize DuckDB connector
 
         Args:
             db_path: Path to DuckDB database file
@@ -131,8 +124,7 @@ class DuckDBConnector(DatabaseConnector):
             raise DatabaseError(f"Failed to retrieve schema for table '{table_name}': {e}")
 
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """
-        Get column comments from DuckDB
+        """Get column comments from DuckDB
 
         Note: DuckDB stores comments via COMMENT ON COLUMN syntax
 
@@ -174,6 +166,7 @@ class DuckDBConnector(DatabaseConnector):
             return comments
         except Exception:
             # If comment retrieval fails, return empty dict
+
             return {}
 
     def get_table_sample(self, table_name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
@@ -199,9 +192,7 @@ class DuckDBConnector(DatabaseConnector):
 
 
 class OracleConnector(DatabaseConnector):
-    """
-    Oracle database connector
-    """
+    """Oracle database connector"""
 
     def __init__(self, host: str, port: int, service_name: str, user: str, password: str):
         """Initialize Oracle connector"""
@@ -297,9 +288,7 @@ class OracleConnector(DatabaseConnector):
 
 
 class MariaDBConnector(DatabaseConnector):
-    """
-    MariaDB/MySQL database connector
-    """
+    """MariaDB/MySQL database connector"""
 
     def __init__(self, host: str, port: int, database: str, user: str, password: str):
         """Initialize MariaDB connector"""
@@ -401,16 +390,14 @@ class MariaDBConnector(DatabaseConnector):
 
 
 class DatabaseManager:
-    """
-    Database Manager with multi-database support
+    """Database Manager with multi-database support
 
     This class provides a centralized interface for database operations,
     supporting DuckDB, Oracle, and MariaDB with COMMENT extraction.
     """
 
     def __init__(self, db_config):
-        """
-        Initialize DatabaseManager with configuration
+        """Initialize DatabaseManager with configuration
 
         Args:
             db_config: Database path (str) for DuckDB or config dict for others
@@ -443,8 +430,7 @@ class DatabaseManager:
 
     @contextmanager
     def get_connection(self):
-        """
-        Context manager for database connections
+        """Context manager for database connections
 
         Ensures proper connection cleanup even if errors occur.
         """
@@ -463,8 +449,7 @@ class DatabaseManager:
         return self.connector.get_table_schema(table_name)
 
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """
-        Get column comments for a table
+        """Get column comments for a table
 
         Args:
             table_name: Name of the table
@@ -475,8 +460,7 @@ class DatabaseManager:
         return self.connector.get_column_comments(table_name)
 
     def get_enhanced_schema(self, table_name: str) -> Dict[str, Dict[str, Any]]:
-        """
-        Get enhanced schema with column names, types, and comments
+        """Get enhanced schema with column names, types, and comments
 
         This is the key method for PII detection with COMMENT support.
 
@@ -519,8 +503,7 @@ class DatabaseManager:
 
 
 def get_db_connection(db_path: str):
-    """
-    Legacy function: Returns a connection to the database
+    """Legacy function: Returns a connection to the database
 
     Note: Consider using DatabaseManager.get_connection() context manager instead
     """

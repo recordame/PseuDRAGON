@@ -1,11 +1,11 @@
-"""
-Feedback Processor for PseuDRAGON Framework
+"""Feedback Processor for PseuDRAGON Framework
 
 This module processes audit logs from HITL stage and converts them into
 searchable feedback knowledge base entries for the RAG system.
 """
 
-# Standard library imports
+
+# 표준 라이브러리 import
 import json
 import os
 from pathlib import Path
@@ -13,20 +13,18 @@ from typing import Any, Dict, List
 
 
 class FeedbackProcessor:
-    """
-    Audit Log Analyzer and Feedback Knowledge Base Generator
-    
+    """Audit Log Analyzer and Feedback Knowledge Base Generator
+
     Processes USER_EDIT events from audit logs and converts them into
     searchable feedback documents that can be integrated into the RAG system.
     """
 
     def process_audit_logs(self, log_dir: str) -> List[Dict[str, Any]]:
-        """
-        Process all audit log files in the directory and extract feedback entries
-        
+        """Process all audit log files in the directory and extract feedback entries
+
         Args:
             log_dir: Path to directory containing audit logs (output directory)
-        
+
         Returns:
             List of feedback documents ready for embedding
         """
@@ -37,6 +35,7 @@ class FeedbackProcessor:
             return feedback_entries
 
         # Find all audit log files (*.jsonl) in all session subdirectories
+
         log_dir_path = Path(log_dir)
         audit_files = []
 
@@ -54,6 +53,7 @@ class FeedbackProcessor:
         print(f"[INFO] Found {len(audit_files)} audit log files")
 
         # Process each audit log file
+
         for log_file in audit_files:
             try:
                 with open(log_file, 'r', encoding='utf-8') as f:
@@ -62,6 +62,7 @@ class FeedbackProcessor:
                             event = json.loads(line.strip())
 
                             # Extract USER_EDIT events
+
                             if event.get("event_type") == "USER_EDIT":
                                 data = event.get("data", {})
                                 feedback_entry = self._create_feedback_entry(data)
@@ -77,16 +78,16 @@ class FeedbackProcessor:
         return feedback_entries
 
     def _create_feedback_entry(self, edit_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Convert a USER_EDIT event into a searchable feedback document
-        
+        """Convert a USER_EDIT event into a searchable feedback document
+
         Args:
             edit_data: USER_EDIT event data containing table, column, actions, and rationale
-        
+
         Returns:
             Feedback document with formatted text and metadata
         """
         # Extract and sanitize data from edit event
+
         table_name = str(edit_data.get("table", "Unknown"))[:200]  # Limit length
         column_name = str(edit_data.get("column", "Unknown"))[:200]
         old_action = str(edit_data.get("old_action", "Unknown"))[:100]
@@ -94,6 +95,7 @@ class FeedbackProcessor:
         rationale = str(edit_data.get("rationale", "No rationale provided"))[:1000]
 
         # Basic sanitization: remove potential control characters
+
         def sanitize(text: str) -> str:
             """Remove control characters but keep whitespace and newlines"""
             return ''.join(char for char in text if char.isprintable() or char in '\n\t ')
@@ -105,6 +107,7 @@ class FeedbackProcessor:
         rationale = sanitize(rationale)
 
         # Format feedback text for optimal embedding search
+
         feedback_text = f"""[피드백 기록]
 테이블: {table_name}
 컬럼: {column_name}

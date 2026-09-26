@@ -1,5 +1,4 @@
-"""
-Policy Validators
+"""Policy Validators
 
 Implements consistency checks for policy validation.
 """
@@ -12,13 +11,15 @@ from pseudragon.domain.policy_dsl import ActionType, Policy
 
 @dataclass
 class ValidationViolation:
-    """
-    Represents a policy validation violation
-    
+    """Represents a policy validation violation
+
     Attributes:
         severity: Violation severity level ('error', 'warning', 'info')
+
         message: Description of the violation
+
         column: Column name associated with the violation (if applicable)
+
         suggestion: Suggested fix for the violation
     """
     severity: str
@@ -27,38 +28,30 @@ class ValidationViolation:
     suggestion: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to dictionary
-        
+        """Convert to dictionary
+
         Returns:
             Dictionary representation
         """
         return {'severity': self.severity, 'message': self.message, 'column': self.column, 'suggestion': self.suggestion}
 
     def __repr__(self) -> str:
-        """
-        String representation
-        """
+        """String representation"""
         col_str = f" [{self.column}]" if self.column else ""
         return f"{self.severity.upper()}{col_str}: {self.message}"
 
     def is_error(self) -> bool:
-        """
-        Check if violation is an error
-        """
+        """Check if violation is an error"""
         return self.severity == 'error'
 
     def is_warning(self) -> bool:
-        """
-        Check if violation is a warning
-        """
+        """Check if violation is a warning"""
         return self.severity == 'warning'
 
 
 class LegalComplianceChecker:
-    """
-    Legal Compliance Checker
-    
+    """Legal Compliance Checker
+
     Verifies that all PII columns are processed according to PIPA/GDPR.
     """
 
@@ -66,8 +59,7 @@ class LegalComplianceChecker:
 
     @staticmethod
     def check(policy: Policy) -> list[ValidationViolation]:
-        """
-        Check legal compliance
+        """Check legal compliance
 
         Args:
             policy: Policy to validate
@@ -92,22 +84,20 @@ class LegalComplianceChecker:
 
 
 class ConsistencyChecker:
-    """
-    Consistency Checker
-    
+    """Consistency Checker
+
     Ensures no logical contradictions in the policy.
-    
+
     Example: A column is both deleted and used in aggregation.
     """
 
     @staticmethod
     def check(policy: Policy) -> List[ValidationViolation]:
-        """
-        Check consistency
-        
+        """Check consistency
+
         Args:
             policy: Policy to validate
-        
+
         Returns:
             List of violations
         """
@@ -120,16 +110,12 @@ class ConsistencyChecker:
 
     @staticmethod
     def _get_deleted_columns(policy: Policy) -> set:
-        """
-        Get set of deleted columns
-        """
+        """Get set of deleted columns"""
         return {col for col, pol in policy.columns.items() if pol.action.action == ActionType.DELETE}
 
     @staticmethod
     def _check_group_by_consistency(policy: Policy, deleted_columns: set) -> List[ValidationViolation]:
-        """
-        Check that group_by columns are not deleted
-        """
+        """Check that group_by columns are not deleted"""
         violations = []
 
         for col_name, col_policy in policy.columns.items():
@@ -153,9 +139,8 @@ class ConsistencyChecker:
 
 
 class UtilityPreservationChecker:
-    """
-    Utility Preservation Checker
-    
+    """Utility Preservation Checker
+
     Verifies that preferred methods can still be achieved after pseudonymization.
 
     Example: Preferred method mentions "user-level analysis" but user_id is deleted.
@@ -170,8 +155,7 @@ class UtilityPreservationChecker:
 
     @staticmethod
     def check(policy: Policy, preferred_method: str) -> List[ValidationViolation]:
-        """
-        Check if preferred method can still be achieved.
+        """Check if preferred method can still be achieved.
 
         Args:
             policy: Policy to check
@@ -204,11 +188,10 @@ class UtilityPreservationChecker:
 
 
 class PrivacyMetricsChecker:
-    """
-    Privacy Metrics Checker
-    
+    """Privacy Metrics Checker
+
     Estimates k-anonymity and re-identification risk.
-    
+
     Note: This is a simplified heuristic. Full implementation would
     require actual data analysis.
     """
@@ -218,8 +201,7 @@ class PrivacyMetricsChecker:
 
     @staticmethod
     def check(policy: Policy) -> List[ValidationViolation]:
-        """
-        Check privacy metrics
+        """Check privacy metrics
 
         Args:
             policy: Policy to validate
@@ -235,9 +217,7 @@ class PrivacyMetricsChecker:
 
     @staticmethod
     def _check_direct_identifiers(policy: Policy) -> List[ValidationViolation]:
-        """
-        Check direct identifier handling
-        """
+        """Check direct identifier handling"""
         violations = []
 
         direct_identifiers = [col for col, pol in policy.columns.items() if pol.pii_type in PrivacyMetricsChecker.DIRECT_IDENTIFIER_TYPES and pol.action.action == ActionType.KEEP]
@@ -256,20 +236,18 @@ class PrivacyMetricsChecker:
 
 
 class CompletenessChecker:
-    """
-    Completeness Checker
-    
+    """Completeness Checker
+
     Verifies that all necessary columns are addressed.
     """
 
     @staticmethod
     def check(policy: Policy) -> List[ValidationViolation]:
-        """
-        Check completeness
-        
+        """Check completeness
+
         Args:
             policy: Policy to validate
-        
+
         Returns:
             List of violations
         """
@@ -284,26 +262,23 @@ class CompletenessChecker:
 
 
 class PolicyValidator:
-    """
-    Policy Validator
-    
+    """Policy Validator
+
     Main validator class that orchestrates all validation checks.
-    
+
     Validates policies according to the paper's 5 checks (Line 558-564).
     """
 
     def __init__(self, legal_kb=None):
-        """
-        Initialize PolicyValidator
-        
+        """Initialize PolicyValidator
+
         Args:
             legal_kb: Legal knowledge base (optional)
         """
         self.legal_kb = legal_kb
 
     def validate(self, policy: Policy, preferred_method: str = "") -> list[ValidationViolation]:
-        """
-        Validate policy for consistency and utility preservation.
+        """Validate policy for consistency and utility preservation.
 
         Args:
             policy: Policy to validate
@@ -323,8 +298,7 @@ class PolicyValidator:
         return violations
 
     def check_legal_compliance(self, policy: Policy) -> list[ValidationViolation]:
-        """
-        Check 1: Verify all PII columns are processed according to PIPA/GDPR
+        """Check 1: Verify all PII columns are processed according to PIPA/GDPR
 
         Args:
             policy: Policy to validate
@@ -335,8 +309,7 @@ class PolicyValidator:
         return LegalComplianceChecker.check(policy)
 
     def check_consistency(self, policy: Policy) -> list[ValidationViolation]:
-        """
-        Check 2: Ensure no logical contradictions
+        """Check 2: Ensure no logical contradictions
 
         Args:
             policy: Policy to validate
@@ -347,8 +320,7 @@ class PolicyValidator:
         return ConsistencyChecker.check(policy)
 
     def check_utility_preservation(self, policy: Policy, preferred_method: str) -> list[ValidationViolation]:
-        """
-        Check 3: Verify preferred method can still be achieved
+        """Check 3: Verify preferred method can still be achieved
 
         Args:
             policy: Policy to check
@@ -359,37 +331,35 @@ class PolicyValidator:
         """
         return UtilityPreservationChecker.check(policy, preferred_method)
     def check_privacy_metrics(self, policy: Policy) -> List[ValidationViolation]:
-        """
-        Check 4: Estimate k-anonymity and re-identification risk
-        
+        """Check 4: Estimate k-anonymity and re-identification risk
+
         Args:
             policy: Policy to validate
-        
+
         Returns:
             List of violations
         """
         return PrivacyMetricsChecker.check(policy)
 
     def check_completeness(self, policy: Policy) -> list[ValidationViolation]:
-        """
-        Check 5: Verify all necessary columns are addressed
-        
+        """Check 5: Verify all necessary columns are addressed
+
         Args:
             policy: Policy to validate
-        
+
         Returns:
             List of violations
         """
         return CompletenessChecker.check(policy)
 
     def suggest_fixes(self, policy: Policy, violations: list[ValidationViolation]) -> Policy:
-        """
-        Automatically suggest fixes for violations (Line 545)
-        
+        """Automatically suggest fixes for violations (Line 545)
+
         Args:
             policy: Policy with violations
+
             violations: List of violations to fix
-        
+
         Returns:
             Modified policy with suggested fixes
         """
@@ -405,24 +375,22 @@ class PolicyValidator:
         return policy
 
     def has_errors(self, violations: list[ValidationViolation]) -> bool:
-        """
-        Check if there are any error-level violations
-        
+        """Check if there are any error-level violations
+
         Args:
             violations: List of violations
-        
+
         Returns:
             True if there are errors, False otherwise
         """
         return any(v.is_error() for v in violations)
 
     def get_summary(self, violations: list[ValidationViolation]) -> dict[str, int]:
-        """
-        Get summary of violations by severity
-        
+        """Get summary of violations by severity
+
         Args:
             violations: List of violations
-        
+
         Returns:
             Dictionary with counts by severity
         """

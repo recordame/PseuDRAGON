@@ -1,36 +1,27 @@
-"""
-Stage 4: Code Generation
+"""Stage 4: Code Generation
 
 Implements code generation from the paper (Algorithm 1):
+
 - Policy-to-Code translation
 - Template-based generation
 - Syntax validation
 """
 
-# Standard library imports
+
+# 표준 라이브러리 import
 import ast
 from typing import Any, Callable, Dict, Optional
 
-# Project-specific imports
+
+# 프로젝트 관련 import
 from pseudragon.domain.policy_dsl import ActionType, Policy
 
 
 class Stage4CodeGeneration:
-    """
-    Stage 4: Template-based Code Generation
-
-    Generates executable Python code from validated policies using templates.
-
-    Benefits of template-based approach:
-    - No LLM hallucination
-    - Guaranteed syntax correctness
-    - Fast generation
-    - Predictable output
-    """
+    """Generate Python transformations from selected policies and validate their syntax."""
 
     def __init__(self, llm_client=None):
-        """
-        Initialize code generator
+        """Initialize code generator
 
         Args:
             llm_client: Not used in template-based approach (kept for compatibility)
@@ -38,8 +29,7 @@ class Stage4CodeGeneration:
         self.client = llm_client
 
     def generate_code(self, schema: Dict[str, Any], policy: Policy, pii_metadata: Dict[str, Any], db_config: Optional[str] = None, log_callback: Optional[Callable] = None, ) -> str:
-        """
-        Generate Python code from policy using templates.
+        """Generate Python code from policy using templates.
 
         Implements f_code() from Algorithm 1.
 
@@ -65,9 +55,7 @@ class Stage4CodeGeneration:
         return code
 
     def _generate_from_template(self, schema: Dict[str, Any], policy: Policy, pii_metadata: Dict[str, Any], db_config: Optional[str] = None, ) -> str:
-        """
-        Generate code using template
-        """
+        """Generate code using template"""
         table_name = policy.table_name
         schema.get("columns", [])
 
@@ -152,132 +140,41 @@ if __name__ == "__main__":
         return code
 
     def _build_imports(self, policy: Policy) -> str:
-        """
-        Build import statements based on required actions
-        """
-        # Check which actions are used
-        actions_used = set()
-        for col_policy in policy.columns.values():
-            if col_policy.is_pii:
-                actions_used.add(col_policy.action.action)
-
-        # Build library installation section for non-standard libraries
-        non_standard_libs = []
-        if ActionType.ENCRYPT in actions_used:
-            non_standard_libs.append("cryptography")
-
-        # Create auto-install section if non-standard libraries are needed
-        install_section = []
-        if non_standard_libs:
-            install_section.append("# Auto-install required non-standard libraries")
-            install_section.append("# 필요한 비표준 라이브러리 자동 설치")
-            install_section.append("import subprocess")
-            install_section.append("import sys")
-            install_section.append("")
-            install_section.append("def install_required_libraries():")
-            install_section.append("    \"\"\"Install required non-standard libraries if not available\"\"\"")
-            install_section.append(f"    required_libs = {non_standard_libs}")
-            install_section.append("    ")
-            install_section.append("    for lib in required_libs:")
-            install_section.append("        try:")
-            install_section.append("            __import__(lib)")
-            install_section.append(f"            print(f\"[OK] {{lib}} is already installed\")")
-            install_section.append("        except ImportError:")
-            install_section.append(f"            print(f\"[WARN] {{lib}} not found. Installing...\")")
-            install_section.append("            try:")
-            install_section.append("                subprocess.check_call([sys.executable, \"-m\", \"pip\", \"install\", lib])")
-            install_section.append(f"                print(f\"[OK] Successfully installed {{lib}}\")")
-            install_section.append("            except subprocess.CalledProcessError as e:")
-            install_section.append(f"                print(f\"[X] Failed to install {{lib}}: {{e}}\")")
-            install_section.append(f"                print(f\"  Please manually install with: pip install {{lib}}\")")
-            install_section.append("                sys.exit(1)")
-            install_section.append("")
-            install_section.append("# Install required libraries before importing them")
-            install_section.append("install_required_libraries()")
-            install_section.append("")
-
-        # Standard imports
+        """Use installed dependencies; generated programs never install packages."""
+        actions = {column.action.action for column in policy.columns.values()}
         imports = ["import os", "import pandas as pd", "import duckdb"]
-
-        # Add imports based on actions
-        if ActionType.HASH in actions_used:
-            imports.append("import hashlib")
-
-        if ActionType.MASK in actions_used:
-            imports.append("import re")
-
-        if ActionType.TOKENIZE in actions_used:
-            imports.append("import uuid")
-
-        if ActionType.ENCRYPT in actions_used:
-            imports.append("import base64")
-            imports.append("from cryptography.fernet import Fernet")
-            imports.append("# Note: Encryption key must be securely managed")
-            imports.append("# ENCRYPTION_KEY should be loaded from secure storage")
-
-        # Combine install section and imports
-        all_lines = install_section + imports
-        return "\n".join(all_lines)
+        for action, modules in {
+            ActionType.HASH: ["import hashlib"],
+            ActionType.MASK: ["import re"],
+            ActionType.TOKENIZE: ["import uuid"],
+            ActionType.ENCRYPT: ["import base64", "from cryptography.fernet import Fernet"],
+        }.items():
+            if action in actions:
+                imports.extend(modules)
+        return "\n".join(imports)
 
     def _build_encryption_init_code(self, policy: Policy) -> str:
-        """
-        Build encryption initialization code if ENCRYPT action is used
-        """
-        # Check if any column uses ENCRYPT
-        uses_encrypt = False
-        for col_policy in policy.columns.values():
-            if col_policy.is_pii and col_policy.action.action == ActionType.ENCRYPT:
-                uses_encrypt = True
-                break
-
-        if not uses_encrypt:
+        """Require a deployment-managed Fernet key without printing or storing it."""
+        if not any(column.action.action == ActionType.ENCRYPT for column in policy.columns.values()):
             return ""
-
-        # Generate encryption initialization code
-        code = """
-# ========================================
-# Encryption Setup
-# ========================================
-# CRITICAL: Encryption key management
-#
-# The encryption key must be stored securely for later decryption.
-#
-# Production recommendations:
-# - Store key in secure key management system (AWS KMS, Azure Key Vault, etc.)
-# - Never commit keys to version control
-# - Use environment variables or secret management
-# ========================================
-
-# Generate encryption key (development only)
-key = Fernet.generate_key()
-print("=" * 60)
-print("[WARN]️  IMPORTANT: Store this encryption key securely!")
-print("[WARN]️  중요: 이 암호화 키를 안전하게 저장하세요!")
-print("=" * 60)
-print(f"Encryption Key: {key.decode()}")
-print("=" * 60)
-print("Without this key, encrypted data CANNOT be decrypted!")
-print("이 키가 없으면 암호화된 데이터를 복호화할 수 없습니다!")
-print("=" * 60)
-print()
-
-# Initialize Fernet cipher
-fernet = Fernet(key)
+        return """
+key = os.environ.get("PSEUDRAGON_ENCRYPTION_KEY")
+if not key:
+    raise RuntimeError("Set PSEUDRAGON_ENCRYPTION_KEY from secure storage before executing ENCRYPT.")
+fernet = Fernet(key.encode("ascii"))
 """
-        return code
 
     def _build_db_connection_code(self, table_name: str, db_config: Optional[str] = None) -> str:
-        """
-        Build database connection and data loading code
-        """
+        """Build database connection and data loading code"""
         if db_config:
             # Use provided DB path
             db_path = db_config
         else:
             # Use default sample DB path
-            db_path = "sample_table_schemas.duckdb"
+            db_path = "institution_a_synthetic_schema.duckdb"
 
         code = f"""    # Database connection
+    # 데이터베이스 연결
     DB_PATH = r"{db_path}"
 
     if not os.path.exists(DB_PATH):
@@ -287,6 +184,7 @@ fernet = Fernet(key)
     conn = duckdb.connect(DB_PATH, read_only=True)
 
     # Load data from table
+    # 테이블에서 데이터 로드
     query = "SELECT * FROM {table_name}"
     print(f"Executing query: {{query}}")
     df = pd.read_sql(query, conn)
@@ -297,20 +195,27 @@ fernet = Fernet(key)
         return code
 
     def _build_processing_code(self, policy: Policy, pii_metadata: Dict[str, Any]) -> str:
-        """
-        Build column processing code using LLM-generated code snippets from Stage 2
-        """
+        """Build column processing code using LLM-generated code snippets from Stage 2"""
         code_lines = []
 
         # First pass: Extract helper functions from complex snippets
         helper_functions = []
         for col_name, col_policy in policy.columns.items():
+            if col_policy.action.action in (ActionType.KEEP, ActionType.DELETE):
+                continue
             code_snippet = col_policy.action.code_snippet
             if code_snippet and '\n' in code_snippet.strip():
                 # Check if it contains a function definition
                 if 'def ' in code_snippet:
-                    # Extract and store helper function
-                    helper_functions.append(code_snippet.strip())
+                    # Keep helper setup (including imports, constants and
+                    # decorators), but execute the target apply only once below.
+                    snippet_tree = ast.parse(code_snippet.strip())
+                    for node in snippet_tree.body:
+                        if isinstance(node, ast.FunctionDef) or not any(
+                            self._is_target_series_apply(child, col_name)
+                            for child in ast.walk(node)
+                        ):
+                            helper_functions.append(ast.unparse(node))
 
         # Add helper functions at the beginning
         if helper_functions:
@@ -376,7 +281,8 @@ fernet = Fernet(key)
                                     # Use the apply() statement directly (function already defined above)
                                     code_lines.append(f"    # Apply transformation using helper function defined above")
                                     code_lines.append(f"    if '{col_name}' in df.columns:")
-                                    code_lines.append(f"        {apply_line}")
+                                    guarded_apply = self._guard_apply_statement(apply_line, col_name)
+                                    code_lines.append(f"        {guarded_apply}")
                                 else:
                                     # Fallback: couldn't extract apply line
                                     code_lines.append(f"    # WARNING: Complex snippet - could not extract apply() statement")
@@ -404,11 +310,14 @@ fernet = Fernet(key)
 
                                     lambda_expr = code_snippet[start_idx:end_idx - 1].strip()
 
-                                    # Use the extracted lambda directly
+                                    # Preserve apply arguments while guarding its
+                                    # callback, including positional/keyword args.
                                     code_lines.append(f"    if '{col_name}' in df.columns:")
-                                    code_lines.append(f"        df['{col_name}'] = df['{col_name}'].apply(")
-                                    code_lines.append(f"            {lambda_expr}")
-                                    code_lines.append(f"        )")
+                                    apply_statement = (
+                                        f"df[{col_name!r}] = df[{col_name!r}].apply({lambda_expr})"
+                                    )
+                                    guarded_apply = self._guard_apply_statement(apply_statement, col_name)
+                                    code_lines.append(f"        {guarded_apply}")
                                 else:
                                     # Couldn't extract lambda - use as-is
                                     code_lines.append(f"    if '{col_name}' in df.columns:")
@@ -427,7 +336,7 @@ fernet = Fernet(key)
                             # Use lambda function
                             code_lines.append(f"    if '{col_name}' in df.columns:")
                             code_lines.append(f"        df['{col_name}'] = df['{col_name}'].apply(")
-                            code_lines.append(f"            {lambda_code}")
+                            code_lines.append(f"            {self._null_preserving_callback(lambda_code)}")
                             code_lines.append(f"        )")
 
             else:
@@ -441,9 +350,57 @@ fernet = Fernet(key)
 
         return "\n".join(code_lines)
 
-    def _convert_snippet_to_lambda(self, code_snippet: str, col_name: str) -> str:
+    @staticmethod
+    def _null_preserving_callback(callback: str) -> str:
+        """Apply a selected scalar callback only to nonmissing input values.
+
+        A user-edited lambda may stringify None or fail on pd.NA. Missingness is
+        a dataframe execution contract, so it is checked outside that callback.
+        Returning the original missing scalar also avoids coercing KEEP columns,
+        which never enter this path.
         """
-        Convert standalone code snippet to lambda function for pandas .apply()
+        return (
+            "lambda _pseudragon_value, *_pseudragon_args, **_pseudragon_kwargs: "
+            f"({callback})(_pseudragon_value, *_pseudragon_args, **_pseudragon_kwargs) "
+            "if pd.notna(_pseudragon_value) else _pseudragon_value"
+        )
+
+    @staticmethod
+    def _is_target_series_apply(node: ast.AST, col_name: str) -> bool:
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            return False
+        target = node.func.value
+        return (
+            node.func.attr == "apply"
+            and isinstance(target, ast.Subscript)
+            and isinstance(target.value, ast.Name)
+            and target.value.id == "df"
+            and isinstance(target.slice, ast.Constant)
+            and target.slice.value == col_name
+        )
+
+    def _guard_apply_statement(self, statement: str, col_name: str) -> str:
+        """Guard the callback in a helper snippet's target-column Series.apply."""
+        tree = ast.parse(statement)
+        for node in ast.walk(tree):
+            if not self._is_target_series_apply(node, col_name):
+                continue
+            if node.args:
+                callback = node.args[0]
+                node.args[0] = ast.parse(
+                    self._null_preserving_callback(ast.unparse(callback)), mode="eval"
+                ).body
+            else:
+                for keyword in node.keywords:
+                    if keyword.arg == "func":
+                        keyword.value = ast.parse(
+                            self._null_preserving_callback(ast.unparse(keyword.value)),
+                            mode="eval",
+                        ).body
+        return ast.unparse(ast.fix_missing_locations(tree))
+
+    def _convert_snippet_to_lambda(self, code_snippet: str, col_name: str) -> str:
+        """Convert standalone code snippet to lambda function for pandas .apply()
 
         Args:
             code_snippet: LLM-generated code snippet (e.g., "hashed_x = hashlib.sha256(...)")
@@ -476,7 +433,7 @@ fernet = Fernet(key)
         if snippet.startswith('import '):
             return f"__COMPLEX_SNIPPET__:{col_name}"
 
-        # CRITICAL: Check if snippet already contains .apply() - this means it's a full transformation statement
+        # Check if snippet already contains .apply() - this means it's a full transformation statement
         # Example: "df['column'].apply(lambda x: str(uuid.uuid4()) if pd.notna(x) else None)"
         # We should NOT wrap this in another lambda - mark it as complex for special handling
         if '.apply(' in snippet:
@@ -506,9 +463,7 @@ fernet = Fernet(key)
         return f"lambda x: ({snippet}) if pd.notna(x) else None"
 
     def _generate_fallback_code(self, col_name: str, action: ActionType, parameters: Dict[str, Any]) -> list:
-        """
-        Generate fallback code when LLM code snippet is not available
-        """
+        """Generate fallback code when LLM code snippet is not available"""
         fallback_lines = []
 
         if action == ActionType.HASH:
@@ -518,7 +473,7 @@ fernet = Fernet(key)
             fallback_lines.append(f"        )")
 
         elif action == ActionType.MASK:
-            # CRITICAL: MASK requires specific masking rules from legal documents
+            # MASK requires specific masking rules from legal documents
             # Do NOT use generic fallback - this forces LLM to provide code_snippet
             fallback_lines.append(f"    # ERROR: MASK action requires specific code snippet from legal document")
             fallback_lines.append(f"    # The LLM must extract masking rules (e.g., 'show first 4', 'show last 3')")
@@ -581,9 +536,7 @@ fernet = Fernet(key)
         return fallback_lines
 
     def _build_policy_documentation(self, policy: Policy, pii_metadata: Dict[str, Any]) -> str:
-        """
-        Build policy documentation for code header
-        """
+        """Build policy documentation for code header"""
         doc_lines = []
 
         for col_name, col_policy in policy.columns.items():
@@ -603,9 +556,7 @@ fernet = Fernet(key)
         return "\n".join(doc_lines)
 
     def _validate_syntax(self, code: str, log_callback: Optional[Callable] = None) -> str:
-        """
-        Validate generated code syntax
-        """
+        """Validate generated code syntax"""
 
         self._log("  [Search] Validating generated code...", log_callback)
 
@@ -618,9 +569,7 @@ fernet = Fernet(key)
             raise e
 
     def _log(self, message: str, callback: Optional[Callable] = None):
-        """
-        Helper for logging
-        """
+        """Helper for logging"""
         if callback:
             callback(message)
         else:

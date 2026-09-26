@@ -1,24 +1,26 @@
-﻿"""
-View COMMENT from DuckDB database
-"""
+"""View COMMENT from DuckDB database"""
 
 import os
 
 import duckdb
 
-db_path = os.path.join(os.path.dirname(__file__), "sample_table_schemas.duckdb")
+db_path = os.path.join(
+    os.path.dirname(__file__),
+    "institution_a_synthetic_schema.duckdb",
+)
 
 if not os.path.exists(db_path):
     print(f"Database not found: {db_path}")
-    print("Please run setup_test_db_duckdb.py first")
+    print("Please run setup_test_db_duckdb_for_1st_loop.py first")
     exit(1)
 
 conn = duckdb.connect(db_path, read_only=True)
 
 print("=" * 120)
-print("금융 이체 정보 - 컬럼 스키마 (COMMENT 포함)")
-print("Financial Transfer Information - Column Schema (with COMMENT)")
+print("기관 A 합성 금융 이체 정보 - 컬럼 스키마 (COMMENT 포함)")
+print("Institution-A Synthetic Transfer Data - Column Schema (with COMMENT)")
 print("=" * 120)
+
 
 tables = [
     "HF_TRNS_TRAN", "CD_TRNS_TRAN", "OB_INQR_TRAN", "OB_TRNS_TRAN",
@@ -37,11 +39,13 @@ table_descriptions = {
     "CMS_RES_TRAN": "CMS 출금 결과 내역"
 }
 
+
 for table_name in tables:
     print(f"\n{'=' * 120}")
     print(f"[Table: {table_name}] - {table_descriptions[table_name]}")
     print(f"{'=' * 120}")
 
+    # DuckDB에서 컬럼 정보 및 COMMENT 조회
     result = conn.execute(
         """
         SELECT column_name,
@@ -72,8 +76,10 @@ for table_name in tables:
             print(f"     [COMMENT] (no comment)")
         print()
 
+
     print(f"\n[Sample Data from {table_name} - First 3 Records]")
     print("-" * 120)
+
 
     if table_name in ["HF_TRNS_TRAN", "CD_TRNS_TRAN"]:
         sample_data = conn.execute(
@@ -149,8 +155,10 @@ for table_name in tables:
 
 print("\n" + "=" * 120)
 
+
 print("\n[PII Columns (Sensitive Data) - All Tables]")
 print("=" * 120)
+
 
 pii_columns_all = {
     "DPSTR_NM": "입금자명 - 개인정보",
@@ -186,10 +194,12 @@ for table_name in tables:
 
 print("\n" + "=" * 120)
 
+# PseuDRAGON이 사용할 스키마 정보
 print("\n[Enhanced Schema for PseuDRAGON]")
 print("PseuDRAGON uses both column names and COMMENT for accurate PII detection")
 print("-" * 120)
 
+# Enhanced schema 예시
 print("\nEnhanced Schema Format:")
 print("{\n  'column_name': {")
 print("    'type': 'VARCHAR',")
@@ -233,7 +243,7 @@ for table_name in tables:
 
 print("\n[OK] DuckDB supports COMMENT on columns.")
 print("[OK] PseuDRAGON queries both column names and COMMENT")
-print("[OK] This enables accurate PII identification in enterprise databases.")
+print("[OK] This enables accurate PII identification in Korean enterprise databases.")
 print("\nQuery to get COMMENT:")
 print(
     """

@@ -1,146 +1,136 @@
 # PseuDRAGON
 
-Schema-centric compliance NLP for closed-network pseudonymization.
+Schema-centric compliance NLP for closed-network financial-data pseudonymization.
 
-PseuDRAGON interprets database column names, SQL comments, and locally
-provided policy or legal documents. It combines local LLM inference,
-authority-aware retrieval, expert review, deterministic reuse of approved
-corrections, and executable transformation generation.
+PseuDRAGON interprets column names, descriptions and table context with a local
+language model. Experts review the proposed field labels, supporting passages
+and treatments. Approved decisions are retained for reuse, while selected
+transformations are assembled into inspectable Python programs.
 
-The repository contains only generic program code, empty document
-placeholders, and scripts that generate synthetic sample data. It does not
-include production records, organization-specific policies, learned
-heuristics, model responses, audit logs, or credentials.
+Release: **2026.09.26**. The default model is **gpt-oss-120b**, served locally
+through an OpenAI-compatible endpoint (`gpt-oss:120b` in Ollama).
 
 ## Workflow
 
-1. Detect candidate PII columns from schema metadata.
-2. Retrieve locally indexed policy and legal evidence.
-3. Propose a pseudonymization method and executable code.
-4. Let an authorized reviewer accept or correct each proposal.
-5. Reuse approved corrections through deterministic rules and feedback.
+1. **Identify fields.** Apply stored rules and approved judgments where available;
+   use the model for the remaining schema fields.
+2. **Propose treatment with evidence.** Search institutional policy, then national
+   law, then international guidance. Within each category, BM25 retrieves
+   candidate passages and the model checks relevance. Stop at the first category
+   with relevant evidence; otherwise continue to the next category.
+3. **Review and retain decisions.** Experts correct field labels, inspect the
+   evidence and select treatments. A changed label regenerates treatment
+   proposals. Approved selections and corrections support subsequent reuse.
+4. **Generate programs.** Check supported code/parameter contracts, preserve
+   missing inputs, and generate transformations from the selected policies.
 
-Generated classifications, legal bases, and code are review proposals. They
-must be validated by qualified personnel before use.
+Source order is a configurable workflow scope, not a legal-precedence rule.
+Relevance does not establish legal applicability. The interface retains the
+source trace and leaves treatment approval to the reviewer. Empty retrieval
+preserves an empty traceable result rather than forcing a non-PII label.
 
-## Requirements
+## Install
 
-- Python 3.10 or newer
-- A local OpenAI-compatible LLM endpoint
-- Local access to the embedding models configured in `.env`
-
-Install the dependencies:
+Use Python 3.10 or newer, preferably in a virtual environment:
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
-```
-
-## Configuration
-
-Create a local configuration file:
-
-```bash
 cp .env.example .env
 ```
 
-`.env` is intentionally ignored by Git. Do not commit API keys, database
-credentials, private endpoints, or internal file paths.
+For a closed-network deployment, provision dependencies and the model inside
+that network before starting the application. The default source-order mode
+uses a lexical index and does not load a dense embedding model. Optional legacy
+modes require the embedding models configured in `.env`.
 
-The retrieval score is:
+## Configure and run
 
-```text
-score = alpha * semantic_similarity + (1 - alpha) * authority
-```
+1. Start a local OpenAI-compatible model server. `.env.example` uses
+   `http://127.0.0.1:11434/v1` and the Ollama model name `gpt-oss:120b`.
+2. Put approved PDF documents in the corresponding local directories:
 
-`SEMANTIC_SIMILARITY_WEIGHT` supplies alpha and can also be adjusted for an
-individual run in the web interface. Source-authority defaults are separately
-configurable:
+   ```text
+   resources/legal_documents/
+   ├── institutional_policy/
+   ├── national_law/
+   └── international_regulation/
+   ```
 
-```text
-approved expert feedback  1.0
-institutional policy      0.8
-applicable national law   0.6
-international guidance    0.4
-```
+3. Generate synthetic sample records, then start the interface:
 
-These values are deployment settings, not a universal legal ranking. Each
-deployment must curate applicable sources and validate the configuration.
+   ```bash
+   python resources/sample_db/setup_test_db_duckdb_for_1st_loop.py
+   python PseuDRAGON.py
+   ```
 
-## Local documents
+4. Open **http://127.0.0.1:5001**.
 
-Place only documents that are approved for the deployment environment under:
+The sample generator creates nine tables with schema descriptions and synthetic
+rows. It is a runnable demonstration, not the original evaluation dataset or
+an independent reproduction of the paper's reported scores. The second-loop
+generator replaces the same local sample database; run it only when that is
+intended. To use another supported database, set `USE_SAMPLE_DB=false` and
+configure the connection in `.env`.
 
-```text
-resources/legal_documents/
-├── institutional_policy/
-├── national_law/
-└── international_regulation/
-```
+The web interface binds to loopback by default and has no authentication layer.
+It is intended for a trusted local session. An organizational deployment needs
+its own access controls. Generated programs run selected Python snippets:
+review them before execution; syntax and contract checks are not a sandbox.
 
-Documents and generated embedding caches are ignored by Git. The empty text
-files in these directories are placeholders only.
+## Retrieval configuration
 
-## Synthetic sample database
+`RAG_RETRIEVAL_MODE=source_order` is the default. It does not read or combine
+numeric source weights. `TOP_K_RESULTS` controls candidates per category.
+The runtime profile displays the active mode and source trace.
 
-Generate the local sample database:
+`legacy` and `lexical` remain available for compatibility with earlier
+experiments. Only those modes use their corresponding ranking parameters;
+they are not the default release workflow. See the optional settings in
+`.env.example`.
 
-```bash
-python resources/sample_db/setup_test_db_duckdb_for_1st_loop.py
-```
+## Treatment contracts
 
-The generated DuckDB file is ignored by Git and contains synthetic records.
-To use another database, set `USE_SAMPLE_DB=false` and provide connection
-settings in the local `.env`.
-
-## Run
-
-```bash
-python PseuDRAGON.py
-```
-
-Open `http://127.0.0.1:5000`.
-
-## Project structure
-
-```text
-PseuDRAGON.py
-config/
-pseudragon/
-├── database/
-├── domain/
-├── heuristics/
-├── llm/
-├── logging/
-├── rag/
-├── reporting/
-├── stages/
-└── validation/
-resources/
-├── legal_documents/
-├── prompts/
-└── sample_db/
-tests/
-web_interface/
-```
+- Recognized code forms are checked against their method and parameters.
+- Edited custom code requires an explicit method/parameter declaration; the
+  declaration remains marked as unverified when outside the supported forms.
+- Missing values are preserved before applying a scalar transformation.
+- The bounded display-rule compiler accepts explicit supplied requirements or
+  supported account-display table syntax. Compiled alternatives retain exact
+  source records and remain pending expert selection.
+- `ENCRYPT` programs require `PSEUDRAGON_ENCRYPTION_KEY` from deployment-managed
+  secret storage. The generated program neither creates nor prints the key.
+- Generated programs use installed dependencies and never install packages.
 
 ## Tests
 
-The regression test verifies environment-defined and per-run retrieval
-weights:
+Run synthetic, offline regression tests:
 
 ```bash
-python -m unittest discover -s tests -p 'test_*.py'
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 LLM_AUDIT_ENABLED=false \
+  python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-## Data and privacy
+The tests cover ordered retrieval and fallback, invalid relevance responses,
+concurrent retrieval traces, compatibility modes, runtime UI rendering,
+method/parameter validation, display-rule provenance and missing-value
+preservation. Install Node.js to include the JavaScript rendering check;
+without it, that check is explicitly skipped. Tests do not call a model API.
 
-- No production data is bundled.
-- Runtime outputs, logs, feedback, heuristics, legal documents, embeddings,
-  and local databases are excluded by `.gitignore`.
-- The included sample-data generator creates synthetic records.
-- Reviewers remain responsible for legal applicability, transformation
-  correctness, and deployment approval.
+## Included and excluded files
+
+This repository contains runtime code, prompt templates, synthetic sample-data
+generators, generic regression fixtures and configuration examples. It excludes
+production records, internal policy documents, evaluation responses, learned
+decision stores, local databases, audit logs, credentials and manuscript files.
+Runtime audit records can contain supplied metadata and model output; keep
+them inside the deployment environment.
+
+Release files and commit attribution omit personal author and institution
+identifiers. A named GitHub account and its public activity can still identify
+repository ownership; this URL is not an anonymous review service.
 
 ## License
 
-MIT
+MIT; see [LICENSE](LICENSE).

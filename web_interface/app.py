@@ -1,17 +1,19 @@
-"""
-PseuDRAGON Web Application
+"""PseuDRAGON Web Application
 
 Flask-based web interface for the PseuDRAGON pseudonymization pipeline.
 
 This application provides:
+
 - Interactive UI for pipeline execution
 - Real-time progress streaming
 - Human-in-the-loop policy refinement
 - Code generation and download
 """
 
-# Standard library imports
+
+# 표준 라이브러리 import
 import json
+import logging
 import copy
 import ipaddress
 import os
@@ -24,24 +26,29 @@ from threading import Lock, Thread
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
-# CRITICAL: Add parent directory to Python path BEFORE any project imports
+# Add parent directory to Python path BEFORE any project imports
+
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 # Fix Windows console encoding for emoji support
+
 if sys.platform == "win32":
     try:
         # Reconfigure stdout and stderr to use UTF-8 encoding
+
         sys.stdout.reconfigure(encoding='utf-8')
         sys.stderr.reconfigure(encoding='utf-8')
     except Exception as e:
         print(f"Warning: Could not set UTF-8 encoding: {e}")
 
-# Third-party imports
+
+# 서드파티 라이브러리 import
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
-# Project-specific imports
+
+# 프로젝트 관련 import
 from config.config import (
     DEFAULT_LLM_CLIENT,
     DatabaseConfig,
@@ -62,16 +69,16 @@ from pseudragon.logging.file_logger import reinitialize_logger, PseuDRAGONLogger
 from pseudragon.llm.session_manager import UniversalLLMSession
 from pseudragon.pipeline import PseuDRAGONPipeline
 from pseudragon.validation.compliance_checker import ComplianceValidator
+from pseudragon.validation.method_contract import MethodContractError, prepare_method_selection
 
 # Use BASE_DIR from DirectoryConfig for consistency
+
 BASE_DIR = DirectoryConfig.BASE_DIR
 sys.path.insert(0, BASE_DIR)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    """
-    Custom JSON encoder for handling Decimal and datetime objects
-    """
+    """Custom JSON encoder for handling Decimal and datetime objects"""
 
     def default(self, obj):
         if isinstance(obj, Decimal):
@@ -84,8 +91,7 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 class AppConfig:
-    """
-    Application configuration constants
+    """Application configuration constants
 
     Centralizes all application-level configuration values.
     """
@@ -95,7 +101,7 @@ class AppConfig:
     OUTPUT_DIR = DirectoryConfig.OUTPUT_DIR
     REPORTS_DIR = DirectoryConfig.OUTPUT_DIR
     LOGS_DIR = os.path.join(DirectoryConfig.BASE_DIR, "logs")
-    HOST = os.getenv("FLASK_HOST", "0.0.0.0")
+    HOST = os.getenv("FLASK_HOST", "127.0.0.1")
     PORT = int(os.getenv("FLASK_PORT", 5001))
     DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     PAPER_TITLE = (
@@ -105,8 +111,7 @@ class AppConfig:
 
 
 class PipelineStep:
-    """
-    Pipeline execution step constants
+    """Pipeline execution step constants
 
     Defines all possible states of the pipeline execution.
     """
@@ -120,10 +125,10 @@ class PipelineStep:
 
 
 class PipelineState:
-    """
-    Global state manager for pipeline execution
+    """Global state manager for pipeline execution
 
     Maintains all runtime state including:
+
     - Pipeline execution status
     - Intermediate results
     - Logs and progress
@@ -132,7 +137,7 @@ class PipelineState:
     """
 
     def __init__(self) -> None:
-        """Initialize pipeline state with default values"""
+        """Initialize pipeline state with default values / 기본값으로 파이프라인 상태 초기화"""
         self.engine: Optional[PseuDRAGONPipeline] = None
         self.rag: Optional[RAGSystem] = None
         self.expert_preference_manager: Optional[ExpertPreferenceManager] = None
@@ -153,7 +158,6 @@ class PipelineState:
         self.session_dir: Optional[str] = None
         self.current_step: str = PipelineStep.IDLE
         self.purpose_goal: str = ""  # User's intended purpose for data pseudonymization
-        self.semantic_similarity_weight: Optional[float] = None
         # Immutable model/RAG output captured before human review.
         self.model_initial_pii_data: Dict[str, Any] = {}
         self.model_initial_policy_data: Dict[str, Any] = {}
@@ -163,8 +167,7 @@ class PipelineState:
         self.hitl_window_opened_at: Optional[str] = None
 
     def reset(self) -> None:
-        """
-        Reset pipeline state to initial values
+        """Reset pipeline state to initial values
 
         Thread-safe reset of all state variables.
         """
@@ -181,7 +184,6 @@ class PipelineState:
             self.session_dir = None
             self.current_step = PipelineStep.IDLE
             self.purpose_goal = ""
-            self.semantic_similarity_weight = None
             self.model_initial_pii_data = {}
             self.model_initial_policy_data = {}
             self.manual_corrections = []
@@ -191,21 +193,22 @@ class PipelineState:
 
 
 class SessionManager:
-    """
-    Session manager for multi-client support
+    """Session manager for multi-client support
 
     Each client gets an independent session with its own PipelineState.
     """
 
     # Session expiry time in seconds (30 minutes)
+
     SESSION_EXPIRY = 1800
 
     def __init__(self) -> None:
-        """Initialize session manager"""
+        """Initialize session manager / 세션 관리자 초기화"""
         self._sessions: Dict[str, PipelineState] = {}
         self._session_timestamps: Dict[str, float] = {}
         self._lock: Lock = Lock()
         # Shared backend components (RAG, engine) - initialized once
+
         self._rag: Optional[RAGSystem] = None
         self._engine: Optional[PseuDRAGONPipeline] = None
         self._expert_preference_manager: Optional[ExpertPreferenceManager] = None
@@ -214,8 +217,7 @@ class SessionManager:
         self._backend_lock: Lock = Lock()
 
     def create_session(self) -> str:
-        """
-        Create a new session and return its ID
+        """Create a new session and return its ID
 
         Returns:
             Unique session ID
@@ -227,8 +229,7 @@ class SessionManager:
         return session_id
 
     def get_session(self, session_id: str) -> Optional[PipelineState]:
-        """
-        Get session state by ID
+        """Get session state by ID
 
         Args:
             session_id: Session ID to look up
@@ -244,8 +245,7 @@ class SessionManager:
         return None
 
     def remove_session(self, session_id: str) -> bool:
-        """
-        Remove a session
+        """Remove a session
 
         Args:
             session_id: Session ID to remove
@@ -261,8 +261,7 @@ class SessionManager:
         return False
 
     def cleanup_expired_sessions(self) -> int:
-        """
-        Remove expired sessions
+        """Remove expired sessions
 
         Returns:
             Number of sessions removed
@@ -273,6 +272,7 @@ class SessionManager:
             for sid, ts in self._session_timestamps.items():
                 if current_time - ts > self.SESSION_EXPIRY:
                     # Don't remove sessions that are currently running
+
                     if sid in self._sessions and not self._sessions[sid].is_running:
                         expired.append(sid)
 
@@ -283,8 +283,7 @@ class SessionManager:
         return len(expired)
 
     def get_active_session_count(self) -> int:
-        """
-        Get count of active sessions
+        """Get count of active sessions
 
         Returns:
             Number of active sessions
@@ -293,8 +292,7 @@ class SessionManager:
             return len(self._sessions)
 
     def get_all_sessions_info(self) -> List[Dict[str, Any]]:
-        """
-        Get information about all active sessions for monitoring
+        """Get information about all active sessions for monitoring
 
         Returns:
             List of session info dictionaries
@@ -319,12 +317,6 @@ class SessionManager:
                     "tables": tables,
                     "table_count": len(tables),
                     "purpose_goal": session_state.purpose_goal[:50] + "..." if len(session_state.purpose_goal) > 50 else session_state.purpose_goal,
-                    "semantic_similarity_weight": session_state.semantic_similarity_weight,
-                    "authority_mixing_weight": (
-                        round(1.0 - session_state.semantic_similarity_weight, 10)
-                        if session_state.semantic_similarity_weight is not None
-                        else None
-                    ),
                     "log_count": len(session_state.logs),
                     "duration_seconds": duration_seconds,
                     "has_pii_data": bool(session_state.pii_data),
@@ -334,13 +326,13 @@ class SessionManager:
                 sessions_info.append(session_info)
 
         # Sort by running status first, then by duration (most recent first)
+
         sessions_info.sort(key=lambda x: (not x["is_running"], -x["duration_seconds"]))
 
         return sessions_info
 
     def get_session_logs(self, session_id: str, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
-        """
-        Get logs from a specific session for monitoring
+        """Get logs from a specific session for monitoring
 
         Args:
             session_id: Session ID
@@ -371,8 +363,7 @@ class SessionManager:
             }
 
     def get_shared_backend(self) -> Tuple[Optional[RAGSystem], Optional[PseuDRAGONPipeline], Optional[ExpertPreferenceManager], Optional[ComplianceValidator]]:
-        """
-        Get shared backend components
+        """Get shared backend components
 
         Returns:
             Tuple of (RAG, engine, expert_preference_manager, validator)
@@ -384,8 +375,7 @@ class SessionManager:
             expert_preference_manager: ExpertPreferenceManager,
             validator: ComplianceValidator
     ) -> None:
-        """
-        Set shared backend components
+        """Set shared backend components
 
         Args:
             rag: RAG system instance
@@ -401,8 +391,7 @@ class SessionManager:
             self._backend_initialized = True
 
     def is_backend_initialized(self) -> bool:
-        """
-        Check if backend is initialized
+        """Check if backend is initialized
 
         Returns:
             True if initialized
@@ -415,8 +404,7 @@ class SessionManager:
             end_date: Optional[str] = None,
             user_id: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """
-        Get audit events from all sessions
+        """Get audit events from all sessions
 
         Args:
             event_type: Filter by event type
@@ -450,8 +438,7 @@ class SessionManager:
         return all_events
 
     def get_all_audit_summary(self) -> Dict[str, Any]:
-        """
-        Get combined audit summary from all sessions
+        """Get combined audit summary from all sessions
 
         Returns:
             Combined summary statistics
@@ -495,27 +482,26 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 app.json_encoder = CustomJSONEncoder
 
 # Session manager for multi-client support
+
 session_manager = SessionManager()
 
 # Legacy global state for backward compatibility (will be deprecated)
+
 state = PipelineState()
 
 # Global audit logger for reading all logs (regardless of session)
+
 global_audit_logger = AuditLogger(log_dir=AppConfig.REPORTS_DIR, session_id="global")
 
 # Initialize heuristic manager
 heuristic_manager = HeuristicManager()
 
 
-def init_backend(
-        session_state: Optional[PipelineState] = None,
-        log_callback: Optional[Any] = None,
-        semantic_similarity_weight: Optional[float] = None,
-) -> Tuple[RAGSystem, PseuDRAGONPipeline, ExpertPreferenceManager, ComplianceValidator]:
-    """
-    Initialize backend components (RAG system and PseuDRAGON engine)
+def init_backend(session_state: Optional[PipelineState] = None, log_callback: Optional[Any] = None) -> Tuple[RAGSystem, PseuDRAGONPipeline, ExpertPreferenceManager, ComplianceValidator]:
+    """Initialize backend components (RAG system and PseuDRAGON engine)
 
     This function:
+
     - Checks for required files and directories
     - Initializes RAG system with legal documents
     - Creates PseuDRAGON engine instance
@@ -525,7 +511,6 @@ def init_backend(
     Args:
         session_state: Optional session state for logging
         log_callback: Optional log callback function
-        semantic_similarity_weight: Optional per-run alpha override
 
     Returns:
         Tuple of (RAG, engine, expert_preference_manager, validator)
@@ -563,30 +548,21 @@ def init_backend(
             os.makedirs(subdir_path, exist_ok=True)
 
         _log(f"   [WARN]️  Please add applicable evidence to these directories:")
-        _log(f"      - {docs_dir}/institutional_policy (institutional policy, w=0.8)")
-        _log(f"      - {docs_dir}/national_law (national law/guidance, w=0.6)")
-        _log(f"      - {docs_dir}/international_regulation (international regulation/guidance, w=0.4)")
+        _log(f"      - {docs_dir}/institutional_policy (institutional policy)")
+        _log(f"      - {docs_dir}/national_law (national law/guidance)")
+        _log(f"      - {docs_dir}/international_regulation (international regulation/guidance)")
         _log(f"   Without documents, the RAG system cannot provide legal guidance.")
 
     os.makedirs(AppConfig.REPORTS_DIR, exist_ok=True)
 
     _log("\n[RAG] Initializing RAG System...")
-    ranking_config = RAGConfig.get_ranking_config(
-        semantic_similarity_weight
-    )
-    source_weights = ranking_config["authority_source_weights"]
-    _log(
-        "   [Config] score = "
-        f"{ranking_config['semantic_similarity_weight']:.1f} * similarity + "
-        f"{ranking_config['authority_mixing_weight']:.1f} * source_authority"
-    )
-    _log(
-        "   [Config] source authority: "
-        f"approved feedback={source_weights[0]:.1f}, "
-        f"institutional policy={source_weights[1]:.1f}, "
-        f"national law/guidance={source_weights[2]:.1f}, "
-        f"international regulation/guidance={source_weights[3]:.1f}"
-    )
+    retrieval_profile = _get_runtime_retrieval_profile()
+    _log(f"   [Config] {retrieval_profile['label']}: {retrieval_profile['summary']}")
+    if retrieval_profile["retrieval_mode"] == "source_order":
+        _log("   [Config] Institutional policy -> National law -> International guidance")
+    else:
+        _log(f"   [Config] {retrieval_profile['formula']}")
+    _log(f"   [Config] {retrieval_profile['review_note']}")
     rag = RAGSystem()
 
     # Check for PDF files in all 3-tier subdirectories
@@ -652,8 +628,7 @@ def init_backend(
 
 
 def log_producer(message: str, session_state: Optional[PipelineState] = None) -> None:
-    """
-    Thread-safe logging function with timestamps
+    """Thread-safe logging function with timestamps
 
     Adds timestamped messages to the session-specific or global log buffer for streaming to clients.
     Also writes to the file logger for persistent logging.
@@ -667,9 +642,11 @@ def log_producer(message: str, session_state: Optional[PipelineState] = None) ->
     print(formatted_msg, flush=True)
 
     # Use session-specific state or fall back to global state
+
     target_state = session_state if session_state else state
 
     # Write to file logger if available
+
     if target_state.file_logger:
         target_state.file_logger.info(message)
 
@@ -677,17 +654,11 @@ def log_producer(message: str, session_state: Optional[PipelineState] = None) ->
         target_state.logs.append(formatted_msg)
 
 
-def run_pipeline_task(
-        target_tables: List[str],
-        purpose_goal: str,
-        preferred_method: str,
-        client_session_id: str,
-        semantic_similarity_weight: float,
-) -> None:
-    """
-    Execute Stages 1 and 2 of the pipeline in a background thread
+def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_method: str, client_session_id: str) -> None:
+    """Execute Stages 1 and 2 of the pipeline in a background thread
 
     This function runs asynchronously and:
+
     - Stage 1: Identifies PII in selected tables
     - Stage 2: Generates policy recommendations
     - Waits for user input (Stage 3)
@@ -697,29 +668,32 @@ def run_pipeline_task(
         purpose_goal: Purpose/intent of data pseudonymization
         preferred_method: Preferred pseudonymization method
         client_session_id: Unique session ID for this client
-        semantic_similarity_weight: Per-run alpha used by retrieval
     """
     # Get session-specific state
+
     session_state = session_manager.get_session(client_session_id)
     if not session_state:
         print(f"ERROR: Session {client_session_id} not found!", flush=True)
         return
 
     # Create session-specific log callback
+
     def session_log(msg: str) -> None:
         log_producer(msg, session_state)
 
-    print(f"DEBUG: run_pipeline_task started for {target_tables} (session: {client_session_id})", flush=True)
+    logging.getLogger(__name__).debug(f"DEBUG: run_pipeline_task started for {target_tables} (session: {client_session_id})")
     session_state.is_running = True
 
     # Store purpose_goal in state for use in policy synthesis
+
     session_state.purpose_goal = purpose_goal
-    session_state.semantic_similarity_weight = semantic_similarity_weight
 
     # Store target_tables for use in get_stage3_data (filter to selected tables only)
+
     session_state.target_tables = target_tables
 
     # Initialize session directory with unique ID (UUID-based to avoid collisions)
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     session_state.session_id = f"{timestamp}_{client_session_id[:8]}"
     session_state.session_dir = os.path.join(AppConfig.OUTPUT_DIR, session_state.session_id)
@@ -727,14 +701,10 @@ def run_pipeline_task(
     session_state.pipeline_started_at = datetime.now().isoformat()
 
     # Initialize file logger for this session
+
     os.makedirs(AppConfig.LOGS_DIR, exist_ok=True)
     session_state.file_logger = reinitialize_logger(session_id=session_state.session_id)
     session_state.file_logger.info(f"Pipeline started for tables: {target_tables}")
-    session_state.file_logger.info(
-        "Retrieval alpha: "
-        f"{semantic_similarity_weight:.3f} similarity / "
-        f"{1.0 - semantic_similarity_weight:.3f} authority"
-    )
     if purpose_goal:
         session_state.file_logger.info(f"Pseudonymization Purpose: {purpose_goal}")
     if preferred_method:
@@ -749,17 +719,8 @@ def run_pipeline_task(
     session_state.current_step = PipelineStep.STAGE1_2_PROCESSING
 
     try:
-        session_log(
-            "[Config] Retrieval score = "
-            f"{semantic_similarity_weight:.3f} * similarity + "
-            f"{1.0 - semantic_similarity_weight:.3f} * source_authority"
-        )
         session_log("Starting backend initialization...")
-        rag, engine, user_pref_manager, validator = init_backend(
-            session_state,
-            session_log,
-            semantic_similarity_weight,
-        )
+        rag, engine, user_pref_manager, validator = init_backend(session_state, session_log)
 
         # Store references in session state for later use
         session_state.engine = engine
@@ -799,6 +760,7 @@ def run_pipeline_task(
                 return
 
             # Stage 1: PII Identification with timing
+
             stage1_name = f"Stage 1 - PII Identification ({table_name})"
             session_log(f"Starting Stage 1: PII Identification for {table_name}")
             if session_state.file_logger:
@@ -808,15 +770,11 @@ def run_pipeline_task(
                 session_state.audit_logger.log_stage_start("Stage 1: PII Identification", table_name)
 
             try:
-                pii_res = engine.identify_pii(
-                    schema,
-                    table_name,
-                    log_callback=session_log,
-                    semantic_similarity_weight=semantic_similarity_weight,
-                )
+                pii_res = engine.identify_pii(schema, table_name, log_callback=session_log)
                 session_state.pii_data[table_name] = pii_res
             finally:
                 # Ensure stage_end is always called even if exception occurs
+
                 if session_state.file_logger:
                     session_state.file_logger.stage_end(stage1_name)
 
@@ -824,6 +782,7 @@ def run_pipeline_task(
                 session_state.audit_logger.log_stage_complete("Stage 1: PII Identification", table_name)
 
             # Log table statistics after PII identification
+
             total_columns = len(pii_res)
             pii_columns = sum(1 for col_data in pii_res.values() if col_data.get("is_pii", False))
             session_state.file_logger.log_table_stats(table_name, total_columns, pii_columns)
@@ -837,6 +796,7 @@ def run_pipeline_task(
                 return
 
             # Stage 2: Policy Synthesis with timing
+
             stage2_name = f"Stage 2 - Policy Synthesis ({table_name})"
             session_log(f"Starting Stage 2: Policy Synthesis for {table_name}")
 
@@ -847,18 +807,11 @@ def run_pipeline_task(
                 session_state.audit_logger.log_stage_start("Stage 2: Policy Synthesis", table_name)
 
             try:
-                policy_res = engine.synthesize_policy(
-                    pii_res,
-                    table_name,
-                    preferred_method,
-                    purpose_goal=purpose_goal,
-                    log_callback=session_log,
-                    output_dir=table_dir,
-                    semantic_similarity_weight=semantic_similarity_weight,
-                )
+                policy_res = engine.synthesize_policy(pii_res, table_name, preferred_method, purpose_goal=purpose_goal, log_callback=session_log, output_dir=table_dir)
                 session_state.policy_data[table_name] = policy_res
             finally:
                 # Ensure stage_end is always called even if exception occurs
+
                 if session_state.file_logger:
                     session_state.file_logger.stage_end(stage2_name)
 
@@ -866,6 +819,7 @@ def run_pipeline_task(
                 session_state.audit_logger.log_stage_complete("Stage 2: Policy Synthesis", table_name)
 
             # Apply user preferences to reorder methods
+
             if user_pref_manager:
                 session_log(f"[Stats] Applying user preferences for {table_name}...")
                 for col_name, col_data in session_state.policy_data[table_name].items():
@@ -880,6 +834,7 @@ def run_pipeline_task(
                         )
 
                         # Apply user's custom code snippet if available (exact match or RAG similar)
+
                         # Get column metadata for RAG search
                         col_comment = session_state.pii_data.get(table_name, {}).get(col_name, {}).get("column_comment", "")
                         col_data_type = ""
@@ -887,6 +842,7 @@ def run_pipeline_task(
                             col_data_type = session_state.schemas[table_name][col_name].get("type", "")
 
                         # Try RAG-based preference lookup (includes exact match first, then similar)
+
                         rag_preference = user_pref_manager.get_preference_from_similar(
                             col_name, pii_type, col_comment, col_data_type
                         )
@@ -902,6 +858,7 @@ def run_pipeline_task(
                                 if custom_snippet:
                                     reordered_methods[0]["code_snippet"] = custom_snippet
                                 # Apply custom description if available (ensures code and description match)
+
                                 if custom_description:
                                     reordered_methods[0]["description"] = custom_description
 
@@ -924,6 +881,7 @@ def run_pipeline_task(
                             col_data_type = session_state.schemas[table_name][col_name].get("type", "")
 
                         # Try RAG-based preference lookup (includes exact match first, then similar)
+
                         rag_preference = user_pref_manager.get_preference_from_similar(
                             col_name, "Non-PII", col_comment, col_data_type
                         )
@@ -949,6 +907,7 @@ def run_pipeline_task(
                                     if custom_snippet:
                                         reordered[0]["code_snippet"] = custom_snippet
                                     # Apply custom description if available (ensures code and description match)
+
                                     if custom_description:
                                         reordered[0]["description"] = custom_description
 
@@ -967,6 +926,7 @@ def run_pipeline_task(
                                 print(f"[INFO] Non-PII column {col_name} has only basic methods, skipping reorder")
 
             # Store integrated report filename (relative to OUTPUT_DIR)
+
             if hasattr(engine, "_last_integrated_report"):
                 rel_path = os.path.relpath(engine._last_integrated_report, AppConfig.OUTPUT_DIR)
                 session_state.report_files[f"{table_name}_integrated"] = rel_path
@@ -996,9 +956,6 @@ def run_pipeline_task(
                     "model_completed_at": session_state.model_completed_at,
                     "model_elapsed_seconds": model_elapsed_seconds,
                     "timing_definition": "model_completed_at is the end of all RAG+LLM judgments, immediately before HITL review becomes available",
-                    "ranking": RAGConfig.get_ranking_config(
-                        session_state.semantic_similarity_weight
-                    ),
                     "pii_data": session_state.model_initial_pii_data,
                     "policy_data": session_state.model_initial_policy_data,
                 },
@@ -1025,6 +982,7 @@ def run_pipeline_task(
         session_state.current_step = PipelineStep.STAGE3_READY
 
         # Log stage timing summary for Stage 1 & 2
+
         if session_state.file_logger:
             session_state.file_logger.info("=" * 60)
             session_state.file_logger.info("Stage 1 & 2 Timing Summary")
@@ -1052,9 +1010,7 @@ def run_pipeline_task(
 
 
 def _count_evidence_pdfs(source_family: str) -> int:
-    """
-    Count indexed PDF inputs without exposing confidential filenames.
-    """
+    """Count indexed PDF inputs without exposing confidential filenames."""
     source_dir = os.path.join(Settings.DOCS_DIR, source_family)
     if not os.path.isdir(source_dir):
         return 0
@@ -1068,8 +1024,7 @@ def _count_evidence_pdfs(source_family: str) -> int:
 
 
 def _classify_endpoint_scope(base_url: Optional[str]) -> str:
-    """
-    Classify an LLM endpoint without exposing its hostname in the UI.
+    """Classify an LLM endpoint without exposing its hostname in the UI.
 
     This is a configuration check, not proof that an entire deployment is
     air-gapped. Hostname-based network endpoints remain "configured-network"
@@ -1098,10 +1053,70 @@ def _classify_endpoint_scope(base_url: Optional[str]) -> str:
     return "configured-network"
 
 
+def _get_runtime_retrieval_profile() -> dict:
+    """Describe the active retrieval mode without initializing a model."""
+    config = RAGConfig.get_retrieval_config()
+    mode = config["retrieval_mode"]
+    families = [
+        {"priority_level": level, "key": key, "label": label,
+         "document_count": _count_evidence_pdfs(key)}
+        for level, key, label in [
+            (1, "institutional_policy", "Institutional policy"),
+            (2, "national_law", "National law/guidance"),
+            (3, "international_regulation", "International regulation/guidance"),
+        ]
+    ]
+    profile = {
+        "retrieval_mode": mode,
+        "source_families": families,
+        "review_note": "Expert review confirms applicability before treatment approval.",
+    }
+    if mode == "source_order":
+        profile.update(
+            label="Source-ordered retrieval",
+            summary="Use relevant passages; otherwise try the next source.",
+            source_order=list(config["source_order"]),
+            stop_condition=config["stop_condition"],
+            automatic_treatment_approval=config["automatic_treatment_approval"],
+            legal_applicability_review_required=config["legal_applicability_review_required"],
+        )
+        return profile
+
+    weights = config["authority_source_weights"]
+    alpha = config["semantic_similarity_weight"]
+    if mode == "lexical":
+        gap = RAGConfig.get_lexical_source_gap()
+        profile.update(
+            label="Lexical retrieval",
+            summary=f"Lexical relevance with source gap {gap:g}; semantic fallback for unmatched terms.",
+            formula="score = 0.7 * relevance + 0.3 * (1 - source_gap * source_level)",
+            source_gap=gap,
+            feedback_ranking={
+                "alpha_semantic_similarity": alpha,
+                "authority_mixing_weight": config["authority_mixing_weight"],
+                "source_weight": weights[0],
+            },
+        )
+        return profile
+
+    for family in families:
+        family["weight"] = weights[family["priority_level"]]
+    families.insert(0, {"priority_level": 0, "key": "approved_expert_feedback",
+                        "label": "Approved expert feedback", "weight": weights[0],
+                        "document_count": None})
+    profile.update(
+        label="Weighted retrieval (legacy)",
+        summary=f"Similarity {alpha:g}; source preference {config['authority_mixing_weight']:g}.",
+        formula="score = alpha * similarity + (1 - alpha) * source_authority",
+        alpha_semantic_similarity=alpha,
+        authority_mixing_weight=config["authority_mixing_weight"],
+    )
+    return profile
+
+
 @app.route("/")
 def index() -> str:
-    """
-    Serve the main web interface
+    """Serve the main web interface
 
     Returns:
         Rendered HTML template
@@ -1111,50 +1126,16 @@ def index() -> str:
 
 @app.route("/api/runtime_config")
 def get_runtime_config() -> Tuple:
-    """
-    Return the audited, non-secret runtime profile shown in the web UI.
+    """Return the audited, non-secret runtime profile shown in the web UI.
 
-    The retriever and this endpoint read the same RAGConfig methods so the
-    displayed alpha and authority weights cannot silently diverge from the
-    scoring logic.
+    The retriever and this endpoint read the same mode-aware RAGConfig methods.
+    Inactive legacy coefficients are not reported for source-ordered retrieval.
     """
     try:
-        ranking_config = RAGConfig.get_ranking_config()
-        authority_weights = ranking_config["authority_source_weights"]
+        retrieval_profile = _get_runtime_retrieval_profile()
         endpoint_scope = _classify_endpoint_scope(
             Settings.STAGE_1_OPENAI_BASE_URL
         )
-
-        source_families = [
-            {
-                "priority_level": 0,
-                "key": "approved_expert_feedback",
-                "label": "Approved expert feedback",
-                "weight": authority_weights[0],
-                "document_count": None,
-            },
-            {
-                "priority_level": 1,
-                "key": "institutional_policy",
-                "label": "Institutional policy",
-                "weight": authority_weights[1],
-                "document_count": _count_evidence_pdfs("institutional_policy"),
-            },
-            {
-                "priority_level": 2,
-                "key": "national_law",
-                "label": "Applicable national law/guidance",
-                "weight": authority_weights[2],
-                "document_count": _count_evidence_pdfs("national_law"),
-            },
-            {
-                "priority_level": 3,
-                "key": "international_regulation",
-                "label": "Applicable international regulation/guidance",
-                "weight": authority_weights[3],
-                "document_count": _count_evidence_pdfs("international_regulation"),
-            },
-        ]
 
         return jsonify(
             {
@@ -1163,7 +1144,7 @@ def get_runtime_config() -> Tuple:
                 "workflow": [
                     "Schema metadata",
                     "Approved feedback and regex heuristics",
-                    "Local LLM with authority-weighted RAG",
+                    f"Local LLM with {retrieval_profile['label'].lower()}",
                     "HITL approval",
                     "Template-based code generation",
                 ],
@@ -1173,17 +1154,7 @@ def get_runtime_config() -> Tuple:
                     "llm_audit_enabled": Settings.LLM_AUDIT_ENABLED,
                     "raw_records_accessed": False,
                 },
-                "ranking": {
-                    "formula": "score = alpha * similarity + (1 - alpha) * source_authority",
-                    "alpha_semantic_similarity": ranking_config["semantic_similarity_weight"],
-                    "authority_mixing_weight": ranking_config["authority_mixing_weight"],
-                    "environment_variable": "SEMANTIC_SIMILARITY_WEIGHT",
-                    "configuration_source": "environment",
-                    "minimum": 0.0,
-                    "maximum": 1.0,
-                    "step": 0.01,
-                    "source_families": source_families,
-                },
+                "ranking": retrieval_profile,
                 "retrieval": {
                     "chunk_size": Settings.CHUNK_SIZE,
                     "chunk_overlap": Settings.CHUNK_OVERLAP,
@@ -1210,8 +1181,7 @@ def get_runtime_config() -> Tuple:
 
 @app.route("/get_tables")
 def get_tables_route() -> Tuple:
-    """
-    API endpoint to retrieve available database tables
+    """API endpoint to retrieve available database tables
 
     Returns:
         JSON response with table names or error
@@ -1231,8 +1201,7 @@ def get_tables_route() -> Tuple:
 
 @app.route("/get_table_schema/<table_name>")
 def get_table_schema_route(table_name: str) -> Tuple:
-    """
-    API endpoint to retrieve schema for a specific table
+    """API endpoint to retrieve schema for a specific table
 
     Args:
         table_name: Name of the table
@@ -1263,8 +1232,7 @@ def get_table_schema_route(table_name: str) -> Tuple:
 
 @app.route("/execute_ddl", methods=["POST"])
 def execute_ddl() -> Tuple:
-    """
-    Execute SQL statements directly (CREATE, INSERT, etc.)
+    """Execute SQL statements directly (CREATE, INSERT, etc.)
 
     Request body:
         ddl: SQL statements
@@ -1282,12 +1250,15 @@ def execute_ddl() -> Tuple:
         import re
 
         # Block dangerous and query commands
+
         blocked_patterns = [
+            # Dangerous commands
             (r'\bDROP\s+DATABASE\b', "DROP DATABASE is not allowed"),
             (r'\bDELETE\s+FROM\b', "DELETE is not allowed"),
             (r'\bTRUNCATE\b', "TRUNCATE is not allowed"),
             (r'\bALTER\s+DATABASE\b', "ALTER DATABASE is not allowed"),
             (r'\bDROP\s+SCHEMA\b', "DROP SCHEMA is not allowed"),
+            # Query commands (require output)
             (r'\bSELECT\b', "SELECT is not allowed (use for data modification only)"),
             (r'\bSHOW\b', "SHOW is not allowed"),
             (r'\bDESCRIBE\b', "DESCRIBE is not allowed"),
@@ -1301,6 +1272,7 @@ def execute_ddl() -> Tuple:
                 return jsonify({"error": message}), 400
 
         # Execute SQL directly using DuckDB's execute method which handles multiple statements
+
         db_path = AppConfig.DB_PATH
 
         try:
@@ -1309,6 +1281,7 @@ def execute_ddl() -> Tuple:
                 import duckdb
                 conn = duckdb.connect(db_path)
                 # DuckDB can execute multiple statements separated by semicolons
+
                 conn.execute(sql_input)
                 conn.close()
             else:
@@ -1337,8 +1310,7 @@ def execute_ddl() -> Tuple:
 
 @app.route("/drop_table", methods=["POST"])
 def drop_table() -> Tuple:
-    """
-    Drop a table from the database
+    """Drop a table from the database
 
     Request body:
         table_name: Name of the table to drop
@@ -1354,6 +1326,7 @@ def drop_table() -> Tuple:
             return jsonify({"error": "Table name is required"}), 400
 
         # Validate table name (prevent SQL injection)
+
         import re
         if not re.match(r'^[\w가-힣]+$', table_name):
             return jsonify({"error": "Invalid table name"}), 400
@@ -1392,8 +1365,7 @@ def drop_table() -> Tuple:
 
 @app.route("/stream")
 def stream() -> Response:
-    """
-    Server-Sent Events (SSE) endpoint for real-time log streaming
+    """Server-Sent Events (SSE) endpoint for real-time log streaming
 
     Streams pipeline logs and status updates to the client in real-time.
 
@@ -1404,16 +1376,17 @@ def stream() -> Response:
         SSE stream with log messages and events
     """
     # Get session ID from query parameter
+
     client_session_id = request.args.get("session_id", "")
-    print(f"DEBUG: /stream endpoint called (session: {client_session_id})", flush=True)
+    logging.getLogger(__name__).debug(f"DEBUG: /stream endpoint called (session: {client_session_id})")
 
     # Get session-specific state or fall back to global state
+
     session_state = session_manager.get_session(client_session_id) if client_session_id else None
     target_state = session_state if session_state else state
 
     def generate() -> Any:
-        """
-        Generator function for SSE stream
+        """Generator function for SSE stream
 
         Yields log messages and stage completion events.
         """
@@ -1439,40 +1412,37 @@ def stream() -> Response:
 
 @app.route("/start", methods=["POST"])
 def start_pipeline() -> Tuple:
-    """
-    API endpoint to start pipeline execution (Stages 1 & 2)
+    """API endpoint to start pipeline execution (Stages 1 & 2)
 
     Accepts:
+
     - tables: List of table names to process
     - purpose_goal: Purpose/intent of data pseudonymization
     - preferred_method: Preferred pseudonymization method
     - session_id: (Optional) Existing session ID to resume
-    - semantic_similarity_weight: (Optional) Per-run alpha; environment default if omitted
 
     Returns:
         JSON response with status and session_id
     """
     req_data = request.json or {}
-    try:
-        semantic_similarity_weight = RAGConfig.resolve_semantic_similarity_weight(
-            req_data.get("semantic_similarity_weight")
-        )
-    except ValueError as exc:
-        return jsonify({"status": "error", "message": str(exc)}), 400
 
     # Get or create session ID
+
     client_session_id = req_data.get("session_id", "")
     if not client_session_id:
         # Create new session for this client
+
         client_session_id = session_manager.create_session()
-        print(f"DEBUG: Created new session: {client_session_id}", flush=True)
+        logging.getLogger(__name__).debug(f"DEBUG: Created new session: {client_session_id}")
     else:
         # Verify existing session exists
+
         existing_session = session_manager.get_session(client_session_id)
         if not existing_session:
             # Session expired or invalid, create new one
+
             client_session_id = session_manager.create_session()
-            print(f"DEBUG: Session not found, created new session: {client_session_id}", flush=True)
+            logging.getLogger(__name__).debug(f"DEBUG: Session not found, created new session: {client_session_id}")
 
     # Get session state
     session_state = session_manager.get_session(client_session_id)
@@ -1480,6 +1450,7 @@ def start_pipeline() -> Tuple:
         return jsonify({"status": "error", "message": "Failed to create session"}), 500
 
     # Check if THIS session is already running (not global state)
+
     if session_state.is_running:
         return jsonify({"status": "already_running", "session_id": client_session_id}), 400
 
@@ -1488,39 +1459,20 @@ def start_pipeline() -> Tuple:
     preferred_method = req_data.get("preferred_method", "")
 
     # Cleanup expired sessions periodically
+
     cleaned = session_manager.cleanup_expired_sessions()
     if cleaned > 0:
-        print(f"DEBUG: Cleaned up {cleaned} expired sessions", flush=True)
+        logging.getLogger(__name__).debug(f"DEBUG: Cleaned up {cleaned} expired sessions")
 
-    thread = Thread(
-        target=run_pipeline_task,
-        args=(
-            tables,
-            purpose_goal,
-            preferred_method,
-            client_session_id,
-            semantic_similarity_weight,
-        ),
-    )
+    thread = Thread(target=run_pipeline_task, args=(tables, purpose_goal, preferred_method, client_session_id))
     thread.start()
 
-    return jsonify(
-        {
-            "status": "started",
-            "session_id": client_session_id,
-            "semantic_similarity_weight": semantic_similarity_weight,
-            "authority_mixing_weight": round(
-                1.0 - semantic_similarity_weight,
-                10,
-            ),
-        }
-    )
+    return jsonify({"status": "started", "session_id": client_session_id})
 
 
 @app.route("/stop", methods=["POST"])
 def stop_pipeline() -> Tuple:
-    """
-    API endpoint to stop pipeline execution
+    """API endpoint to stop pipeline execution
 
     Sets the stop flag to gracefully terminate the running pipeline.
 
@@ -1534,6 +1486,7 @@ def stop_pipeline() -> Tuple:
     client_session_id = req_data.get("session_id", "")
 
     # Get session-specific state or fall back to global state
+
     session_state = session_manager.get_session(client_session_id) if client_session_id else None
     target_state = session_state if session_state else state
 
@@ -1552,8 +1505,7 @@ def stop_pipeline() -> Tuple:
 
 @app.route("/get_stage3_data")
 def get_stage3_data() -> Tuple:
-    """
-    API endpoint to retrieve Stage 3 data for human review
+    """API endpoint to retrieve Stage 3 data for human review
 
     Query Parameters:
         session_id: Client session ID
@@ -1564,9 +1516,11 @@ def get_stage3_data() -> Tuple:
         JSON with PII types, methods, evidence sources, and report filenames
     """
     # Get session ID from query parameter
+
     client_session_id = request.args.get("session_id", "")
 
     # Get session-specific state or fall back to global state
+
     session_state = session_manager.get_session(client_session_id) if client_session_id else None
     target_state = session_state if session_state else state
 
@@ -1597,10 +1551,11 @@ def get_stage3_data() -> Tuple:
     display_data: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
     # Use target_tables if available, otherwise fall back to all schemas
+
     tables_to_process = getattr(target_state, 'target_tables', None)
     if not tables_to_process:
         tables_to_process = list(target_state.schemas.keys())
-    print(f"[DEBUG /get_stage3_data] Processing tables: {tables_to_process}")
+    logging.getLogger(__name__).debug(f"[DEBUG /get_stage3_data] Processing tables: {tables_to_process}")
 
     for table in tables_to_process:
         if table not in target_state.schemas:
@@ -1620,7 +1575,7 @@ def get_stage3_data() -> Tuple:
                     # PII column - use existing policy
                     pii_info = target_state.pii_data[table].get(col, {})
 
-                    # CRITICAL FIX: Validate pii_type consistency
+                    # Validate pii_type consistency
                     # If is_pii=True but pii_type="Non-PII", this is a data inconsistency bug
                     # Fix it by defaulting to "PII"
                     pii_type = pii_info.get("pii_type", "Unknown")
@@ -1642,6 +1597,7 @@ def get_stage3_data() -> Tuple:
                     }
                 else:
                     # Non-PII column with existing policy data
+
                     cached_methods = policy.get('recommended_methods', [])
                     cached_method_names = {m.get('method', '').upper() for m in cached_methods}
 
@@ -1653,10 +1609,12 @@ def get_stage3_data() -> Tuple:
                         column_comment = target_state.schemas[table][col].get("comment", "")
 
                     # Check if cached methods are incomplete (only KEEP, missing DELETE)
+
                     needs_regeneration = len(cached_methods) == 1 and 'KEEP' in cached_method_names and 'DELETE' not in cached_method_names
 
                     if needs_regeneration:
                         # Regenerate methods for Non-PII column
+
                         print(f"[INFO] Regenerating Non-PII methods for {col} (cached methods incomplete: {[m.get('method') for m in cached_methods]})")
 
                         # Get data type for better method recommendations
@@ -1665,7 +1623,7 @@ def get_stage3_data() -> Tuple:
                             data_type = target_state.schemas[table][col].get("type", "")
 
                         non_pii_methods = _generate_non_pii_methods(col, column_comment, data_type)
-                        print(f"[DEBUG] Regenerated {len(non_pii_methods)} methods for {col}: {[t['method'] for t in non_pii_methods]}")
+                        logging.getLogger(__name__).debug(f"[DEBUG] Regenerated {len(non_pii_methods)} methods for {col}: {[t['method'] for t in non_pii_methods]}")
 
                         # Update policy_data with regenerated methods
                         target_state.policy_data[table][col]["recommended_methods"] = non_pii_methods
@@ -1705,15 +1663,16 @@ def get_stage3_data() -> Tuple:
                     data_type = target_state.schemas[table][col].get("type", "")
 
                 # Generate Non-PII methods using LLM
-                print(f"[DEBUG /get_stage3_data] Generating Non-PII methods for {col}")
-                print(f"  - Column: {col}")
-                print(f"  - Data Type: {data_type}")
-                print(f"  - Comment: {column_comment}")
+                logging.getLogger(__name__).debug(f"[DEBUG /get_stage3_data] Generating Non-PII methods for {col}")
+                logging.getLogger(__name__).debug(f"  - Column: {col}")
+                logging.getLogger(__name__).debug(f"  - Data Type: {data_type}")
+                logging.getLogger(__name__).debug(f"  - Comment: {column_comment}")
                 non_pii_methods = _generate_non_pii_methods(col, column_comment, data_type)
-                print(f"[DEBUG /get_stage3_data] Generated {len(non_pii_methods)} methods for {col}")
-                print(f"  - Methods: {[t['method'] for t in non_pii_methods]}")
+                logging.getLogger(__name__).debug(f"[DEBUG /get_stage3_data] Generated {len(non_pii_methods)} methods for {col}")
+                logging.getLogger(__name__).debug(f"  - Methods: {[t['method'] for t in non_pii_methods]}")
 
-                # CRITICAL: Store Non-PII methods in policy_data for later retrieval in submit_stage3
+                # Store Non-PII methods in policy_data for later retrieval in submit_stage3
+
                 if table not in target_state.policy_data:
                     target_state.policy_data[table] = {}
                 target_state.policy_data[table][col] = {
@@ -1733,6 +1692,7 @@ def get_stage3_data() -> Tuple:
                 }
 
     # Include report filenames
+
     response_data = {"tables": display_data, "reports": target_state.report_files}
 
     return jsonify(response_data)
@@ -1740,13 +1700,14 @@ def get_stage3_data() -> Tuple:
 
 @app.route("/submit_stage3", methods=["POST"])
 def submit_stage3() -> Tuple:
-    """
-    API endpoint to submit Stage 3 user selections and execute Stage 4
+    """API endpoint to submit Stage 3 user selections and execute Stage 4
 
     Processes user-selected methods and generates final pseudonymization code.
 
     Accepts:
+
     - choices: Dictionary of user-selected method indices
+
     - session_id: Client session ID
 
     Returns:
@@ -1757,8 +1718,31 @@ def submit_stage3() -> Tuple:
     choices = {k: v for k, v in req_data.items() if k != "session_id"}
 
     # Get session-specific state or fall back to global state
+
     session_state = session_manager.get_session(client_session_id) if client_session_id else None
     target_state = session_state if session_state else state
+
+    # Validate all submitted edits before state, audit logs or preferences change.
+    # Unsupported custom edits need an explicit declaration; do not guess semantics.
+    normalized_selections = {}
+    try:
+        for key, selection_data in choices.items():
+            if not key.startswith("method_"):
+                continue
+            remainder = key[7:]
+            for table_name in sorted(target_state.schemas, key=len, reverse=True):
+                if not remainder.startswith(f"{table_name}_"):
+                    continue
+                column_name = remainder[len(table_name) + 1:]
+                methods = target_state.policy_data.get(table_name, {}).get(column_name, {}).get("recommended_methods", [])
+                index = int(selection_data.get("index", 0) if isinstance(selection_data, dict) else selection_data)
+                if methods and not 0 <= index < len(methods):
+                    raise MethodContractError(f"Invalid selected method for {table_name}.{column_name}.")
+                if methods:
+                    normalized_selections[key] = prepare_method_selection(methods[index], column_name, selection_data)
+                break
+    except (MethodContractError, TypeError, ValueError) as exc:
+        return jsonify({"status": "validation_error", "error": str(exc)}), 400
 
     target_state.current_step = PipelineStep.STAGE4_PROCESSING
 
@@ -1766,12 +1750,12 @@ def submit_stage3() -> Tuple:
         target_state.audit_logger.log_stage_start("Stage 3: HITL Approval", "all_tables")
 
     # Process user selections for ALL columns (PII and non-PII)
-    print(f"[DEBUG submit_stage3] Processing {len(choices)} selections")
-    print(f"[DEBUG submit_stage3] Keys received: {list(choices.keys())}")
+    logging.getLogger(__name__).debug(f"[DEBUG submit_stage3] Processing {len(choices)} selections")
+    logging.getLogger(__name__).debug(f"[DEBUG submit_stage3] Keys received: {list(choices.keys())}")
 
     for key, selection_data in choices.items():
         # Key format: "method_TABLENAME_COLUMNNAME"
-        # CRITICAL: Table names can contain underscores (e.g., "withdraw_transfers")
+        # Table names can contain underscores (e.g., "withdraw_transfers")
         # So we need to be smarter about parsing
 
         if not key.startswith("method_"):
@@ -1785,7 +1769,7 @@ def submit_stage3() -> Tuple:
         table = None
         col = None
 
-        for table_name in target_state.schemas.keys():
+        for table_name in sorted(target_state.schemas, key=len, reverse=True):
             if remainder.startswith(f"{table_name}_"):
                 table = table_name
                 col = remainder[len(table_name) + 1:]  # +1 for the underscore
@@ -1810,7 +1794,7 @@ def submit_stage3() -> Tuple:
             edited_description = None
             description_modified = False
 
-        print(f"[DEBUG] Parsed: key={key} -> table={table}, col={col}, idx={idx}, code_modified={code_modified}, desc_modified={description_modified}")
+        logging.getLogger(__name__).debug(f"[DEBUG] Parsed: key={key} -> table={table}, col={col}, idx={idx}, code_modified={code_modified}, desc_modified={description_modified}")
 
         # A non-default method index or explicit code/description edit is a
         # human correction to the model's proposal. Keep this separate from
@@ -1829,11 +1813,11 @@ def submit_stage3() -> Tuple:
             )
 
         # Check if column is in policy_data AND is still PII
-        # IMPORTANT: User may have changed PII status, so check is_pii flag
+        # User may have changed PII status, so check is_pii flag
         in_policy_data = table in target_state.policy_data and col in target_state.policy_data[table]
         is_pii_flag = target_state.policy_data[table][col].get("is_pii", True) if in_policy_data else False
 
-        print(f"[DEBUG] Column {col}: in_policy_data={in_policy_data}, is_pii_flag={is_pii_flag}")
+        logging.getLogger(__name__).debug(f"[DEBUG] Column {col}: in_policy_data={in_policy_data}, is_pii_flag={is_pii_flag}")
 
         is_current_pii = in_policy_data and is_pii_flag
 
@@ -1846,21 +1830,22 @@ def submit_stage3() -> Tuple:
                 old_action = old_action_obj.get("method", "UNKNOWN")
 
                 # Get and remove selected method from list
-                selected = techs.pop(idx)
+                selected = normalized_selections.get(key, techs[idx])
+                techs.pop(idx)
                 new_action = selected.get("method", "UNKNOWN")
 
                 # Update code snippet if user edited it
                 if code_modified and edited_code:
                     old_code = selected.get("code_snippet", "")
                     selected["code_snippet"] = edited_code
-                    print(f"[DEBUG] Code modified for {col}: User edited code snippet")
+                    logging.getLogger(__name__).debug(f"[DEBUG] Code modified for {col}: User edited code snippet")
                     log_producer(f"✏️ User edited code for {col}", target_state)
 
                 # Update description if user edited it
                 if description_modified and edited_description:
                     old_desc = selected.get("description", "")
                     selected["description"] = edited_description
-                    print(f"[DEBUG] Description modified for {col}: User edited description")
+                    logging.getLogger(__name__).debug(f"[DEBUG] Description modified for {col}: User edited description")
                     log_producer(f"✏️ User edited description for {col}", target_state)
 
                 if code_modified and edited_code:
@@ -1880,19 +1865,23 @@ def submit_stage3() -> Tuple:
 
                 # Insert selected method at the beginning
                 techs.insert(0, selected)
+                target_state.policy_data[table][col]["action"] = new_action
 
-                print(f"[DEBUG] PII Column {col}: User selected idx={idx}, Method changed from '{old_action}' to '{new_action}'")
+                logging.getLogger(__name__).debug(f"[DEBUG] PII Column {col}: User selected idx={idx}, Method changed from '{old_action}' to '{new_action}'")
                 log_producer(f"✏️ User selection for {col}: {new_action} (was: {old_action})", target_state)
 
                 # Record user preference for future sessions (including default selection idx=0)
+
                 if target_state.expert_preference_manager:
                     pii_type = target_state.policy_data[table][col].get("pii_type", "Unknown")
                     all_methods = [t.get("method", "") for t in techs]
                     # Pass code snippet and description if user edited them
+
                     final_code_snippet = selected.get("code_snippet", "") if code_modified else None
                     final_description = selected.get("description", "") if description_modified else None
 
                     # Get column_comment from schema or pii_data for RAG-based similarity search
+
                     col_comment = ""
                     if table in target_state.schemas and col in target_state.schemas[table]:
                         schema_col = target_state.schemas[table][col]
@@ -1935,37 +1924,40 @@ def submit_stage3() -> Tuple:
             # 2. PII -> Non-PII reclassified columns (is_pii=False was set in change_pii_status)
             if table not in target_state.policy_data:
                 target_state.policy_data[table] = {}
+            selected = {}
 
             # Get the actual selected method from policy_data (could be ROUND, GENERALIZE, HASH, KEEP, DELETE)
-            # IMPORTANT: Don't hardcode idx->method mapping; use actual method at that index
+            # Don't hardcode idx->method mapping; use actual method at that index
             if table in target_state.policy_data and col in target_state.policy_data[table]:
                 techs = target_state.policy_data[table][col].get("recommended_methods", [])
 
                 if 0 <= idx < len(techs):
                     # Use actual method at selected index
-                    selected = techs[idx]
+                    selected = normalized_selections.get(key, techs[idx])
                     method = selected.get("method", "Keep")
                     description = selected.get("description", "Keep the column unchanged")
                     code_snippet = selected.get("code_snippet", "# No transformation needed")
 
-                    # CRITICAL: Apply user-edited code if modified
+                    # Apply user-edited code if modified
+
                     if code_modified and edited_code:
                         old_code = code_snippet
                         code_snippet = edited_code
-                        print(f"[DEBUG] Non-PII Column {col}: User edited code snippet")
-                        print(f"[DEBUG]   Original: {old_code[:50]}...")
-                        print(f"[DEBUG]   Edited: {edited_code[:50]}...")
+                        logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: User edited code snippet")
+                        logging.getLogger(__name__).debug(f"[DEBUG]   Original: {old_code[:50]}...")
+                        logging.getLogger(__name__).debug(f"[DEBUG]   Edited: {edited_code[:50]}...")
                         log_producer(f"✏️ User edited code for Non-PII column {col}", target_state)
 
                     # Apply user-edited description if modified
+
                     if description_modified and edited_description:
                         old_desc = description
                         description = edited_description
-                        print(f"[DEBUG] Non-PII Column {col}: User edited description")
+                        logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: User edited description")
                         log_producer(f"✏️ User edited description for Non-PII column {col}", target_state)
 
-                    print(f"[DEBUG] Non-PII Column {col}: User selected idx={idx}, Method='{method}' from {len(techs)} methods")
-                    print(f"[DEBUG]   Available methods: {[t.get('method') for t in techs]}")
+                    logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: User selected idx={idx}, Method='{method}' from {len(techs)} methods")
+                    logging.getLogger(__name__).debug(f"[DEBUG]   Available methods: {[t.get('method') for t in techs]}")
                 else:
                     # Invalid index - fallback to Keep
                     print(f"[WARNING] Non-PII Column {col}: Invalid idx={idx} (only {len(techs)} methods available)")
@@ -1984,11 +1976,12 @@ def submit_stage3() -> Tuple:
                     description = "Keep the column unchanged"
                     code_snippet = "# No transformation needed"
 
-            # CRITICAL DEBUG LOG for non-PII
-            print(f"[DEBUG] Non-PII Column {col}: Final selection - Method='{method}'")
+            # Record the selected non-PII operation at debug level.
+            logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: Final selection - Method='{method}'")
             log_producer(f"✏️ Non-PII selection for {col}: {method}", target_state)
 
             # Record user preference for Non-PII columns (if user changed from default)
+
             if target_state.expert_preference_manager:
                 # Get all available methods from the method list
                 if table in target_state.policy_data and col in target_state.policy_data[table]:
@@ -1998,10 +1991,12 @@ def submit_stage3() -> Tuple:
                     available_methods = ["Keep", "Delete"]
 
                 # Pass code snippet and description if user edited them
+
                 final_code_snippet = code_snippet if code_modified else None
                 final_description = description if description_modified else None
 
                 # Get column_comment from schema or pii_data for RAG-based similarity search
+
                 col_comment = ""
                 if table in target_state.schemas and col in target_state.schemas[table]:
                     schema_col = target_state.schemas[table][col]
@@ -2025,18 +2020,20 @@ def submit_stage3() -> Tuple:
                 )
 
             # Create or update policy for non-PII column with the actual selected method
-            # IMPORTANT: This overwrites any existing policy (including PII -> Non-PII reclassified ones)
+            # This overwrites any existing policy (including PII -> Non-PII reclassified ones)
             target_state.policy_data[table][col] = {
                 "is_pii": False,
                 "pii_type": "Non-PII",
                 "action": method,  # Add action field for audit logging
                 "recommended_methods": [
                     {
+                        **selected,
                         "method": method,
                         "applicability": "High",
                         "description": description,
                         "code_snippet": code_snippet,
                         "example_implementation": code_snippet,
+                        "parameters": copy.deepcopy(selected.get("parameters", {})),
                     }
                 ],
                 "evidence_source": target_state.policy_data[table].get(col, {}).get("evidence_source", "User Selection (Non-PII)"),
@@ -2051,27 +2048,31 @@ def submit_stage3() -> Tuple:
                     new_action=method,
                     rationale=f"User selected {method} for non-PII column",
                     old_parameters={},
-                    new_parameters={},
+                    new_parameters=selected.get("parameters", {}),
                     old_code_snippet="",
                     new_code_snippet=code_snippet,
                     legal_evidence="",
                 )
 
-    # CRITICAL: Regenerate integrated report AFTER user modifications in Stage 3
+    # Regenerate integrated report AFTER user modifications in Stage 3
+
     # This ensures that the report reflects all user changes (PII reclassification, method selection, code edits)
+
     log_producer("\n[Stats] Regenerating integrated reports with user modifications...", target_state)
 
     # Extract selected tables from choices to only process those tables
+
     selected_tables = set()
     for key in choices.keys():
         if key.startswith("method_"):
             remainder = key[7:]
-            for table_name in target_state.schemas.keys():
+            for table_name in sorted(target_state.schemas, key=len, reverse=True):
                 if remainder.startswith(f"{table_name}_"):
                     selected_tables.add(table_name)
                     break
 
     # Clear previous generated_code and report_files for clean generation
+
     target_state.generated_code = {}
     target_state.report_files = {}
 
@@ -2083,6 +2084,7 @@ def submit_stage3() -> Tuple:
 
         try:
             # Convert policy_data to Policy object for report generation
+
             from pseudragon.domain.policy_dsl import Policy, ColumnPolicy, PolicyAction, ActionType
             from pseudragon.reporting.compliance_reporter import ReportGenerator
 
@@ -2099,22 +2101,27 @@ def submit_stage3() -> Tuple:
                     action_type = ActionType[selected_tech["method"]]
 
                     # Extract rationale from PII classification change if available
+
                     evidence_source = col_data.get("evidence_source", "")
                     user_rationale = ""
                     legal_evidence = selected_tech.get("legal_evidence", "")
 
                     # Check if this was a user-defined PII classification change
+
                     if evidence_source.startswith("User-defined PII"):
                         # Extract the rationale from evidence_source
+
                         if "Rationale:" in evidence_source:
                             parts = evidence_source.split("Rationale:", 1)
                             if len(parts) == 2:
                                 user_rationale = parts[1].strip()
 
                         # Set legal_evidence to just "User-defined PII"
+
                         legal_evidence = "User-defined PII"
 
                     # Use user rationale if available, otherwise use method description
+
                     final_rationale = user_rationale if user_rationale else selected_tech.get("description", "")
 
                     action = PolicyAction(
@@ -2154,6 +2161,7 @@ def submit_stage3() -> Tuple:
                     policy_obj.columns[col_name] = col_policy
 
             # Ensure pii_data has all columns with updated information
+
             if table not in target_state.pii_data:
                 target_state.pii_data[table] = {}
 
@@ -2172,6 +2180,7 @@ def submit_stage3() -> Tuple:
                     target_state.pii_data[table][col_name]["pii_type"] = col_data.get("pii_type", "Non-PII")
 
             # Regenerate integrated report with user-modified policy
+
             table_dir = os.path.join(target_state.session_dir, table)
             os.makedirs(table_dir, exist_ok=True)
 
@@ -2184,6 +2193,7 @@ def submit_stage3() -> Tuple:
             )
 
             # Update target_state.report_files so the frontend shows the updated report
+
             rel_report_path = os.path.relpath(report_path, AppConfig.OUTPUT_DIR)
             report_key = f"{table}_integrated"
             target_state.report_files[report_key] = rel_report_path
@@ -2226,6 +2236,7 @@ def submit_stage3() -> Tuple:
         target_state.audit_logger.log_stage_complete("Stage 3: HITL Approval", "all_tables")
 
     # Trigger heuristic pattern learning at Stage 3 completion
+
     heuristic_learning_stats = None
     if target_state.expert_preference_manager:
         log_producer("[Update] Learning heuristic patterns from expert feedback...", target_state)
@@ -2240,6 +2251,7 @@ def submit_stage3() -> Tuple:
         os.makedirs(AppConfig.OUTPUT_DIR)
 
     # Only generate code for selected tables (not all tables in schemas)
+
     for table in selected_tables:
         if table not in target_state.policy_data or table not in target_state.schemas:
             continue
@@ -2253,6 +2265,7 @@ def submit_stage3() -> Tuple:
         os.makedirs(table_dir, exist_ok=True)
 
         # Stage 4: Code Generation with timing
+
         stage4_name = f"Stage 4 - Code Generation ({table})"
         duration = 0.0  # Initialize duration variable
         if target_state.file_logger:
@@ -2278,6 +2291,7 @@ def submit_stage3() -> Tuple:
             log_producer(f"Code for {table} generated and saved to {output_file}", target_state)
         finally:
             # Ensure stage_end is always called even if exception occurs
+
             if target_state.file_logger:
                 duration = target_state.file_logger.stage_end(stage4_name)
 
@@ -2325,11 +2339,13 @@ def submit_stage3() -> Tuple:
     target_state.current_step = PipelineStep.COMPLETED
 
     # Log final summary
+
     if target_state.file_logger:
         target_state.file_logger.log_summary()
         log_producer(f"[Dir] Log file saved: {target_state.file_logger.get_log_file_path()}", target_state)
 
     # Return updated report files so frontend can show the regenerated integrated reports
+
     return jsonify(
         {
             "status": "completed",
@@ -2342,8 +2358,7 @@ def submit_stage3() -> Tuple:
 
 @app.route("/validate_policy", methods=["POST"])
 def validate_policy() -> Tuple:
-    """
-    API endpoint for real-time policy validation
+    """API endpoint for real-time policy validation
 
     Implements real-time validation
 
@@ -2362,6 +2377,7 @@ def validate_policy() -> Tuple:
         user_policies = data.get("policies", {})
 
         # Get session-specific state or fall back to global state
+
         session_state = session_manager.get_session(client_session_id) if client_session_id else None
         target_state = session_state if session_state else state
 
@@ -2387,6 +2403,7 @@ def validate_policy() -> Tuple:
                     action_type = ActionType.KEEP
 
                 # Extract legal evidence and check for user-defined PII
+
                 evidence_source = col_data.get("evidence_source", "")
                 legal_evidence = col_data.get("legal_evidence", "Unknown")
 
@@ -2400,22 +2417,27 @@ def validate_policy() -> Tuple:
                     first_tech = techs[0]
 
                     # Extract rationale from PII classification change if available
+
                     evidence_source = col_data.get("evidence_source", "")
                     user_rationale = ""
                     legal_evidence = col_data.get("legal_evidence", "Unknown")
 
                     # Check if this was a user-defined PII classification change
+
                     if evidence_source.startswith("User-defined PII"):
                         # Extract the rationale from evidence_source
+
                         if "Rationale:" in evidence_source:
                             parts = evidence_source.split("Rationale:", 1)
                             if len(parts) == 2:
                                 user_rationale = parts[1].strip()
 
                         # Set legal_evidence to just "User-defined PII"
+
                         legal_evidence = "User-defined PII"
 
                     # Use user rationale if available, otherwise use method description
+
                     final_rationale = user_rationale if user_rationale else first_tech.get("description", "")
 
                     action = PolicyAction(action=ActionType[first_tech.get("method", "KEEP")], rationale=final_rationale, legal_evidence=legal_evidence, )
@@ -2450,8 +2472,7 @@ def validate_policy() -> Tuple:
 
 @app.route("/get_report/<path:filename>")
 def get_report(filename: str) -> Tuple:
-    """
-    API endpoint to retrieve markdown report content
+    """API endpoint to retrieve markdown report content
 
     Args:
         filename: Report filename or path
@@ -2474,8 +2495,7 @@ def get_report(filename: str) -> Tuple:
 
 @app.route("/download_report/<path:filename>")
 def download_report(filename: str) -> Tuple:
-    """
-    API endpoint to download markdown report
+    """API endpoint to download markdown report
 
     Args:
         filename: Report filename
@@ -2493,14 +2513,12 @@ def download_report(filename: str) -> Tuple:
         return f"Error downloading report: {str(e)}", 500
 
 
-# ============================================================================
 # Heuristics Management API Endpoints
-# ============================================================================
+
 
 @app.route("/api/heuristics", methods=["GET"])
 def get_heuristics() -> Tuple:
-    """
-    Get all heuristics
+    """Get all heuristics
 
     Query params:
         enabled_only: "true" to get only enabled heuristics
@@ -2511,6 +2529,7 @@ def get_heuristics() -> Tuple:
     """
     try:
         # Reload from file to get latest data (including auto-learned patterns)
+
         heuristic_manager.load()
 
         enabled_only = request.args.get("enabled_only", "false").lower() == "true"
@@ -2529,14 +2548,14 @@ def get_heuristics() -> Tuple:
 
 @app.route("/api/heuristics/statistics", methods=["GET"])
 def get_heuristics_statistics() -> Tuple:
-    """
-    Get heuristics statistics
+    """Get heuristics statistics
 
     Returns:
         JSON with heuristics statistics (total, manual, auto-learned counts)
     """
     try:
         # Reload from file to get latest data
+
         heuristic_manager.load()
 
         stats = heuristic_manager.get_statistics()
@@ -2547,12 +2566,11 @@ def get_heuristics_statistics() -> Tuple:
 
 @app.route("/api/heuristics/<heuristic_id>", methods=["GET"])
 def get_heuristic(heuristic_id: str) -> Tuple:
-    """
-    Get specific heuristic by ID
-    
+    """Get specific heuristic by ID
+
     Args:
         heuristic_id: Heuristic ID
-    
+
     Returns:
         JSON with heuristic data
     """
@@ -2568,9 +2586,8 @@ def get_heuristic(heuristic_id: str) -> Tuple:
 
 @app.route("/api/heuristics", methods=["POST"])
 def add_heuristic() -> Tuple:
-    """
-    Add new heuristic
-    
+    """Add new heuristic
+
     Accepts:
         - name: Heuristic name
         - regex: Regular expression pattern
@@ -2621,12 +2638,11 @@ def add_heuristic() -> Tuple:
 
 @app.route("/api/heuristics/<heuristic_id>", methods=["PUT"])
 def update_heuristic(heuristic_id: str) -> Tuple:
-    """
-    Update existing heuristic
-    
+    """Update existing heuristic
+
     Args:
         heuristic_id: Heuristic ID to update
-    
+
     Returns:
         JSON with updated heuristic
     """
@@ -2662,12 +2678,11 @@ def update_heuristic(heuristic_id: str) -> Tuple:
 
 @app.route("/api/heuristics/<heuristic_id>", methods=["DELETE"])
 def delete_heuristic(heuristic_id: str) -> Tuple:
-    """
-    Delete heuristic
-    
+    """Delete heuristic
+
     Args:
         heuristic_id: Heuristic ID to delete
-    
+
     Returns:
         JSON with status
     """
@@ -2696,13 +2711,12 @@ def delete_heuristic(heuristic_id: str) -> Tuple:
 
 @app.route("/api/heuristics/test", methods=["POST"])
 def test_heuristic() -> Tuple:
-    """
-    Test regex pattern against sample strings
-    
+    """Test regex pattern against sample strings
+
     Accepts:
         - regex: Regular expression pattern
         - test_strings: List of strings to test
-    
+
     Returns:
         JSON with test results
     """
@@ -2722,15 +2736,13 @@ def test_heuristic() -> Tuple:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-# ============================================================================
 # Stage 3 User Validation API Endpoints
-# ============================================================================
+
 
 @app.route("/change_pii_status", methods=["POST"])
 @app.route("/api/stage3/change_pii_status", methods=["POST"])
 def change_pii_status() -> Tuple:
-    """
-    Handle PII status change and query LLM for anonymization methods
+    """Handle PII status change and query LLM for anonymization methods
 
     Accepts:
         - session_id: Client session ID
@@ -2755,22 +2767,23 @@ def change_pii_status() -> Tuple:
         pii_type = data.get("pii_type", "PII")  # Default PII type
 
         # Get session-specific state or fall back to global state
+
         session_state = session_manager.get_session(client_session_id) if client_session_id else None
         target_state = session_state if session_state else state
 
-        print(f"[DEBUG /change_pii_status] Received request:")
-        print(f"  - session_id: {client_session_id}")
-        print(f"  - table: {table}")
-        print(f"  - column: {column}")
-        print(f"  - old_status: {old_status}")
-        print(f"  - new_status: {new_status}")
-        print(f"  - pii_type: {pii_type}")
-        print(f"  - rationale: {rationale}")
+        logging.getLogger(__name__).debug(f"[DEBUG /change_pii_status] Received request:")
+        logging.getLogger(__name__).debug(f"  - session_id: {client_session_id}")
+        logging.getLogger(__name__).debug(f"  - table: {table}")
+        logging.getLogger(__name__).debug(f"  - column: {column}")
+        logging.getLogger(__name__).debug(f"  - old_status: {old_status}")
+        logging.getLogger(__name__).debug(f"  - new_status: {new_status}")
+        logging.getLogger(__name__).debug(f"  - pii_type: {pii_type}")
+        logging.getLogger(__name__).debug(f"  - rationale: {rationale}")
 
         # If old_status is not provided, infer it from new_status
         if not old_status and new_status:
             old_status = "Non-PII" if new_status == "PII" else "PII"
-            print(f"[DEBUG] Inferred old_status: {old_status}")
+            logging.getLogger(__name__).debug(f"[DEBUG] Inferred old_status: {old_status}")
 
         # Validate inputs
         if not all([table, column, new_status]):
@@ -2802,8 +2815,10 @@ def change_pii_status() -> Tuple:
             )
 
         # Record PII classification change in user preference manager for future learning
+
         if target_state.expert_preference_manager:
             # Get column_comment from schema or pii_data for RAG-based similarity search
+
             col_comment = ""
             if table in target_state.schemas and column in target_state.schemas[table]:
                 schema_col = target_state.schemas[table][column]
@@ -2823,14 +2838,14 @@ def change_pii_status() -> Tuple:
 
         methods = []
 
-        print(f"[DEBUG] Checking status change conditions:")
-        print(f"  - old_status == 'PII': {old_status == 'PII'}")
-        print(f"  - new_status == 'Non-PII': {new_status == 'Non-PII'}")
-        print(f"  - old_status == 'Non-PII': {old_status == 'Non-PII'}")
-        print(f"  - new_status == 'PII': {new_status == 'PII'}")
+        logging.getLogger(__name__).debug(f"[DEBUG] Checking status change conditions:")
+        logging.getLogger(__name__).debug(f"  - old_status == 'PII': {old_status == 'PII'}")
+        logging.getLogger(__name__).debug(f"  - new_status == 'Non-PII': {new_status == 'Non-PII'}")
+        logging.getLogger(__name__).debug(f"  - old_status == 'Non-PII': {old_status == 'Non-PII'}")
+        logging.getLogger(__name__).debug(f"  - new_status == 'PII': {new_status == 'PII'}")
 
         if old_status == "PII" and new_status == "Non-PII":
-            print(f"[DEBUG] Executing branch: PII -> Non-PII")
+            logging.getLogger(__name__).debug(f"[DEBUG] Executing branch: PII -> Non-PII")
             # PII -> Non-PII: Generate Non-PII methods using LLM (same as regular Non-PII columns)
             # This allows ROUND, GENERALIZATION for numeric/date columns
 
@@ -2854,15 +2869,15 @@ def change_pii_status() -> Tuple:
             print(f"[INFO] Generated {len(methods)} Non-PII methods for {column} (type: {data_type})")
             log_producer(f"[Note] Generated Non-PII methods for {column}: {', '.join([m['method'] for m in methods])}", target_state)
 
-            # CRITICAL: Update target_state.policy_data AND target_state.pii_data to reflect PII -> Non-PII change
+            # Update target_state.policy_data AND target_state.pii_data to reflect PII -> Non-PII change
             # This ensures that the old PII policy (e.g., MASK) is replaced with Non-PII methods
-            print(f"[DEBUG] Updating state for {table}.{column}: PII -> Non-PII")
+            logging.getLogger(__name__).debug(f"[DEBUG] Updating state for {table}.{column}: PII -> Non-PII")
             log_producer(f"[Note] State updated for {column}: PII -> Non-PII", target_state)
 
             # Remove from policy_data (since it's no longer PII)
             if table in target_state.policy_data and column in target_state.policy_data[table]:
                 del target_state.policy_data[table][column]
-                print(f"[DEBUG] Removed {column} from policy_data")
+                logging.getLogger(__name__).debug(f"[DEBUG] Removed {column} from policy_data")
 
             # Update pii_data to mark as Non-PII
             if table not in target_state.pii_data:
@@ -2874,9 +2889,9 @@ def change_pii_status() -> Tuple:
                 "evidence_source": f"User reclassified from PII. {rationale}" if rationale else "User reclassified from PII",
                 "column_comment": column_comment
             }
-            print(f"[DEBUG] Updated pii_data for {column} to Non-PII")
+            logging.getLogger(__name__).debug(f"[DEBUG] Updated pii_data for {column} to Non-PII")
         elif old_status == "Non-PII" and new_status == "PII":
-            print(f"[DEBUG] Executing branch: Non-PII -> PII")
+            logging.getLogger(__name__).debug(f"[DEBUG] Executing branch: Non-PII -> PII")
             # Non-PII -> PII: Query LLM for anonymization methods
             if not rationale:
                 return jsonify({"status": "error", "message": "Rationale is required for Non-PII to PII conversion"}), 400
@@ -2896,17 +2911,17 @@ def change_pii_status() -> Tuple:
                 column_comment = target_state.pii_data[table][column].get("column_comment", "")
 
             # Get LLM-generated anonymization methods with column description
-            print(f"[DEBUG] Calling _query_llm_for_anonymization_methods for {column}")
-            print(f"  - pii_type: {pii_type}")
-            print(f"  - rationale: {rationale}")
-            print(f"  - column_comment: {column_comment}")
-            print(f"  - data_type: {data_type}")
+            logging.getLogger(__name__).debug(f"[DEBUG] Calling _query_llm_for_anonymization_methods for {column}")
+            logging.getLogger(__name__).debug(f"  - pii_type: {pii_type}")
+            logging.getLogger(__name__).debug(f"  - rationale: {rationale}")
+            logging.getLogger(__name__).debug(f"  - column_comment: {column_comment}")
+            logging.getLogger(__name__).debug(f"  - data_type: {data_type}")
             methods = _query_llm_for_anonymization_methods(column, pii_type, rationale, column_comment, data_type)
-            print(f"[DEBUG] _query_llm_for_anonymization_methods returned {len(methods)} methods")
+            logging.getLogger(__name__).debug(f"[DEBUG] _query_llm_for_anonymization_methods returned {len(methods)} methods")
 
-            # CRITICAL: Update target_state.policy_data AND target_state.pii_data to reflect Non-PII -> PII change
+            # Update target_state.policy_data AND target_state.pii_data to reflect Non-PII -> PII change
             # This ensures that the new PII policy is stored for code generation
-            print(f"[DEBUG] Updating state for {table}.{column}: Non-PII -> PII")
+            logging.getLogger(__name__).debug(f"[DEBUG] Updating state for {table}.{column}: Non-PII -> PII")
             log_producer(f"[Note] State updated for {column}: Non-PII -> PII", target_state)
 
             # Add to policy_data
@@ -2919,7 +2934,7 @@ def change_pii_status() -> Tuple:
                 "recommended_methods": methods,
                 "evidence_source": f"User-defined PII. Rationale: {rationale}",
             }
-            print(f"[DEBUG] Added {column} to policy_data as PII")
+            logging.getLogger(__name__).debug(f"[DEBUG] Added {column} to policy_data as PII")
 
             # Update pii_data to mark as PII
             if table not in target_state.pii_data:
@@ -2938,7 +2953,7 @@ def change_pii_status() -> Tuple:
                 "evidence_source": f"User-defined PII. Rationale: {rationale}",
                 "column_comment": column_comment
             }
-            print(f"[DEBUG] Updated pii_data for {column} to PII ({pii_type})")
+            logging.getLogger(__name__).debug(f"[DEBUG] Updated pii_data for {column} to PII ({pii_type})")
         else:
             return jsonify({"status": "error", "message": "Invalid status change"}), 400
 
@@ -2955,13 +2970,13 @@ def change_pii_status() -> Tuple:
         # Prepare response data
         response_pii_type = pii_type if new_status == "PII" else "Non-PII"
 
-        print(f"[DEBUG] Response data:")
-        print(f"  - column: {column}")
-        print(f"  - old_status: {old_status}")
-        print(f"  - new_status: {new_status}")
-        print(f"  - pii_type (from request): {pii_type}")
-        print(f"  - response pii_type: {response_pii_type}")
-        print(f"  - methods count: {len(methods)}")
+        logging.getLogger(__name__).debug(f"[DEBUG] Response data:")
+        logging.getLogger(__name__).debug(f"  - column: {column}")
+        logging.getLogger(__name__).debug(f"  - old_status: {old_status}")
+        logging.getLogger(__name__).debug(f"  - new_status: {new_status}")
+        logging.getLogger(__name__).debug(f"  - pii_type (from request): {pii_type}")
+        logging.getLogger(__name__).debug(f"  - response pii_type: {response_pii_type}")
+        logging.getLogger(__name__).debug(f"  - methods count: {len(methods)}")
 
         return jsonify(
             {
@@ -2983,8 +2998,7 @@ def change_pii_status() -> Tuple:
 
 
 def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, rationale: str, column_comment: str = "", data_type: str = "") -> List[Dict[str, Any]]:
-    """
-    Query LLM to generate anonymization methods for a column with RAG integration
+    """Query LLM to generate anonymization methods for a column with RAG integration
 
     This function integrates with RAG to retrieve legal context and uses Stage 2
     prompts for consistent policy generation across the system.
@@ -3000,26 +3014,26 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
         List of anonymization methods with code snippets and legal evidence
     """
     try:
-        print(f"[DEBUG _query_llm_for_anonymization_methods] Starting for column: {column_name}")
-        print(f"  - pii_type: {pii_type}")
-        print(f"  - rationale: {rationale}")
-        print(f"  - column_comment: {column_comment}")
-        print(f"  - data_type: {data_type}")
+        logging.getLogger(__name__).debug(f"[DEBUG _query_llm_for_anonymization_methods] Starting for column: {column_name}")
+        logging.getLogger(__name__).debug(f"  - pii_type: {pii_type}")
+        logging.getLogger(__name__).debug(f"  - rationale: {rationale}")
+        logging.getLogger(__name__).debug(f"  - column_comment: {column_comment}")
+        logging.getLogger(__name__).debug(f"  - data_type: {data_type}")
 
         # Use shared backend components from session_manager
         shared_rag, shared_engine, _, _ = session_manager.get_shared_backend()
 
-        print(f"[DEBUG] shared_engine: {shared_engine}")
-        print(f"[DEBUG] shared_rag: {shared_rag}")
+        logging.getLogger(__name__).debug(f"[DEBUG] shared_engine: {shared_engine}")
+        logging.getLogger(__name__).debug(f"[DEBUG] shared_rag: {shared_rag}")
 
         if not shared_engine or not shared_engine.llm_client_stage_2:
             # Fallback to default methods if LLM is not available
-            print(f"[DEBUG] LLM client not available, using fallback methods")
+            logging.getLogger(__name__).debug(f"[DEBUG] LLM client not available, using fallback methods")
             return _get_default_anonymization_methods(column_name, column_comment, data_type)
 
         if not shared_rag:
             # Fallback if RAG is not initialized
-            print(f"[DEBUG] RAG not initialized, using fallback methods")
+            logging.getLogger(__name__).debug(f"[DEBUG] RAG not initialized, using fallback methods")
             return _get_default_anonymization_methods(column_name, column_comment, data_type)
 
         llm_client = shared_engine.llm_client_stage_2
@@ -3037,7 +3051,7 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
         user_prompt_template = load_prompt("stage2_policy_synthesis", "user")
 
         # Step 3: Build user prompt with retrieved legal context
-        # IMPORTANT: Prioritize column description over column name
+        # Prioritize column description over column name
         column_description_text = column_comment if column_comment else "No description available"
         data_type_text = data_type if data_type else "Unknown"
         user_prompt = user_prompt_template.format(
@@ -3130,8 +3144,7 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
 
 
 def _infer_pii_type_from_context(column_name: str, rationale: str) -> str:
-    """
-    Infer PII type from column name and user rationale
+    """Infer PII type from column name and user rationale
 
     Args:
         column_name: Column name
@@ -3141,12 +3154,12 @@ def _infer_pii_type_from_context(column_name: str, rationale: str) -> str:
         PII type (PII)
     """
     # All PII columns are classified as PII
+
     return "PII"
 
 
 def _analyze_column_semantics(column_name: str, column_comment: str = "", data_type: str = "") -> Dict[str, Any]:
-    """
-    Analyze column semantics from description and name to determine data type
+    """Analyze column semantics from description and name to determine data type
 
     Args:
         column_name: Column name
@@ -3267,8 +3280,7 @@ def _analyze_column_semantics(column_name: str, column_comment: str = "", data_t
 
 
 def _get_default_anonymization_methods(column_name: str, column_comment: str = "", data_type: str = "") -> List[Dict[str, Any]]:
-    """
-    Get default anonymization methods when LLM is not available
+    """Get default anonymization methods when LLM is not available
 
     Args:
         column_name: Column name
@@ -3280,24 +3292,25 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
     """
     methods = []
 
-    print(f"[DEBUG _get_default_anonymization_methods] column={column_name}, comment={column_comment}, data_type={data_type}")
+    logging.getLogger(__name__).debug(f"[DEBUG _get_default_anonymization_methods] column={column_name}, comment={column_comment}, data_type={data_type}")
 
     # Use unified semantic analysis
     semantics = _analyze_column_semantics(column_name, column_comment, data_type)
 
-    print(f"[DEBUG] is_phone={semantics['is_phone']} (comment:{semantics['is_phone_by_comment']}, name:{semantics['is_phone_by_name']})")
-    print(f"[DEBUG] is_email={semantics['is_email']} (comment:{semantics['is_email_by_comment']}, name:{semantics['is_email_by_name']})")
-    print(f"[DEBUG] is_name={semantics['is_name']} (comment:{semantics['is_name_by_comment']}, name:{semantics['is_name_by_name']})")
-    print(f"[DEBUG] is_id={semantics['is_id']} (comment:{semantics['is_id_by_comment']}, name:{semantics['is_id_by_name']})")
+    logging.getLogger(__name__).debug(f"[DEBUG] is_phone={semantics['is_phone']} (comment:{semantics['is_phone_by_comment']}, name:{semantics['is_phone_by_name']})")
+    logging.getLogger(__name__).debug(f"[DEBUG] is_email={semantics['is_email']} (comment:{semantics['is_email_by_comment']}, name:{semantics['is_email_by_name']})")
+    logging.getLogger(__name__).debug(f"[DEBUG] is_name={semantics['is_name']} (comment:{semantics['is_name_by_comment']}, name:{semantics['is_name_by_name']})")
+    logging.getLogger(__name__).debug(f"[DEBUG] is_id={semantics['is_id']} (comment:{semantics['is_id_by_comment']}, name:{semantics['is_id_by_name']})")
 
     # Provide context-specific methods based on column semantics
     if semantics['is_phone']:
-        # Phone numbers: MASK (show last 4 digits), HASH, ENCRYPT
+        # Phone numbers: MASK (hide the last 4 characters), HASH, ENCRYPT
         methods.append(
             {
                 "method": "MASK",
                 "applicability": "High",
-                "description": f"Mask {column_name} - show only last 4 digits (e.g., 010-1234-5678 -> ***-****-5678)",
+                "description": f"Mask the last 4 characters of {column_name}; preserve the prefix (e.g., 010-1234-5678 -> 010-1234-****)",
+                "parameters": {"mask_char": "*", "mask_last": 4, "short_value_mask_length": 4},
                 "code_snippet": f"masked_{column_name} = str(record['{column_name}'])[:-4] + '****' if len(str(record['{column_name}'])) > 4 else '****'",
                 "example_implementation": f"masked_{column_name} = str(record['{column_name}'])[:-4] + '****' if len(str(record['{column_name}'])) > 4 else '****'",
                 "legal_evidence": "Phone number masking - recommended for PII protection"
@@ -3370,10 +3383,10 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
 
 
 def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: str) -> List[Dict[str, Any]]:
-    """
-    Generate pseudonymization methods for Non-PII columns using LLM
+    """Generate pseudonymization methods for Non-PII columns using LLM
 
     For numeric columns (e.g., BLNC/Balance), this may recommend:
+
     - ROUND: Round to nearest value (e.g., round to thousands)
     - GENERALIZATION: Generalize to ranges (e.g., 0-1000, 1001-5000)
     - KEEP: Keep unchanged
@@ -3415,10 +3428,10 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
             data_type=data_type if data_type else "Unknown"
         )
 
-        print(f"[DEBUG _generate_non_pii_methods] Querying LLM for {column_name}")
-        print(f"  - Column: {column_name}")
-        print(f"  - Description: {column_comment}")
-        print(f"  - Data Type: {data_type}")
+        logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] Querying LLM for {column_name}")
+        logging.getLogger(__name__).debug(f"  - Column: {column_name}")
+        logging.getLogger(__name__).debug(f"  - Description: {column_comment}")
+        logging.getLogger(__name__).debug(f"  - Data Type: {data_type}")
 
         # Query LLM
         session = UniversalLLMSession(
@@ -3436,10 +3449,10 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
 
         content = response.choices[0].message.content
 
-        print(f"[DEBUG _generate_non_pii_methods] LLM response length: {len(content)} characters")
-        print(f"[DEBUG _generate_non_pii_methods] LLM FULL response:")
+        logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] LLM response length: {len(content)} characters")
+        logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] LLM FULL response:")
         print("=" * 80)
-        print(content)
+        logging.getLogger(__name__).debug("Model response received (%d characters)", len(content))
         print("=" * 80)
 
         # Parse JSON response
@@ -3453,7 +3466,7 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
 
         methods_data = result.get("recommended_methods", [])
 
-        print(f"[DEBUG _generate_non_pii_methods] Parsed {len(methods_data)} methods from LLM")
+        logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] Parsed {len(methods_data)} methods from LLM")
 
         # Convert to expected format
         methods = []
@@ -3469,7 +3482,7 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
                 "legal_evidence": tech.get("rationale", "LLM-generated recommendation for Non-PII")
             }
             methods.append(method_dict)
-            print(f"  - Added method: {method_name}")
+            logging.getLogger(__name__).debug(f"  - Added method: {method_name}")
 
         # Ensure KEEP and DELETE are always available (add if not present)
         existing_methods = {m["method"].upper() for m in methods}
@@ -3509,8 +3522,7 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
 
 
 def _get_default_non_pii_methods(column_name: str, data_type: str, column_comment: str = "") -> List[Dict[str, Any]]:
-    """
-    Get default Non-PII methods when LLM is not available
+    """Get default Non-PII methods when LLM is not available
 
     Args:
         column_name: Column name
@@ -3522,14 +3534,14 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
     """
     methods = []
 
-    print(f"[DEBUG _get_default_non_pii_methods] column={column_name}, data_type={data_type}, comment={column_comment}")
+    logging.getLogger(__name__).debug(f"[DEBUG _get_default_non_pii_methods] column={column_name}, data_type={data_type}, comment={column_comment}")
 
     # Use unified semantic analysis
     semantics = _analyze_column_semantics(column_name, column_comment, data_type)
 
-    print(f"[DEBUG] is_numeric={semantics['is_numeric']}, is_date_column={semantics['is_date_column']} (comment:{semantics['is_date_by_comment']}, name:{semantics['is_date_by_name']})")
-    print(f"[DEBUG] is_amount_column={semantics['is_amount_column']} (comment:{semantics['is_amount_by_comment']}, name:{semantics['is_amount_by_name']})")
-    print(f"[DEBUG] is_age_column={semantics['is_age_column']}")
+    logging.getLogger(__name__).debug(f"[DEBUG] is_numeric={semantics['is_numeric']}, is_date_column={semantics['is_date_column']} (comment:{semantics['is_date_by_comment']}, name:{semantics['is_date_by_name']})")
+    logging.getLogger(__name__).debug(f"[DEBUG] is_amount_column={semantics['is_amount_column']} (comment:{semantics['is_amount_by_comment']}, name:{semantics['is_amount_by_name']})")
+    logging.getLogger(__name__).debug(f"[DEBUG] is_age_column={semantics['is_age_column']}")
 
     # Get uppercase versions for checking
     col_name_upper = column_name.upper()
@@ -3691,14 +3703,12 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
     return methods
 
 
-# ============================================================================
 # Expert Feedback API Endpoints
-# ============================================================================
+
 
 @app.route("/api/expert_feedback", methods=["GET"])
 def get_expert_feedback() -> Tuple:
-    """
-    Get expert feedback data
+    """Get expert feedback data
 
     Returns all accumulated expert feedback from Stage 3 HITL sessions.
 
@@ -3766,8 +3776,7 @@ def get_expert_feedback() -> Tuple:
 
 @app.route("/api/expert_feedback/summary", methods=["GET"])
 def get_expert_feedback_summary() -> Tuple:
-    """
-    Get expert feedback summary statistics
+    """Get expert feedback summary statistics
 
     Returns:
         JSON with summary statistics
@@ -3786,17 +3795,16 @@ def get_expert_feedback_summary() -> Tuple:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-# ============================================================================
 # Audit Log API Endpoints
-# ============================================================================
+
 
 @app.route("/api/audit_log", methods=["GET"])
 def get_audit_log() -> Tuple:
-    """
-    Get audit log entries with optional filtering
+    """Get audit log entries with optional filtering
 
     Query parameters:
         - session_id: Client session ID (optional, if not provided returns all logs)
+
         - event_type: Filter by event type
         - start_date: Filter by start date (ISO format)
         - end_date: Filter by end date (ISO format)
@@ -3813,9 +3821,11 @@ def get_audit_log() -> Tuple:
         user_id = request.args.get("user_id")
 
         # Get session ID from query parameter
+
         client_session_id = request.args.get("session_id", "")
 
         # If session_id is provided, try to get events from that specific session
+
         if client_session_id:
             session_state = session_manager.get_session(client_session_id)
             if session_state and session_state.audit_logger:
@@ -3828,7 +3838,9 @@ def get_audit_log() -> Tuple:
                 return jsonify({"status": "success", "events": events, "count": len(events)})
 
         # Use global audit logger to read ALL log files from disk
+
         # This works even after page refresh or server restart
+
         events = global_audit_logger.get_all_events(
             event_type=event_type,
             start_date=start_date,
@@ -3843,8 +3855,7 @@ def get_audit_log() -> Tuple:
 
 @app.route("/api/audit_log/summary", methods=["GET"])
 def get_audit_log_summary() -> Tuple:
-    """
-    Get audit log summary
+    """Get audit log summary
 
     Query parameters:
         - session_id: Client session ID (optional, if not provided returns combined summary)
@@ -3854,9 +3865,11 @@ def get_audit_log_summary() -> Tuple:
     """
     try:
         # Get session ID from query parameter
+
         client_session_id = request.args.get("session_id", "")
 
         # If session_id is provided, get summary from that specific session
+
         if client_session_id:
             session_state = session_manager.get_session(client_session_id)
             if session_state and session_state.audit_logger:
@@ -3864,20 +3877,19 @@ def get_audit_log_summary() -> Tuple:
                 return jsonify({"status": "success", "summary": summary})
 
         # Use global audit logger to get summary from ALL log files on disk
+
         summary = global_audit_logger.get_session_summary()
         return jsonify({"status": "success", "summary": summary})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-# ============================================================================
 # Session Monitoring API Endpoints
-# ============================================================================
+
 
 @app.route("/api/sessions", methods=["GET"])
 def get_all_sessions() -> Tuple:
-    """
-    Get list of all active sessions for monitoring
+    """Get list of all active sessions for monitoring
 
     Returns:
         JSON with list of session info
@@ -3897,8 +3909,7 @@ def get_all_sessions() -> Tuple:
 
 @app.route("/api/sessions/<session_id>/logs", methods=["GET"])
 def get_session_logs_api(session_id: str) -> Tuple:
-    """
-    Get logs from a specific session for monitoring (read-only)
+    """Get logs from a specific session for monitoring (read-only)
 
     Args:
         session_id: Session ID to get logs from
@@ -3931,8 +3942,7 @@ def get_session_logs_api(session_id: str) -> Tuple:
 
 @app.route("/api/sessions/<session_id>/status", methods=["GET"])
 def get_session_status_api(session_id: str) -> Tuple:
-    """
-    Get current status of a specific session
+    """Get current status of a specific session
 
     Args:
         session_id: Session ID
@@ -3968,8 +3978,10 @@ def get_session_status_api(session_id: str) -> Tuple:
 if __name__ == "__main__":
     """
     Application entry point
+    애플리케이션 진입점
 
     Performs startup checks and launches the Flask development server.
+    시작 검사를 수행하고 Flask 개발 서버를 시작합니다.
     """
     print("=" * 60)
     print(AppConfig.PAPER_TITLE)

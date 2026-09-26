@@ -1,17 +1,19 @@
-"""
-Optimized Stage 1: PII Detection with Universal Caching
+"""Optimized Stage 1: PII Detection with Universal Caching
 
 Supports both OpenAI (prompt caching) and Ollama (KV cache).
 """
 
-# Standard library imports
+
+# 표준 라이브러리 import
 import json
 import os
 import re
+from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-# Project-specific imports
+
+# 프로젝트 관련 import
 from config.config import HeuristicConfig, Settings
 from pseudragon.llm.json_parser import safe_parse_json
 from pseudragon.llm.session_manager import UniversalSessionManager
@@ -109,31 +111,34 @@ class Stage1LLMResponseError(RuntimeError):
 
 
 def load_prompt(stage_name: str, prompt_type: str = "system") -> str:
-    """
-    Load prompt template from resources/prompts/ based on PROMPT_MODE
-    
+    """Load prompt template from resources/prompts/ based on PROMPT_MODE
+
     Args:
         stage_name: Name of the stage (e.g., "stage1_pii_identification")
+
         prompt_type: Type of prompt ("system" or "user")
-    
+
     Returns:
         Prompt text content
     """
     prompt_dir = os.path.join(os.path.dirname(__file__), "..", "..")
 
     # Extract stage number (stage1 or stage2) from stage_name
+
     if "stage1" in stage_name:
         stage = "stage1"
     elif "stage2" in stage_name:
         stage = "stage2"
     else:
         # Fallback to old behavior for other stages
+
         filename = f"{stage_name}_{prompt_type}.txt"
         filepath = os.path.join(prompt_dir, "resources", "prompts", filename)
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
 
     # Use Settings.get_prompt_path() for stage1 and stage2
+
     prompt_path = Settings.get_prompt_path(stage, prompt_type)
     filepath = os.path.join(prompt_dir, prompt_path)
 
@@ -142,15 +147,14 @@ def load_prompt(stage_name: str, prompt_type: str = "system") -> str:
 
 
 class Stage1PIIDetection:
-    """
-    Optimized Stage 1: PII Identification with Universal Session Management
-    
+    """Optimized Stage 1: PII Identification with Universal Session Management
+
     Key features:
     - Auto-detects LLM provider (OpenAI, Ollama, etc.)
     - Applies provider-specific caching optimizations
     - System prompt sent only once per table
     - Estimated 70-90% reduction in system prompt tokens
-    
+
     Provider-specific optimizations:
     - OpenAI: Automatic prompt caching
     - Ollama: KV cache with keep_alive
@@ -158,8 +162,7 @@ class Stage1PIIDetection:
     """
 
     def __init__(self, rag_system, llm_client, provider: str = "auto", base_url: Optional[str] = None, expert_preference_manager=None):
-        """
-        Initialize optimized Stage 1 with provider detection.
+        """Initialize optimized Stage 1 with provider detection.
 
         Args:
             rag_system: RAG system for context retrieval
@@ -197,15 +200,8 @@ class Stage1PIIDetection:
         # Initialize audit logger (optional, for COT logging)
         self.audit_logger = None
 
-    def identify_pii(
-            self,
-            schema: Dict[str, Any],
-            table_name: str,
-            log_callback: Optional[Callable] = None,
-            semantic_similarity_weight: Optional[float] = None,
-    ) -> Dict[str, Any]:
-        """
-        Identify PII columns using session-based approach with provider detection.
+    def identify_pii(self, schema: Dict[str, Any], table_name: str, log_callback: Optional[Callable] = None) -> Dict[str, Any]:
+        """Identify PII columns using session-based approach with provider detection.
 
         Now supports batch parallel processing for LLM verification.
 
@@ -213,7 +209,6 @@ class Stage1PIIDetection:
             schema: Enhanced schema with column metadata
             table_name: Name of the table
             log_callback: Optional logging callback
-            semantic_similarity_weight: Optional per-run alpha override
 
         Returns:
             Dictionary mapping column names to PII analysis results
@@ -221,15 +216,20 @@ class Stage1PIIDetection:
         results = {}
 
         # Create or get session for this table
-        # CRITICAL: max_history=0 prevents token overflow
+
+        # max_history=0 prevents token overflow
+
         # Each column verification is independent, so no conversation history is needed
+
         # This keeps only the system prompt and discards previous user/assistant messages
+
         session_id = f"stage1_{table_name}"
         session = self.session_manager.get_or_create_session(
             session_id=session_id,
             system_prompt=self.system_prompt,
             ttl_minutes=60,
             max_history=0  # No history - each column is independent
+
         )
 
         self._log(f"[Search] [Stage 1] PII Identification for '{table_name}'", log_callback)
@@ -242,12 +242,14 @@ class Stage1PIIDetection:
         learned_classification_count = 0
 
         # Columns that need LLM verification (will be processed in parallel batches)
+
         llm_verification_columns: List[Tuple[str, Dict[str, Any]]] = []
 
         # Learned heuristic classification count
         learned_heuristic_count = 0
 
         # First pass: Apply heuristics and learned classifications (fast, sequential)
+
         for column, metadata in schema.items():
             data_type = metadata.get("type", "")
             column_comment = metadata.get("comment", "")
@@ -255,6 +257,8 @@ class Stage1PIIDetection:
             # Step 0: Check learned PII classification (HIGHEST PRIORITY)
             # If user has previously corrected this column's classification, use that
             # Now supports RAG-based similarity search for similar columns
+
+
             learned_result = None
             if self.heuristics_enabled and self.expert_preference_manager:
                 learned_result = self.expert_preference_manager.get_learned_pii_classification(
@@ -318,6 +322,7 @@ class Stage1PIIDetection:
 
             # Step 0.5: Check learned heuristic patterns (second highest priority)
             # Fast pattern matching using regex patterns learned from expert feedback
+
             # This is faster than RAG similarity search (< 1ms vs ~100ms)
             heuristic_result = None
             if self.heuristics_enabled and self.expert_preference_manager:
@@ -404,10 +409,12 @@ class Stage1PIIDetection:
                 }
 
             # Step 3: Uncertain cases - queue for LLM verification
+
             else:
                 llm_verification_columns.append((column, metadata))
 
         # Second pass: Process LLM verification columns in parallel batches
+
         if llm_verification_columns:
             llm_failures = []
             batch_size = Settings.LLM_BATCH_SIZE
@@ -417,6 +424,7 @@ class Stage1PIIDetection:
             self._log(f"\n   [Parallel] Parallel LLM verification: {total_llm_columns} columns (batch_size={batch_size}, max_workers={max_workers})", log_callback)
 
             # Process in batches
+
             for batch_start in range(0, total_llm_columns, batch_size):
                 batch_end = min(batch_start + batch_size, total_llm_columns)
                 batch = llm_verification_columns[batch_start:batch_end]
@@ -426,6 +434,7 @@ class Stage1PIIDetection:
                 self._log(f"   [Batch] Processing batch {batch_num}/{total_batches} ({len(batch)} columns)", log_callback)
 
                 # Process batch in parallel using ThreadPoolExecutor
+
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     # Submit all tasks in this batch
                     future_to_column = {}
@@ -436,8 +445,7 @@ class Stage1PIIDetection:
                             column=column,
                             metadata=metadata,
                             table_name=table_name,
-                            log_callback=log_callback,
-                            semantic_similarity_weight=semantic_similarity_weight,
+                            log_callback=log_callback
                         )
                         future_to_column[future] = column
 
@@ -488,17 +496,8 @@ class Stage1PIIDetection:
 
         return results
 
-    def _process_single_column_llm(
-            self,
-            session,
-            column: str,
-            metadata: Dict[str, Any],
-            table_name: str,
-            log_callback: Optional[Callable] = None,
-            semantic_similarity_weight: Optional[float] = None,
-    ) -> Dict[str, Any]:
-        """
-        Process a single column with LLM verification (used for parallel processing).
+    def _process_single_column_llm(self, session, column: str, metadata: Dict[str, Any], table_name: str, log_callback: Optional[Callable] = None) -> Dict[str, Any]:
+        """Process a single column with LLM verification (used for parallel processing).
 
         Args:
             session: LLM session
@@ -521,8 +520,7 @@ class Stage1PIIDetection:
             table_name=table_name,
             data_type=data_type,
             column_comment=column_comment,
-            log_callback=log_callback,
-            semantic_similarity_weight=semantic_similarity_weight,
+            log_callback=log_callback
         )
 
         # Extract LLM decision for comparison
@@ -543,6 +541,8 @@ class Stage1PIIDetection:
                 "evidence": llm_result.get("evidence", ""),
                 "reasoning": llm_result.get("reasoning", ""),
                 "evidence_source": llm_result.get("evidence_source", "LLM Verification"),
+                "model_evidence_source": llm_result.get("model_evidence_source", ""),
+                "retrieved_evidence": llm_result.get("retrieved_evidence", []),
                 "column_comment": column_comment,
                 "detection_method": "llm",
                 "confidence": llm_result.get("confidence", "Medium")
@@ -556,6 +556,8 @@ class Stage1PIIDetection:
                 "evidence": llm_result.get("evidence", ""),
                 "reasoning": llm_result.get("reasoning", ""),
                 "evidence_source": llm_result.get("evidence_source", "LLM Verification"),
+                "model_evidence_source": llm_result.get("model_evidence_source", ""),
+                "retrieved_evidence": llm_result.get("retrieved_evidence", []),
                 "column_comment": column_comment,
                 "detection_method": "llm",
                 "confidence": llm_result.get("confidence", "Medium")
@@ -563,11 +565,13 @@ class Stage1PIIDetection:
             self._log(f"    [X] {column}: Not PII", log_callback)
             self._log(f"   [OK] [Final Classification]: is_pii=False (matches LLM decision)", log_callback)
 
+        for key in ("retrieval_trace", "needs_review", "legal_applicability_review_required"):
+            if key in llm_result:
+                result[key] = deepcopy(llm_result[key])
         return result
 
     def _heuristic_pii(self, column_name: str, column_comment: str = "") -> bool:
-        """
-        Fast heuristic check using regex patterns on column name and comment.
+        """Fast heuristic check using regex patterns on column name and comment.
 
         Implements HEURISTIC_PII() from Algorithm 1 with COMMENT support.
 
@@ -597,10 +601,10 @@ class Stage1PIIDetection:
         return False
 
     def _infer_pii_type(self, column_name: str, column_comment: str = "") -> str:
-        """
-        Infer PII type from column name and comment
+        """Infer PII type from column name and comment
 
         CRITICAL: This function is only called for columns that matched PII heuristics.
+
         Therefore, it should NEVER return "Non-PII".
 
         Args:
@@ -614,7 +618,7 @@ class Stage1PIIDetection:
         matched_heuristic = self.heuristic_manager.match_column(column_name)
         if matched_heuristic:
             pii_type = matched_heuristic.get("pii_type")
-            # CRITICAL: Only accept valid PII types, reject "Non-PII"
+            # Only accept valid PII types, reject "Non-PII"
             # This prevents the bug where is_pii=True but pii_type="Non-PII"
             if pii_type and pii_type == "PII":
                 return pii_type
@@ -624,24 +628,24 @@ class Stage1PIIDetection:
             matched_comment_heuristic = self.heuristic_manager.match_column(column_comment)
             if matched_comment_heuristic:
                 pii_type = matched_comment_heuristic.get("pii_type")
-                # CRITICAL: Only accept valid PII types, reject "Non-PII"
+                # Only accept valid PII types, reject "Non-PII"
                 if pii_type and pii_type == "PII":
                     return pii_type
 
         # Default: All PII columns are classified as PII
+
         return "PII"
 
     def _heuristic_non_pii(self, column_name: str, column_comment: str = "") -> bool:
-        """
-        Fast heuristic check for clearly Non-PII columns
-        
+        """Fast heuristic check for clearly Non-PII columns
+
         Identifies system columns, metadata, timestamps, counters, etc.
         that are clearly not personal information.
-        
+
         Args:
             column_name: Name of the column
             column_comment: Column description/comment from database schema
-        
+
         Returns:
             True if column is clearly Non-PII (skip LLM verification)
         """
@@ -666,63 +670,41 @@ class Stage1PIIDetection:
 
         return False
 
-    def _llm_verify_pii_with_session(
-            self,
-            session,
-            column: str,
-            table_name: str,
-            data_type: str = "",
-            column_comment: str = "",
-            log_callback: Optional[Callable] = None,
-            semantic_similarity_weight: Optional[float] = None,
-    ) -> Dict[str, Any]:
-        """
-        LLM-based PII verification using universal session.
-        
+    def _llm_verify_pii_with_session(self, session, column: str, table_name: str, data_type: str = "", column_comment: str = "", log_callback: Optional[Callable] = None) -> Dict[
+        str, Any]:
+        """LLM-based PII verification using universal session.
+
         Automatically uses provider-specific optimizations:
         - OpenAI: Prompt caching + Streaming (if enabled)
         - Ollama: KV cache with keep_alive
         """
         # Build column description with structured format
+
         column_desc = f"Column Name: {column}"
         column_desc += f"\nData Type: {data_type if data_type else 'Not specified'}"
         column_desc += f"\nDescription: {column_comment if column_comment else 'Not provided'}"
 
         # Retrieve context from RAG with detailed information (include data type in query)
+
         data_type = data_type if data_type else ""
         query = (
             f"Does the schema column '{column}' ({data_type}) with the description "
             f"'{column_comment}' constitute Personal Identifiable Information (PII)?"
         )
 
-        # Use retrieve_with_details if available, otherwise fall back to retrieve
-        # Prioritize 'status_change' feedback for PII identification
-        #
-        # NOTE: The RAG system now performs DUAL-MODEL SEARCH:
-        # 1. Legal documents: configured legal-domain embedding model
-        # 2. Feedback documents: SBERT for semantic similarity (finds SIMILAR columns, not exact match)
-        #
-        # metadata_filter is passed for logging purposes but NOT used for strict filtering
-        metadata_filter = {'table': table_name, 'column': column}
+        # The default source-order search ranks the provided description, then
+        # judges relevance in this task. Approved memory routes run earlier;
+        # legacy retrieval can still use the status-change feedback filter.
+        metadata_filter = {'table': table_name, 'column': column,
+                           'description': column_comment}
 
         # Check if RAG is available (not None)
+
         if self.rag is not None:
             if hasattr(self.rag, 'retrieve_with_details'):
-                context, source_docs, doc_details = self.rag.retrieve_with_details(
-                    query,
-                    exclude_feedback=False,
-                    allowed_feedback_types=['status_change'],
-                    metadata_filter=metadata_filter,
-                    semantic_similarity_weight=semantic_similarity_weight,
-                )
+                context, source_docs, doc_details = self.rag.retrieve_with_details(query, exclude_feedback=False, allowed_feedback_types=['status_change'], metadata_filter=metadata_filter)
             else:
-                context, source_docs = self.rag.retrieve(
-                    query,
-                    exclude_feedback=False,
-                    allowed_feedback_types=['status_change'],
-                    metadata_filter=metadata_filter,
-                    semantic_similarity_weight=semantic_similarity_weight,
-                )
+                context, source_docs = self.rag.retrieve(query, exclude_feedback=False, allowed_feedback_types=['status_change'], metadata_filter=metadata_filter)
                 doc_details = []
 
             # Log RAG context retrieval for debugging (summary only)
@@ -732,10 +714,15 @@ class Stage1PIIDetection:
             # Note: Document details are not logged to avoid excessive output
         else:
             # RAG is disabled - use empty context
+
             context = ""
             source_docs = []
             doc_details = []
             self._log(f"\n   [LLM-ONLY] RAG disabled, using LLM knowledge only for '{column}'", log_callback)
+
+        retrieval_result = getattr(doc_details, "retrieval_result", None)
+        if retrieval_result is None and self.rag is not None:
+            retrieval_result = getattr(self.rag, "last_result", None)
 
         # Load user prompt template
         user_prompt_template = load_prompt("stage1_pii_identification", "user")
@@ -856,6 +843,14 @@ class Stage1PIIDetection:
                     pii_type=result.get("pii_type", "Unknown")
                 )
 
+        # Preserve the model's attribution separately from exact supplied passages.
+        result["model_evidence_source"] = result.get("evidence_source", "")
+        result["retrieved_evidence"] = [d["evidence_record"] for d in doc_details if "evidence_record" in d]
+        if retrieval_result is not None:
+            result["retrieval_trace"] = deepcopy(retrieval_result)
+            result["needs_review"] = retrieval_result.get("needs_review", True)
+            result["legal_applicability_review_required"] = retrieval_result.get(
+                "legal_applicability_review_required", True)
         # Add evidence source from RAG
         if doc_details:
             sources = [doc.get('source', 'Unknown') for doc in doc_details]
@@ -919,8 +914,7 @@ class Stage1PIIDetection:
         return None
 
     def _log_cot_reasoning(self, column: str, cot: Dict[str, Any], log_callback: Optional[Callable] = None):
-        """
-        Log chain-of-thought reasoning from LLM response.
+        """Log chain-of-thought reasoning from LLM response.
 
         Args:
             column: Column name
@@ -958,9 +952,8 @@ class Stage1PIIDetection:
         self._log("", log_callback)  # Empty line for readability
 
     def set_audit_logger(self, audit_logger):
-        """
-        Set audit logger for COT logging.
-        
+        """Set audit logger for COT logging.
+
         Args:
             audit_logger: AuditLogger instance
         """

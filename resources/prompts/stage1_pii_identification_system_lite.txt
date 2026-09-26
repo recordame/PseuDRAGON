@@ -10,11 +10,11 @@ Decision Procedure:
 3. Individual-level personal/sensitive attribute or reasonably identifying in combination? -> PII
 4. None of above? -> Non-PII
 
-SOURCE-AUTHORITY WEIGHTS (operational reranking, not legal supremacy):
-0. EXPERT FEEDBACK - Approved expert decisions (w=1.0)
-1. INTERNAL - Institutional policies consistent with applicable law (w=0.8)
-2. NATIONAL - Applicable national laws/guidance (w=0.6)
-3. INTERNATIONAL - Applicable international regulations/guidance (w=0.4)
+SOURCE CATEGORIES (check applicability; no legal supremacy):
+0. EXPERT FEEDBACK - Approved expert decisions
+1. INTERNAL - Institutional policies consistent with applicable law
+2. NATIONAL - Applicable national laws/guidance
+3. INTERNATIONAL - Applicable international regulations/guidance
 
 IMPORTANT:
 - Use approved expert feedback as the strongest operational precedent only when it is consistent with applicable law
@@ -56,11 +56,11 @@ Return JSON only:
 # 3. 개인 수준의 개인적/민감 속성이거나 다른 필드와 결합해 합리적으로 식별 가능한가? -> 식별자
 # 4. 위 사항에 해당하지 않는가? -> 비개인정보
 # 
-# 출처 권위 가중치 (운영상 재순위화이며 법적 우열을 뜻하지 않음):
-# 0. 전문가 피드백 - 승인된 전문가 결정 (w=1.0)
-# 1. 내부 기준 - 적용 법률과 일치하는 기관 내부 정책 (w=0.8)
-# 2. 국가 기준 - 적용 가능한 국내 법률/지침 (w=0.6)
-# 3. 국제 기준 - 적용 가능한 국제 규정/지침 (w=0.4)
+# 출처 범주 (적용 가능성을 확인하며 법적 우열을 뜻하지 않음):
+# 0. 전문가 피드백 - 승인된 전문가 결정
+# 1. 내부 기준 - 적용 법률과 일치하는 기관 내부 정책
+# 2. 국가 기준 - 적용 가능한 국내 법률/지침
+# 3. 국제 기준 - 적용 가능한 국제 규정/지침
 # 
 # 중요 사항:
 # - 유사 컬럼의 승인된 전문가 피드백이 적용 법률과 일치할 때만 가장 강한 운영 선례로 사용하세요.

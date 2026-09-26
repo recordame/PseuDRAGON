@@ -1,5 +1,4 @@
-"""
-PseuDRAGON File Logger
+"""PseuDRAGON File Logger
 
 Provides file-based logging with timestamp-based log file creation.
 """
@@ -11,10 +10,10 @@ from typing import Optional
 
 
 class PseuDRAGONLogger:
-    """
-    Centralized logger for PseuDRAGON pipeline
+    """Centralized logger for PseuDRAGON pipeline
 
     Features:
+
     - Console output with emoji support
     - File logging with timestamp-based filenames
     - Stage timing measurement
@@ -24,14 +23,13 @@ class PseuDRAGONLogger:
     _initialized: bool = False
 
     def __new__(cls, *args, **kwargs):
-        """Singleton pattern"""
+        """Singleton pattern / 싱글톤 패턴"""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self, log_dir: Optional[str] = None, session_id: Optional[str] = None):
-        """
-        Initialize the logger
+        """Initialize the logger
 
         Args:
             log_dir: Directory for log files
@@ -41,6 +39,7 @@ class PseuDRAGONLogger:
             return
 
         # Determine log directory (default: code/logs)
+
         if log_dir is None:
             # code/pseudragon/logging -> code
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -66,14 +65,13 @@ class PseuDRAGONLogger:
         self._stage_durations: dict[str, float] = {}
 
         # Table statistics tracking
+
         self._table_stats: dict[str, dict] = {}
 
         PseuDRAGONLogger._initialized = True
 
     def _setup_logging(self) -> None:
-        """
-        Configure logging handlers
-        """
+        """Configure logging handlers"""
         # Create logger
         self.logger = logging.getLogger("PseuDRAGON")
         self.logger.setLevel(logging.DEBUG)
@@ -92,7 +90,9 @@ class PseuDRAGONLogger:
         self.logger.addHandler(file_handler)
 
         # Console handler - DISABLED to prevent duplicate logging
+
         # The web interface's log_producer() already handles console output
+
         # console_handler = logging.StreamHandler(sys.stdout)
         # console_handler.setLevel(logging.INFO)
         # console_handler.setFormatter(console_formatter)
@@ -105,8 +105,7 @@ class PseuDRAGONLogger:
         self.logger.info(f"=" * 80)
 
     def reinitialize(self, session_id: Optional[str] = None) -> None:
-        """
-        Reinitialize logger with new session
+        """Reinitialize logger with new session
 
         Args:
             session_id: New session identifier
@@ -136,24 +135,23 @@ class PseuDRAGONLogger:
         PseuDRAGONLogger._initialized = True
 
     def info(self, message: str) -> None:
-        """Log info message"""
+        """Log info message / INFO 메시지 로깅"""
         self.logger.info(message)
 
     def debug(self, message: str) -> None:
-        """Log debug message"""
+        """Log debug message / DEBUG 메시지 로깅"""
         self.logger.debug(message)
 
     def warning(self, message: str) -> None:
-        """Log warning message"""
+        """Log warning message / WARNING 메시지 로깅"""
         self.logger.warning(message)
 
     def error(self, message: str) -> None:
-        """Log error message"""
+        """Log error message / ERROR 메시지 로깅"""
         self.logger.error(message)
 
     def stage_start(self, stage_name: str) -> None:
-        """
-        Record stage start time
+        """Record stage start time
 
         Args:
             stage_name: Name of the pipeline stage
@@ -163,8 +161,7 @@ class PseuDRAGONLogger:
         self.info(f"[TIMER START] {stage_name}")
 
     def stage_end(self, stage_name: str) -> float:
-        """
-        Record stage end time and calculate duration
+        """Record stage end time and calculate duration
 
         Args:
             stage_name: Name of the pipeline stage
@@ -199,8 +196,7 @@ class PseuDRAGONLogger:
             return 0.0
 
     def get_stage_duration(self, stage_name: str) -> Optional[float]:
-        """
-        Get duration for a completed stage
+        """Get duration for a completed stage
 
         Args:
             stage_name: Name of the pipeline stage
@@ -211,8 +207,7 @@ class PseuDRAGONLogger:
         return self._stage_durations.get(stage_name)
 
     def get_all_stage_durations(self) -> dict[str, float]:
-        """
-        Get all recorded stage durations
+        """Get all recorded stage durations
 
         Returns:
             Dictionary of stage names to durations
@@ -220,8 +215,7 @@ class PseuDRAGONLogger:
         return self._stage_durations.copy()
 
     def log_table_stats(self, table_name: str, total_columns: int, pii_columns: int) -> None:
-        """
-        Record table statistics for summary
+        """Record table statistics for summary
 
         Args:
             table_name: Name of the table
@@ -232,8 +226,7 @@ class PseuDRAGONLogger:
         self.info(f"[TABLE STATS] {table_name}: {total_columns} columns total, {pii_columns} PII columns")
 
     def get_table_stats(self, table_name: str) -> Optional[dict]:
-        """
-        Get statistics for a specific table
+        """Get statistics for a specific table
 
         Args:
             table_name: Name of the table
@@ -244,8 +237,7 @@ class PseuDRAGONLogger:
         return self._table_stats.get(table_name)
 
     def get_all_table_stats(self) -> dict[str, dict]:
-        """
-        Get all recorded table statistics
+        """Get all recorded table statistics
 
         Returns:
             Dictionary of table names to statistics
@@ -253,14 +245,13 @@ class PseuDRAGONLogger:
         return self._table_stats.copy()
 
     def log_summary(self) -> None:
-        """
-        Log summary of all stage durations and table statistics
-        """
+        """Log summary of all stage durations and table statistics"""
         self.info("=" * 80)
         self.info("PIPELINE EXECUTION SUMMARY")
         self.info("=" * 80)
 
         # Table Statistics Section
+
         if self._table_stats:
             self.info("")
             self.info("[TABLE STATISTICS]")
@@ -292,6 +283,7 @@ class PseuDRAGONLogger:
                 self.info(f"    - Total PII Columns: {total_pii_columns} ({overall_pii_ratio:.1f}%)")
 
         # Stage Timing Section
+
         self.info("")
         self.info("[STAGE TIMING]")
         self.info("-" * 40)
@@ -332,8 +324,7 @@ class PseuDRAGONLogger:
         self.info("=" * 80)
 
     def get_log_file_path(self) -> str:
-        """
-        Get the current log file path
+        """Get the current log file path
 
         Returns:
             Path to the log file
@@ -342,12 +333,12 @@ class PseuDRAGONLogger:
 
 
 # Global logger instance
+
 _logger: Optional[PseuDRAGONLogger] = None
 
 
 def get_logger(log_dir: Optional[str] = None, session_id: Optional[str] = None) -> PseuDRAGONLogger:
-    """
-    Get or create the global logger instance
+    """Get or create the global logger instance
 
     Args:
         log_dir: Directory for log files
@@ -363,8 +354,7 @@ def get_logger(log_dir: Optional[str] = None, session_id: Optional[str] = None) 
 
 
 def reinitialize_logger(session_id: Optional[str] = None) -> PseuDRAGONLogger:
-    """
-    Reinitialize the global logger with a new session
+    """Reinitialize the global logger with a new session
 
     Args:
         session_id: New session identifier

@@ -1,7 +1,7 @@
-"""
-Audit Logger
+"""Audit Logger
 
 Implements audit trail system:
+
 - Records final policy
 - Logs all user edits and rationales
 - Generates compliance report
@@ -18,9 +18,7 @@ from typing import Any, Dict, List, Optional
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    """
-    Custom JSON encoder for handling Decimal and datetime objects
-    """
+    """Custom JSON encoder for handling Decimal and datetime objects"""
 
     def default(self, obj):
         if isinstance(obj, Decimal):
@@ -31,8 +29,7 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 class AuditLogger:
-    """
-    Audit Trail System for Regulatory Compliance
+    """Audit Trail System for Regulatory Compliance
 
     Implements audit logging requirements from paper Section 4.3.4.
 
@@ -42,11 +39,11 @@ class AuditLogger:
     """
 
     def __init__(self, log_dir: str = "output", session_id: Optional[str] = None):
-        """
-        Initialize audit logger
+        """Initialize audit logger
 
         Args:
             log_dir: Base directory to store audit logs
+
             session_id: Optional session ID (timestamp)
         """
         self.session_id = session_id or datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -59,11 +56,11 @@ class AuditLogger:
         self._log_event("SESSION_START", {"session_id": self.session_id, "timestamp": datetime.now().isoformat()}, )
 
     def _log_event(self, event_type: str, data: Dict[str, Any]):
-        """
-        Internal method to log an event
+        """Internal method to log an event
 
         Args:
             event_type: Type of event (USER_EDIT, POLICY_APPROVED, etc.)
+
             data: Event data dictionary
         """
         event = {"timestamp": datetime.now().isoformat(), "session_id": self.session_id, "event_type": event_type, "data": data, }
@@ -72,21 +69,21 @@ class AuditLogger:
             f.write(json.dumps(event, ensure_ascii=False, cls=CustomJSONEncoder) + "\n")
 
     def log_stage_start(self, stage: str, table: str):
-        """
-        Log the start of a pipeline stage
+        """Log the start of a pipeline stage
 
         Args:
             stage: Stage name (Stage 1, Stage 2, etc.)
+
             table: Table name being processed
         """
         self._log_event("STAGE_START", {"stage": stage, "table": table})
 
     def log_stage_complete(self, stage: str, table: str, result: Optional[Dict] = None):
-        """
-        Log the completion of a pipeline stage
+        """Log the completion of a pipeline stage
 
         Args:
             stage: Stage name
+
             table: Table name
         """
         self._log_event("STAGE_COMPLETE", {"stage": stage, "table": table})
@@ -103,8 +100,7 @@ class AuditLogger:
             old_code_snippet: str = "",
             new_code_snippet: str = "",
             legal_evidence: str = "", ):
-        """
-        Log user modification in Stage 3 HITL
+        """Log user modification in Stage 3 HITL
 
         Implements user edit logging
 
@@ -112,14 +108,23 @@ class AuditLogger:
 
         Args:
             table: Table name
+
             column: Column being modified
+
             old_action: Previous action
+
             new_action: New action selected by user
+
             rationale: User's rationale for the change
+
             old_parameters: Previous action parameters
+
             new_parameters: New action parameters
+
             old_code_snippet: Previous code implementation
+
             new_code_snippet: New code implementation
+
             legal_evidence: Legal basis for the change
         """
         self._log_event(
@@ -139,8 +144,7 @@ class AuditLogger:
             }, )
 
     def log_policy_approval(self, table_name: str, policy: Dict[str, Any], approved_by: str = "user"):
-        """
-        Log final policy approval in Stage 3
+        """Log final policy approval in Stage 3
 
         Implements policy approval logging
 
@@ -148,7 +152,9 @@ class AuditLogger:
 
         Args:
             table_name: Name of the table
+
             policy: Approved policy dictionary
+
             approved_by: User who approved the policy
         """
         policy_summary = {"table_name": table_name, "total_columns": len(policy) if isinstance(policy, dict) else 0, "approved_by": approved_by, }
@@ -180,35 +186,37 @@ class AuditLogger:
         self._log_event("POLICY_APPROVED", policy_summary)
 
     def log_validation_result(self, table: str, violations: List[Dict[str, Any]]):
-        """
-        Log validation results
+        """Log validation results
 
         Args:
             table: Table name
+
             violations: List of violations found
         """
         self._log_event("VALIDATION", {"table": table, "num_violations": len(violations), "violations": violations, }, )
 
     def log_code_generation(self, table: str, code_length: int, validation_passed: bool):
-        """
-        Log code generation event
+        """Log code generation event
 
         Args:
             table: Table name
+
             code_length: Length of generated code
+
             validation_passed: Whether code passed syntax validation
         """
         self._log_event("CODE_GENERATION", {"table": table, "code_length": code_length, "validation_passed": validation_passed, }, )
 
     def generate_compliance_report(self, policy_dict: Dict[str, Any], table_name: str, output_dir: Optional[str] = None, ) -> str:
-        """
-        Generate compliance report for regulatory review
+        """Generate compliance report for regulatory review
 
         Implements compliance report generation
 
         Args:
             policy_dict: Policy as dictionary
+
             table_name: Table name
+
             output_dir: Optional directory to save the report
 
         Returns:
@@ -306,14 +314,17 @@ class AuditLogger:
             new_data: Optional[Dict[str, Any]] = None,
             user_id: str = "system"
     ):
-        """
-        Log heuristic pattern modification
-        
+        """Log heuristic pattern modification
+
         Args:
             action: Action type (ADD, UPDATE, DELETE)
+
             heuristic_id: Heuristic ID
+
             old_data: Previous heuristic data (for UPDATE/DELETE)
+
             new_data: New heuristic data (for ADD/UPDATE)
+
             user_id: User who made the change
         """
         self._log_event(
@@ -332,15 +343,19 @@ class AuditLogger:
             rationale: str = "",
             user_id: str = "user"
     ):
-        """
-        Log PII classification change in Stage 3
-        
+        """Log PII classification change in Stage 3
+
         Args:
             table: Table name
+
             column: Column name
+
             old_status: Previous PII status
+
             new_status: New PII status
+
             rationale: Reason for the change
+
             user_id: User who made the change
         """
         self._log_event(
@@ -355,8 +370,7 @@ class AuditLogger:
         )
 
     def get_session_summary(self) -> Dict[str, Any]:
-        """
-        Get summary of current session
+        """Get summary of current session
 
         Returns:
             Dictionary with session statistics
@@ -377,11 +391,7 @@ class AuditLogger:
         return {"session_id": self.session_id, "total_events": len(events), "event_counts": event_counts, "log_file": str(self.log_file), }
 
     def _debug_log(self, msg: str) -> None:
-        # try:
-        #     with open("audit_debug.txt", "a", encoding="utf-8") as f:
-        #         f.write(f"{datetime.now().isoformat()} - {msg}\n")
-        # except:
-        #     pass
+        """Compatibility hook; runtime events are recorded by the audit logger."""
         pass
 
     def get_all_events(
@@ -390,21 +400,24 @@ class AuditLogger:
             end_date: Optional[str] = None,
             user_id: Optional[str] = None
     ) -> List[Dict[str, Any]]:
-        """
-        Get all audit events with optional filtering
-        
+        """Get all audit events with optional filtering
+
         Args:
             event_type: Filter by event type
+
             start_date: Filter by start date (ISO format)
+
             end_date: Filter by end date (ISO format)
+
             user_id: Filter by user ID
-        
+
         Returns:
             List of audit events
         """
         events = []
 
         # Search all audit logs in the base output directory recursively
+
         # Pattern: output/session_id/audit_logs/*.jsonl
         self._debug_log(f"Searching in {self.base_output_dir} with filters: type={event_type}, start={start_date}, end={end_date}")
         log_files = list(self.base_output_dir.rglob("*.jsonl"))
@@ -454,6 +467,7 @@ class AuditLogger:
                 continue
 
         # Sort events by timestamp descending (newest first)
+
         events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
         return events
@@ -463,14 +477,17 @@ class AuditLogger:
             chain_of_thought: Dict[str, Any],
             is_pii: bool, pii_type: str
     ):
-        """
-        Log Stage 1 Chain-of-Thought reasoning for PII detection.
-        
+        """Log Stage 1 Chain-of-Thought reasoning for PII detection.
+
         Args:
             table: Table name
+
             column: Column name
+
             chain_of_thought: Chain-of-thought reasoning from LLM
+
             is_pii: Whether column is PII
+
             pii_type: PII type classification
         """
         self._log_event(
@@ -492,14 +509,17 @@ class AuditLogger:
             chain_of_thought: Dict[str, Any],
             methods_count: int
     ):
-        """
-        Log Stage 2 Chain-of-Thought reasoning for policy synthesis.
-        
+        """Log Stage 2 Chain-of-Thought reasoning for policy synthesis.
+
         Args:
             table: Table name
+
             column: Column name
+
             pii_type: PII type
+
             chain_of_thought: Chain-of-thought reasoning from LLM
+
             methods_count: Number of methods generated
         """
         self._log_event(

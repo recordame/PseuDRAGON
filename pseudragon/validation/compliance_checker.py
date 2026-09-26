@@ -1,7 +1,7 @@
-"""
-Compliance Validator
+"""Compliance Validator
 
 Implements automatic compliance checks:
+
 1. Legal compliance
 2. Consistency
 3. Utility preservation
@@ -19,14 +19,17 @@ from pseudragon.domain.policy_dsl import ActionType, Policy
 
 @dataclass
 class Violation:
-    """
-    Represents a policy violation
+    """Represents a policy violation
 
     Attributes:
         severity: HIGH, MEDIUM, or LOW
+
         column: Affected column name(s)
+
         message: Description of the violation
+
         suggestion: Recommended fix
+
         check_type: Which check detected this (legal, consistency, etc.)
     """
 
@@ -38,20 +41,17 @@ class Violation:
 
 
 class ComplianceValidator:
-    """
-    Automatic Compliance Validator
+    """Automatic Compliance Validator
 
     Implements the 5-check validation framework from paper Section 4.3.1.
 
     Note: Check 4 (Privacy metrics) uses heuristic-based estimation.
     Full k-anonymity calculation requires actual data, which is beyond
     the scope of schema-only analysis.
-
     """
 
     def __init__(self, rag_system=None):
-        """
-        Initialize validator
+        """Initialize validator
 
         Args:
             rag_system: Optional RAG system for legal context retrieval
@@ -59,13 +59,13 @@ class ComplianceValidator:
         self.rag = rag_system
 
     def validate_policy(self, policy: Policy, schema: Dict[str, str]) -> List[Violation]:
-        """
-        Run all 5 compliance checks on a policy
+        """Run all 5 compliance checks on a policy
 
         Implements CONTEXTUAL_COMPLIANCE_CHECK from Algorithm (Line 541).
 
         Args:
             policy: Policy object to validate
+
             schema: Database schema (column_name -> data_type)
 
         Returns:
@@ -73,27 +73,34 @@ class ComplianceValidator:
         """
         violations = []
 
+        # Check 1: Legal Compliance
         violations.extend(self._check_legal_compliance(policy))
 
+        # Check 2: Consistency
         violations.extend(self._check_consistency(policy))
 
+        # Check 3: Utility Preservation
         violations.extend(self._check_utility_preservation(policy))
 
+        # Check 4: Privacy Metrics
         violations.extend(self._check_privacy_metrics(policy))
 
+        # Check 5: Completeness
         violations.extend(self._check_completeness(policy, schema))
 
         return violations
 
     def _check_legal_compliance(self, policy: Policy) -> List[Violation]:
-        """
-        Check 1: Legal Compliance
+        """Check 1: Legal Compliance
 
         Verifies that all PII columns are processed according to legal requirements.
 
         Checks:
+
         - All PII columns have legal justification
+
         - DELETE actions have rationale
+
         - PII are properly handled
         """
         violations = []
@@ -102,6 +109,7 @@ class ComplianceValidator:
             if not col_policy.is_pii:
                 continue
 
+            # Check for legal evidence
             if (not col_policy.action.legal_evidence or col_policy.action.legal_evidence == "Unknown Source"):
                 violations.append(
                     Violation(
@@ -112,6 +120,7 @@ class ComplianceValidator:
                         check_type="legal_compliance", )
                 )
 
+            # Check DELETE rationale
             if (col_policy.action.action == ActionType.DELETE and not col_policy.action.rationale):
                 violations.append(
                     Violation(
@@ -122,6 +131,7 @@ class ComplianceValidator:
                         check_type="legal_compliance", )
                 )
 
+            # Check PII handling
             if (col_policy.pii_type == "PII" and col_policy.action.action not in [ActionType.DELETE, ActionType.HASH, ActionType.TOKENIZE, ]):
                 violations.append(
                     Violation(
@@ -135,22 +145,25 @@ class ComplianceValidator:
         return violations
 
     def _check_consistency(self, policy: Policy) -> List[Violation]:
-        """
-        Check 2: Consistency
+        """Check 2: Consistency
 
         Ensures no logical contradictions in the policy.
 
         Checks:
+
         - Columns mentioned in preferred method are not deleted
+
         - No column is both deleted and used for grouping
         """
         violations = []
 
+        # Find deleted columns
         deleted_cols = set()
         for col_name, col_policy in policy.columns.items():
             if col_policy.action.action == ActionType.DELETE:
                 deleted_cols.add(col_name)
 
+        # Check for conflicts with preferred method
         if policy.preferred_method:
             deleted_cols = [col for col, cp in policy.columns.items() if cp.action == "DELETE"]
             for col in deleted_cols:
@@ -168,8 +181,7 @@ class ComplianceValidator:
         return violations
 
     def _check_utility_preservation(self, policy: Policy) -> List[Violation]:
-        """
-        Check 3: Utility Preservation
+        """Check 3: Utility Preservation
 
         Verifies that the preferred method can still be achieved.
 
@@ -191,6 +203,7 @@ class ComplianceValidator:
         obj_lower = policy.preferred_method.lower()
         aggregation_keywords = ["group by", "sum", "count", "average", "trend", "analysis", ]
 
+        # Check for deleted non-PII columns
         if any(kw in obj_lower for kw in aggregation_keywords):
             non_pii_deleted = []
             for col, pol in policy.columns.items():
@@ -207,6 +220,7 @@ class ComplianceValidator:
                         check_type="utility_preservation", )
                 )
 
+        # Check for PII columns kept without transformation
         pii_cols_kept = 0
         for col, pol in policy.columns.items():
             if pol.is_pii and pol.action.action == ActionType.KEEP:
@@ -225,8 +239,7 @@ class ComplianceValidator:
         return violations
 
     def _check_completeness(self, policy: Policy, schema: Dict[str, str]) -> List[Violation]:
-        """
-        Check 5: Completeness
+        """Check 5: Completeness
 
         Verifies that all columns in the schema are addressed in the policy.
         """
@@ -235,6 +248,7 @@ class ComplianceValidator:
         schema_cols = set(schema.keys())
         policy_cols = set(policy.columns.keys())
 
+        # Check for missing columns
         missing = schema_cols - policy_cols
         if missing:
             violations.append(
@@ -246,6 +260,7 @@ class ComplianceValidator:
                     check_type="completeness", )
             )
 
+        # Check for extra columns
         extra = policy_cols - schema_cols
         if extra:
             violations.append(
@@ -260,8 +275,7 @@ class ComplianceValidator:
         return violations
 
     def get_validation_summary(self, violations: List[Violation]) -> Dict[str, Any]:
-        """
-        Generate a summary of validation results
+        """Generate a summary of validation results
 
         Returns:
             Dictionary with counts by severity and check type

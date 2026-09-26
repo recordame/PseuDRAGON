@@ -59,3 +59,13 @@ dist/
 # Local benchmarks and caches
 benchmark/
 .cache/
+
+# Local source documents in any format; keep only the bundled placeholders.
+resources/legal_documents/**/*
+!resources/legal_documents/**/
+!resources/legal_documents/**/put_*.txt
+*.pkl
+*.sqlite
+*.sqlite3
+*.db
+.release-work/

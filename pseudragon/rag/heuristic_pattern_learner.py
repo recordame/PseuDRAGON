@@ -1,10 +1,8 @@
-"""
-Heuristic Pattern Learner for PseuDRAGON
+"""Heuristic Pattern Learner for PseuDRAGON
 
 Automatically extracts regex patterns from expert feedback to enable
 fast PII classification without LLM calls. Integrates with the unified
 heuristics.json file used by HeuristicManager.
-
 
 Processing hierarchy:
 """
@@ -21,8 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeuristicPatternLearner:
-    """
-    Learns regex patterns from expert feedback and saves to unified heuristics.json
+    """Learns regex patterns from expert feedback and saves to unified heuristics.json
 
     Analyzes column_exact and pii_classification data to extract:
     - Suffix patterns (e.g., _ACNO$ -> PII, _DT$ -> Non-PII)
@@ -31,14 +28,14 @@ class HeuristicPatternLearner:
 
     Auto-learned patterns are marked with source="auto_learned" and can be
     edited or deleted by experts through the web interface.
-
-
     """
 
     # Minimum occurrences for a pattern to be considered reliable
+
     MIN_PATTERN_OCCURRENCES = 2
 
     # Minimum confidence threshold for a pattern to be saved
+
     MIN_CONFIDENCE = 0.8
 
     # Patterns with more than 10% contradictory labels are not promoted into
@@ -50,8 +47,7 @@ class HeuristicPatternLearner:
         feedback_file: str = "resources/expert_feedback.json",
         heuristics_file: str = "resources/heuristics.json"
     ):
-        """
-        Initialize the pattern learner
+        """Initialize the pattern learner
 
         Args:
             feedback_file: Path to expert feedback JSON file
@@ -61,8 +57,7 @@ class HeuristicPatternLearner:
         self.heuristics_file = heuristics_file
 
     def _load_heuristics(self) -> Dict[str, Any]:
-        """
-        Load existing heuristics from unified file
+        """Load existing heuristics from unified file
 
         Returns:
             Dictionary of heuristics
@@ -84,8 +79,7 @@ class HeuristicPatternLearner:
             return self._create_empty_heuristics()
 
     def _migrate_v1_to_v2(self, old_heuristics: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Migrate v1.0 heuristics format to v2.0
+        """Migrate v1.0 heuristics format to v2.0
 
         Args:
             old_heuristics: Old format heuristics
@@ -104,8 +98,7 @@ class HeuristicPatternLearner:
         return new_heuristics
 
     def _create_empty_heuristics(self) -> Dict[str, Any]:
-        """
-        Create empty heuristics structure (v2.0 format)
+        """Create empty heuristics structure (v2.0 format)
 
         Returns:
             Empty heuristics dictionary
@@ -124,9 +117,7 @@ class HeuristicPatternLearner:
         }
 
     def _save_heuristics(self, heuristics: Dict[str, Any]):
-        """
-        Save heuristics to unified file
-        """
+        """Save heuristics to unified file"""
         try:
             # Create directory if it doesn't exist
             dir_name = os.path.dirname(self.heuristics_file)
@@ -154,8 +145,7 @@ class HeuristicPatternLearner:
             logger.error(f"Failed to save heuristics: {e}")
 
     def _generate_id(self, existing_ids: List[str], prefix: str = "auto") -> str:
-        """
-        Generate unique heuristic ID
+        """Generate unique heuristic ID
 
         Args:
             existing_ids: List of existing IDs
@@ -178,8 +168,7 @@ class HeuristicPatternLearner:
         return f"{prefix}{next_num:03d}"
 
     def learn_patterns_from_feedback(self) -> Dict[str, Any]:
-        """
-        Main method to analyze expert feedback and extract patterns
+        """Main method to analyze expert feedback and extract patterns
 
         Returns:
             Dictionary of learned patterns (unified heuristics)
@@ -268,6 +257,7 @@ class HeuristicPatternLearner:
         now = datetime.now().isoformat()
 
         # Build a map of existing regex patterns to their heuristic entries for sample_columns update
+
         existing_pattern_map = {}
         for h in heuristics["heuristics"]:
             regex = h.get("regex", "")
@@ -277,8 +267,7 @@ class HeuristicPatternLearner:
         # Helper to add columns to existing pattern's sample_columns if matched
         # Returns list of unmatched columns that need new patterns
         def add_columns_to_existing_pattern(sample_columns: List[str], pii_type: str) -> List[str]:
-            """
-            Check if columns match existing patterns and add to sample_columns if not already present.
+            """Check if columns match existing patterns and add to sample_columns if not already present.
             Returns list of columns that didn't match any existing pattern.
             """
             unmatched_columns = []
@@ -293,6 +282,7 @@ class HeuristicPatternLearner:
                         if re.search(regex, col_upper, re.IGNORECASE):
                             col_matched = True
                             # Add column to sample_columns if not already present
+
                             existing_samples = h_entry.get("sample_columns", [])
                             if col not in existing_samples:
                                 existing_samples.append(col)
@@ -308,8 +298,7 @@ class HeuristicPatternLearner:
 
         # Helper to create exact column name pattern
         def create_exact_column_pattern(column_name: str, pii_type: str):
-            """
-            Create a new heuristic pattern for exact column name match.
+            """Create a new heuristic pattern for exact column name match.
             Will be refined later through refinement process.
             """
             col_upper = column_name.upper()
@@ -361,6 +350,7 @@ class HeuristicPatternLearner:
         ]:
             for pattern, data in patterns.items():
                 # Skip if pattern already exists
+
                 if pattern in existing_pattern_map:
                     # Add new columns to existing pattern's sample_columns
                     h_entry = existing_pattern_map[pattern]
@@ -378,6 +368,7 @@ class HeuristicPatternLearner:
                     continue
 
                 # Check which sample columns already match existing patterns
+
                 unmatched = add_columns_to_existing_pattern(data["samples"], "PII")
 
                 # If all columns matched existing patterns, skip this pattern
@@ -408,6 +399,7 @@ class HeuristicPatternLearner:
                 existing_pattern_map[pattern] = new_entry
 
         # Process all PII columns that didn't match any pattern - create exact patterns
+
         for col_entry in pii_columns:
             col_name = col_entry["column_name"]
             col_upper = col_name.upper()
@@ -477,6 +469,7 @@ class HeuristicPatternLearner:
                 existing_pattern_map[pattern] = new_entry
 
         # Process all Non-PII columns that didn't match any pattern - create exact patterns
+
         for col_entry in non_pii_columns:
             col_name = col_entry["column_name"]
             col_upper = col_name.upper()
@@ -496,6 +489,7 @@ class HeuristicPatternLearner:
         self._save_heuristics(heuristics)
 
         # Run refinement to extract more specific patterns from sample_columns
+
         heuristics = self.refine_heuristics()
 
         return heuristics
@@ -505,8 +499,7 @@ class HeuristicPatternLearner:
         columns: List[Dict[str, Any]],
         classification: str
     ) -> Dict[str, Dict[str, Any]]:
-        """
-        Extract suffix, prefix, and keyword patterns from column list
+        """Extract suffix, prefix, and keyword patterns from column list
 
         Args:
             columns: List of column entries
@@ -532,6 +525,7 @@ class HeuristicPatternLearner:
             weight = col.get("total_selections", 1)
 
             # Extract suffixes using longest match from the end
+
             if "_" in column_name:
                 parts = column_name.split("_")
                 if len(parts) >= 2:
@@ -552,12 +546,16 @@ class HeuristicPatternLearner:
                     if column_name not in prefix_counts[prefix]["samples"]:
                         prefix_counts[prefix]["samples"].append(column_name)
 
+            # NOTE: keyword 패턴은 column_comment가 아닌 column_name에서만 추출
+            # column_comment에서 추출된 패턴은 실제 컬럼명과 매칭되지 않으므로 제거함
             # Keyword patterns are NOT extracted from column_comment anymore
             # because they don't match actual column names
 
         # Filter and create final patterns
         total_columns = len(columns) if columns else 1
 
+        # Process suffixes - longest match 우선
+        # 먼저 모든 후보 suffix를 수집
         suffix_candidates = {}
         for suffix, data in suffix_counts.items():
             if data["count"] >= self.MIN_PATTERN_OCCURRENCES:
@@ -569,6 +567,8 @@ class HeuristicPatternLearner:
                         "samples": data["samples"][:5]
                     }
 
+        # Longest match 우선: 동일한 sample 집합을 가진 짧은 패턴 제거
+        # 예: "_NUM$"과 "_ACCOUNT_NUM$"이 같은 컬럼들에서 나왔다면 "_ACCOUNT_NUM$"만 유지
         suffixes_to_remove = set()
         suffix_list = sorted(suffix_candidates.keys(), key=len, reverse=True)
 
@@ -578,6 +578,7 @@ class HeuristicPatternLearner:
                 if shorter_suffix in suffixes_to_remove:
                     continue
                 shorter_samples = set(suffix_candidates[shorter_suffix]["samples"])
+
                 if shorter_samples <= longer_samples:
                     suffixes_to_remove.add(shorter_suffix)
 
@@ -619,8 +620,7 @@ class HeuristicPatternLearner:
         pii_patterns: Dict[str, Dict[str, Any]],
         non_pii_patterns: Dict[str, Dict[str, Any]]
     ) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
-        """
-        Resolve conflicts when same pattern appears in both PII and Non-PII
+        """Resolve conflicts when same pattern appears in both PII and Non-PII
 
         Strategy:
         1. Compute minority-label count / total count for each shared pattern.
@@ -694,8 +694,7 @@ class HeuristicPatternLearner:
         heuristics: Dict[str, Any],
         now: str
     ) -> Dict[str, Any]:
-        """
-        Remove redundant suffix patterns that have identical or subset sample_columns.
+        """Remove redundant suffix patterns that have identical or subset sample_columns.
 
         When two suffix patterns have the same sample_columns, keep only the longer (more specific) pattern.
 
@@ -783,12 +782,10 @@ class HeuristicPatternLearner:
         return heuristics
 
     def refine_heuristics(self) -> Dict[str, Any]:
-        """
-        Refine existing heuristics by extracting more specific patterns from sample_columns
+        """Refine existing heuristics by extracting more specific patterns from sample_columns
 
         For example, if "_NUM$" has samples ["CNTR_ACCOUNT_NUM", "FINTECH_USE_NUM", "RECV_CLIENT_ACCOUNT_NUM"],
         this method will create more specific patterns like "_ACCOUNT_NUM$" and "_USE_NUM$".
-
 
         Returns:
             Updated heuristics dictionary
@@ -804,6 +801,7 @@ class HeuristicPatternLearner:
         new_patterns_to_add = []
 
         # First, collect all exact patterns and try to merge them into suffix patterns
+
         exact_patterns_by_pii_type = {"PII": [], "Non-PII": []}
         # Map: column -> exact pattern entry (for removing merged columns)
         column_to_exact_pattern = {}
@@ -818,6 +816,7 @@ class HeuristicPatternLearner:
                         column_to_exact_pattern[col.upper()] = h
 
         # Track columns that were merged into new suffix patterns
+
         merged_columns = set()
 
         # Process exact patterns to find common suffixes
@@ -856,6 +855,8 @@ class HeuristicPatternLearner:
                         existing_pattern["updated_at"] = now
                     elif suffix not in [p["regex"] for p in new_patterns_to_add]:
                         # Confidence for exact pattern merging: based on matched count only
+
+                        # MIN_PATTERN_OCCURRENCES 이상이면 유효한 패턴으로 간주
                         confidence = min(1.0, 0.7 + 0.1 * len(matched_cols))
                         if len(matched_cols) >= self.MIN_PATTERN_OCCURRENCES:
                             new_id = self._generate_id(existing_ids, "auto")
@@ -884,6 +885,7 @@ class HeuristicPatternLearner:
                                        f"({len(matched_cols)} columns: {', '.join(matched_cols[:3])})")
 
         # Remove merged columns from their original exact patterns
+
         exact_patterns_to_remove = []
         for col_upper in merged_columns:
             if col_upper in column_to_exact_pattern:
@@ -899,6 +901,7 @@ class HeuristicPatternLearner:
                     exact_patterns_to_remove.append(exact_entry.get("id"))
 
         # Remove exact patterns with no remaining samples
+
         if exact_patterns_to_remove:
             heuristics["heuristics"] = [
                 h for h in heuristics["heuristics"]
@@ -921,6 +924,7 @@ class HeuristicPatternLearner:
                 continue
 
             # Extract all possible longer suffixes from sample columns
+
             suffix_groups = defaultdict(list)
 
             for col in sample_columns:
@@ -930,6 +934,7 @@ class HeuristicPatternLearner:
 
                 parts = col_upper.split("_")
                 # Generate suffixes longer than current pattern
+
                 for i in range(1, len(parts)):
                     suffix = "_" + "_".join(parts[i:]) + "$"
                     # Only consider suffixes longer than current
@@ -937,6 +942,7 @@ class HeuristicPatternLearner:
                         suffix_groups[suffix].append(col)
 
             # Find suffixes that can form independent patterns
+
             refined_patterns = {}
             for suffix, columns in suffix_groups.items():
                 if len(columns) >= self.MIN_PATTERN_OCCURRENCES:
@@ -966,6 +972,7 @@ class HeuristicPatternLearner:
                     refined_patterns[suffix] = columns
 
             # Select the best refined patterns using longest match principle
+
             if refined_patterns:
                 # Sort by length (longest first)
                 sorted_suffixes = sorted(refined_patterns.keys(), key=len, reverse=True)
@@ -1014,6 +1021,7 @@ class HeuristicPatternLearner:
                                    f"({len(columns)} columns: {', '.join(columns[:3])})")
 
                 # Update parent pattern: remove columns that are now in refined patterns
+
                 refined_columns = set()
                 for suffix in suffixes_to_keep:
                     refined_columns.update(refined_patterns[suffix])
@@ -1030,6 +1038,7 @@ class HeuristicPatternLearner:
             heuristics["heuristics"].append(new_entry)
 
         # Apply longest match deduplication for suffix patterns with same sample_columns
+
         # e.g., _CLIENT_NAME$ and _NAME$ with same samples -> keep only _CLIENT_NAME$
         heuristics = self._deduplicate_suffix_patterns_by_samples(heuristics, now)
 
@@ -1049,8 +1058,7 @@ class HeuristicPatternLearner:
         column_name: str,
         column_comment: str = ""
     ) -> Optional[Dict[str, Any]]:
-        """
-        Classify a column using learned heuristic patterns
+        """Classify a column using learned heuristic patterns
 
         This method provides fast classification (< 1ms) using regex patterns
         learned from expert feedback.
@@ -1080,6 +1088,7 @@ class HeuristicPatternLearner:
                 pattern = re.compile(h["regex"], re.IGNORECASE)
 
                 # Check column name only (NOT column_comment)
+
                 if pattern.search(column_upper):
                     return {
                         "classification": h.get("pii_type", "PII"),
@@ -1097,8 +1106,7 @@ class HeuristicPatternLearner:
         return None
 
     def get_statistics(self) -> Dict[str, Any]:
-        """
-        Get statistics about learned patterns
+        """Get statistics about learned patterns
 
         Returns:
             Dictionary with pattern statistics

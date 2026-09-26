@@ -1,5 +1,4 @@
-"""
-Policy Domain-Specific Language (DSL) for PseuDRAGON Framework
+"""Policy Domain-Specific Language (DSL) for PseuDRAGON Framework
 
 Implements the structured policy language described in the paper:
 
@@ -20,8 +19,7 @@ from typing import Any, Dict, List, Optional
 
 
 class ActionType(str, Enum):
-    """
-    Enumeration of pseudonymization actions
+    """Enumeration of pseudonymization actions
 
     These correspond to the 'a' in the policy tuple (t, c, a, θ)
     """
@@ -36,15 +34,14 @@ class ActionType(str, Enum):
 
     @classmethod
     def from_string(cls, action_str: str) -> 'ActionType':
-        """
-        Create ActionType from string
-        
+        """Create ActionType from string
+
         Args:
             action_str: Action type as string
-        
+
         Returns:
             ActionType enum value
-        
+
         Raises:
             ValueError: If action string is invalid
         """
@@ -56,17 +53,20 @@ class ActionType(str, Enum):
 
 @dataclass
 class PolicyAction:
-    """
-    Single policy action for a column
+    """Single policy action for a column
 
     Represents a specific pseudonymization action with its parameters,
     rationale, and legal evidence.
 
     Attributes:
         action: Type of action to perform
+
         parameters: Action-specific parameters (θ in the paper)
+
         rationale: Human-readable explanation
+
         legal_evidence: Citation from legal knowledge base
+
         code_snippet: Python code implementation for this action
     """
     action: ActionType
@@ -74,20 +74,20 @@ class PolicyAction:
     rationale: str = ""
     legal_evidence: str = ""
     code_snippet: str = ""
+    contract_verification: Optional[str] = None
+    contract_code_sha256: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to dictionary for serialization
+        """Convert to dictionary for serialization
 
         Returns:
             Dictionary representation
         """
-        return {'action': self.action.value, 'parameters': self.parameters, 'rationale': self.rationale, 'legal_evidence': self.legal_evidence, 'code_snippet': self.code_snippet}
+        return {'action': self.action.value, 'parameters': self.parameters, 'rationale': self.rationale, 'legal_evidence': self.legal_evidence, 'code_snippet': self.code_snippet, 'contract_verification': self.contract_verification, 'contract_code_sha256': self.contract_code_sha256}
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'PolicyAction':
-        """
-        Create from dictionary
+        """Create from dictionary
 
         Args:
             data: Dictionary containing action data
@@ -103,30 +103,33 @@ class PolicyAction:
             parameters=data.get('parameters', {}),
             rationale=data.get('rationale', ''),
             legal_evidence=data.get('legal_evidence', ''),
-            code_snippet=data.get('code_snippet', '')
+            code_snippet=data.get('code_snippet', ''),
+            contract_verification=data.get('contract_verification'),
+            contract_code_sha256=data.get('contract_code_sha256')
         )
 
     def __repr__(self) -> str:
-        """
-        String representation
-        """
+        """String representation"""
         params_str = f", params={self.parameters}" if self.parameters else ""
         return f"PolicyAction({self.action.value}{params_str})"
 
 
 @dataclass
 class ColumnPolicy:
-    """
-    Policy for a single column
-    
+    """Policy for a single column
+
     Represents the complete policy for a column, including its PII type,
     chosen action, and alternative actions for human-in-the-loop review.
-    
+
     Attributes:
         column_name: Name of the column
+
         pii_type: Type of PII (PII or Non-PII)
+
         is_pii: Whether this column contains PII
+
         action: The chosen action for this column
+
         candidate_actions: Alternative actions (for HITL)
     """
     column_name: str
@@ -134,24 +137,24 @@ class ColumnPolicy:
     is_pii: bool
     action: PolicyAction
     candidate_actions: List[PolicyAction] = field(default_factory=list)
+    retrieved_evidence: List[Dict[str, Any]] = field(default_factory=list)
+    retrieval_trace: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to dictionary
-        
+        """Convert to dictionary
+
         Returns:
             Dictionary representation
         """
-        return {'column_name': self.column_name, 'pii_type': self.pii_type, 'is_pii': self.is_pii, 'action': self.action.to_dict(), 'candidate_actions': [a.to_dict() for a in self.candidate_actions]}
+        return {'column_name': self.column_name, 'pii_type': self.pii_type, 'is_pii': self.is_pii, 'action': self.action.to_dict(), 'candidate_actions': [a.to_dict() for a in self.candidate_actions], 'retrieved_evidence': self.retrieved_evidence, 'retrieval_trace': self.retrieval_trace}
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ColumnPolicy':
-        """
-        Create from dictionary
-        
+        """Create from dictionary
+
         Args:
             data: Dictionary containing column policy data
-        
+
         Returns:
             ColumnPolicy instance
         """
@@ -160,29 +163,27 @@ class ColumnPolicy:
             pii_type=data['pii_type'],
             is_pii=data['is_pii'],
             action=PolicyAction.from_dict(data['action']),
-            candidate_actions=[PolicyAction.from_dict(a) for a in data.get('candidate_actions', [])]
+            candidate_actions=[PolicyAction.from_dict(a) for a in data.get('candidate_actions', [])],
+            retrieved_evidence=data.get('retrieved_evidence', []),
+            retrieval_trace=data.get('retrieval_trace')
         )
 
     def add_candidate_action(self, action: PolicyAction) -> None:
-        """
-        Add a candidate action
-        
+        """Add a candidate action
+
         Args:
             action: PolicyAction to add as candidate
         """
         self.candidate_actions.append(action)
 
     def __repr__(self) -> str:
-        """
-        String representation
-        """
+        """String representation"""
         return f"ColumnPolicy({self.column_name}, {self.pii_type}, {self.action.action.value})"
 
 
 @dataclass
 class Policy:
-    """
-    Complete policy for a table (Π in the paper)
+    """Complete policy for a table (Π in the paper)
 
     Represents: Π = {(t, c, a, θ)}
 
@@ -191,8 +192,11 @@ class Policy:
 
     Attributes:
         table_name: Name of the table (t in the paper)
+
         columns: Dictionary mapping column names to their policies
+
         preferred_method: User's preferred pseudonymization method
+
         metadata: Additional metadata
     """
     table_name: str
@@ -201,8 +205,7 @@ class Policy:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def add_column_policy(self, col_policy: ColumnPolicy) -> None:
-        """
-        Add a column policy
+        """Add a column policy
 
         Args:
             col_policy: ColumnPolicy to add
@@ -210,8 +213,7 @@ class Policy:
         self.columns[col_policy.column_name] = col_policy
 
     def get_column_policy(self, column_name: str) -> Optional[ColumnPolicy]:
-        """
-        Get policy for a specific column
+        """Get policy for a specific column
 
         Args:
             column_name: Name of the column
@@ -222,8 +224,7 @@ class Policy:
         return self.columns.get(column_name)
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert policy to dictionary format
+        """Convert policy to dictionary format
 
         Returns:
             Dictionary representation of the policy
@@ -236,39 +237,35 @@ class Policy:
         }
 
     def get_pii_columns(self) -> List[str]:
-        """
-        Get list of PII column names
-        
+        """Get list of PII column names
+
         Returns:
             List of column names that contain PII
         """
         return [col for col, policy in self.columns.items() if policy.is_pii]
 
     def get_non_pii_columns(self) -> List[str]:
-        """
-        Get list of non-PII column names
-        
+        """Get list of non-PII column names
+
         Returns:
             List of column names that don't contain PII
         """
         return [col for col, policy in self.columns.items() if not policy.is_pii]
 
     def get_columns_by_action(self, action_type: ActionType) -> List[str]:
-        """
-        Get columns with a specific action type
-        
+        """Get columns with a specific action type
+
         Args:
             action_type: ActionType to filter by
-        
+
         Returns:
             List of column names with the specified action
         """
         return [col for col, policy in self.columns.items() if policy.action.action == action_type]
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert to dictionary for serialization
-        
+        """Convert to dictionary for serialization
+
         Returns:
             Dictionary representation
         """
@@ -276,12 +273,11 @@ class Policy:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Policy':
-        """
-        Create from dictionary
-        
+        """Create from dictionary
+
         Args:
             data: Dictionary containing policy data
-        
+
         Returns:
             Policy instance
         """
@@ -291,8 +287,6 @@ class Policy:
         return policy
 
     def __repr__(self) -> str:
-        """
-        String representation
-        """
+        """String representation"""
         pii_count = len(self.get_pii_columns())
         return f"Policy(table={self.table_name}, columns={len(self.columns)}, pii={pii_count})"

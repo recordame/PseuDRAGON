@@ -1,16 +1,17 @@
-"""
-Optimized Stage 2: Policy Synthesis with Universal Caching
+"""Optimized Stage 2: Policy Synthesis with Universal Caching
 
 Supports both OpenAI (prompt caching) and Ollama (KV cache).
 """
 
-# Standard library imports
+
+# 표준 라이브러리 import
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-# Project-specific imports
+
+# 프로젝트 관련 import
 from config.config import PolicyConfig, Settings
 from pseudragon.domain.policy_dsl import ActionType, ColumnPolicy, Policy, PolicyAction
 from pseudragon.llm.json_parser import safe_parse_json
@@ -18,31 +19,34 @@ from pseudragon.llm.session_manager import UniversalSessionManager
 
 
 def load_prompt(stage_name: str, prompt_type: str = "system") -> str:
-    """
-    Load prompt template from resources/prompts/ based on PROMPT_MODE
-    
+    """Load prompt template from resources/prompts/ based on PROMPT_MODE
+
     Args:
         stage_name: Name of the stage (e.g., "stage2_policy_synthesis")
+
         prompt_type: Type of prompt ("system" or "user")
-    
+
     Returns:
         Prompt text content
     """
     prompt_dir = os.path.join(os.path.dirname(__file__), "..", "..")
 
     # Extract stage number (stage1 or stage2) from stage_name
+
     if "stage1" in stage_name:
         stage = "stage1"
     elif "stage2" in stage_name:
         stage = "stage2"
     else:
         # Fallback to old behavior for other stages
+
         filename = f"{stage_name}_{prompt_type}.txt"
         filepath = os.path.join(prompt_dir, "resources", "prompts", filename)
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
 
     # Use Settings.get_prompt_path() for stage1 and stage2
+
     prompt_path = Settings.get_prompt_path(stage, prompt_type)
     filepath = os.path.join(prompt_dir, prompt_path)
 
@@ -51,15 +55,14 @@ def load_prompt(stage_name: str, prompt_type: str = "system") -> str:
 
 
 class Stage2PolicySynthesis:
-    """
-    Optimized Stage 2: Policy Synthesis with Universal Session Management
-    
+    """Optimized Stage 2: Policy Synthesis with Universal Session Management
+
     Key features:
     - Auto-detects LLM provider (OpenAI, Ollama, etc.)
     - Applies provider-specific caching optimizations
     - System prompt sent only once per table
     - Estimated 60-75% reduction in system prompt tokens
-    
+
     Provider-specific optimizations:
     - OpenAI: Automatic prompt caching
     - Ollama: KV cache with keep_alive
@@ -67,9 +70,8 @@ class Stage2PolicySynthesis:
     """
 
     def __init__(self, rag_system, llm_client, provider: str = "auto", base_url: Optional[str] = None):
-        """
-        Initialize optimized Stage 2 with provider detection.
-        
+        """Initialize optimized Stage 2 with provider detection.
+
         Args:
             rag_system: RAG system for context retrieval
             llm_client: LLM client
@@ -92,17 +94,8 @@ class Stage2PolicySynthesis:
         # Initialize audit logger (optional, for COT logging)
         self.audit_logger = None
 
-    def synthesize_policy(
-            self,
-            pii_analysis: Dict[str, Any],
-            table_name: str,
-            preferred_method: str = "",
-            purpose_goal: str = "",
-            log_callback: Optional[Callable] = None,
-            semantic_similarity_weight: Optional[float] = None,
-    ) -> Policy:
-        """
-        Synthesize policy from PII analysis and preferred method using session.
+    def synthesize_policy(self, pii_analysis: Dict[str, Any], table_name: str, preferred_method: str = "", purpose_goal: str = "", log_callback: Optional[Callable] = None) -> Policy:
+        """Synthesize policy from PII analysis and preferred method using session.
 
         Implements f_policy() from Algorithm 1 with session optimization.
 
@@ -114,7 +107,6 @@ class Stage2PolicySynthesis:
             preferred_method: User's preferred pseudonymization method
             purpose_goal: User's intended purpose for data pseudonymization (e.g., statistical analysis, ML, research)
             log_callback: Optional callback for logging
-            semantic_similarity_weight: Optional per-run alpha override
 
         Returns:
             Policy object with candidate actions for each PII column
@@ -126,14 +118,18 @@ class Stage2PolicySynthesis:
             self._log(f"  > Preferred method: {preferred_method}", log_callback)
 
         # Create or get session for this table
-        # CRITICAL: max_history=0 prevents token overflow
+
+        # max_history=0 prevents token overflow
+
         # Each column's policy synthesis is independent
+
         session_id = f"stage2_{table_name}"
         session = self.session_manager.get_or_create_session(
             session_id=session_id,
             system_prompt=self.system_prompt,
             ttl_minutes=30,
             max_history=0  # No history - each column is independent
+
         )
 
         self._log(f"Session ID: {session_id}", log_callback)
@@ -144,11 +140,12 @@ class Stage2PolicySynthesis:
         self._purpose_goal = purpose_goal
 
         # Categorize columns for parallel processing
+
         pii_columns: List[Tuple[str, Dict[str, Any]]] = []
         non_pii_columns: List[Tuple[str, Dict[str, Any]]] = []
 
         for column, analysis in pii_analysis.items():
-            # CRITICAL: Data consistency check
+            # Data consistency check
             # Check pii_type first to determine if column is truly PII
             # This handles cases where is_pii and pii_type are inconsistent
             pii_type = analysis["pii_type"]
@@ -165,10 +162,12 @@ class Stage2PolicySynthesis:
                 non_pii_columns.append((column, analysis))
 
         # Process PII and Non-PII columns in parallel batches
+
         batch_size = Settings.LLM_BATCH_SIZE
         max_workers = Settings.MAX_CONCURRENT_LLM_REQUESTS
 
         # Process Non-PII columns in parallel
+
         if non_pii_columns:
             self._log(f"\n  [Parallel] Parallel Non-PII processing: {len(non_pii_columns)} columns (batch_size={batch_size})", log_callback)
 
@@ -213,6 +212,7 @@ class Stage2PolicySynthesis:
                             policy.add_column_policy(col_policy)
 
         # Process PII columns in parallel
+
         if pii_columns:
             self._log(f"\n  [Parallel] Parallel PII processing: {len(pii_columns)} columns (batch_size={batch_size})", log_callback)
 
@@ -234,8 +234,7 @@ class Stage2PolicySynthesis:
                             analysis=analysis,
                             preferred_method=preferred_method,
                             purpose_goal=purpose_goal,
-                            log_callback=log_callback,
-                            semantic_similarity_weight=semantic_similarity_weight,
+                            log_callback=log_callback
                         )
                         future_to_column[future] = (column, analysis)
 
@@ -267,8 +266,7 @@ class Stage2PolicySynthesis:
         return policy
 
     def _process_non_pii_column(self, session, column: str, analysis: Dict[str, Any], log_callback: Optional[Callable] = None) -> ColumnPolicy:
-        """
-        Process a single Non-PII column (used for parallel processing).
+        """Process a single Non-PII column (used for parallel processing).
 
         Args:
             session: LLM session
@@ -315,18 +313,8 @@ class Stage2PolicySynthesis:
         self._log(f"   [OK] Generated {len(methods)} Non-PII methods for {column}", log_callback)
         return col_policy
 
-    def _process_pii_column(
-            self,
-            session,
-            column: str,
-            analysis: Dict[str, Any],
-            preferred_method: str,
-            purpose_goal: str,
-            log_callback: Optional[Callable] = None,
-            semantic_similarity_weight: Optional[float] = None,
-    ) -> ColumnPolicy:
-        """
-        Process a single PII column (used for parallel processing).
+    def _process_pii_column(self, session, column: str, analysis: Dict[str, Any], preferred_method: str, purpose_goal: str, log_callback: Optional[Callable] = None) -> ColumnPolicy:
+        """Process a single PII column (used for parallel processing).
 
         Args:
             session: LLM session
@@ -343,13 +331,38 @@ class Stage2PolicySynthesis:
         data_type = analysis.get("data_type", "")
         column_comment = analysis.get("column_comment", "")
 
+        # An explicit caller rule remains a separate opt-in path. The normal
+        # route below retains model alternatives and checks a bounded source
+        # table grammar; neither route approves legal applicability.
+        if "display_mask_requirement" in analysis:
+            from pseudragon.validation.display_requirement import compile_display_requirement
+            if str(preferred_method).upper() != "MASK":
+                raise ValueError("An explicit display-mask rule requires preferred method MASK.")
+            candidate = compile_display_requirement(analysis["display_mask_requirement"])
+            action = PolicyAction(
+                action=ActionType.MASK, parameters=candidate["parameters"],
+                rationale=candidate["description"], legal_evidence=candidate["legal_source"],
+                code_snippet=candidate["code_snippet"])
+            return ColumnPolicy(
+                column_name=column, pii_type=pii_type, is_pii=True,
+                action=action, candidate_actions=[action],
+                retrieved_evidence=[candidate["parameters"]["requirement_source"]])
+
         self._log(f"  -> Generating policy for: {column}", log_callback)
 
         query = f"Pseudonymization and anonymization methods for {pii_type} ({column}) considering preferred method '{preferred_method}'"
-        context, source_docs = self.rag.retrieve(
-            query,
-            semantic_similarity_weight=semantic_similarity_weight,
-        )
+        metadata_filter = {'description': column_comment, 'purpose': purpose_goal,
+                           'requested_operation': preferred_method}
+        if 'legal_source_levels' in analysis:
+            metadata_filter['legal_source_levels'] = analysis['legal_source_levels']
+        if hasattr(self.rag, "retrieve_with_details"):
+            context, source_docs, details = self.rag.retrieve_with_details(query, metadata_filter=metadata_filter)
+        else:
+            context, source_docs = self.rag.retrieve(query, metadata_filter=metadata_filter)
+            details = []
+        retrieval_trace = getattr(details, 'retrieval_result', None)
+        # Both modes retain the exact source material used for this proposal.
+        evidence_records = [d["evidence_record"] for d in details if "evidence_record" in d]
 
         methods = self._generate_pii_methods_with_session(
             session=session,
@@ -364,6 +377,16 @@ class Stage2PolicySynthesis:
             log_callback=log_callback
         )
 
+        # Model proposals remain unchanged, even when their MASK interpretation
+        # is wrong or incomplete. A separate deterministic candidate can be
+        # compiled only from an exact, supported display-rule table row.
+        from pseudragon.validation.display_requirement import source_display_candidates
+        compiled = source_display_candidates(evidence_records, column_comment, purpose_goal, preferred_method)
+        compiled_methods = [PolicyAction(
+            action=ActionType.MASK, parameters=c['parameters'], rationale=c['description'],
+            legal_evidence=c['legal_source'], code_snippet=c['code_snippet']) for c in compiled]
+        methods = compiled_methods + methods
+
         col_policy = ColumnPolicy(
             column_name=column,
             pii_type=pii_type,
@@ -374,8 +397,9 @@ class Stage2PolicySynthesis:
                 action=ActionType.from_string(PolicyConfig.get_default_action(is_pii=True)),
                 rationale=f"Default action for PII: {PolicyConfig.DEFAULT_PII_ACTION}"
             )),
-            candidate_actions=methods
-
+            candidate_actions=methods,
+            retrieved_evidence=evidence_records,
+            retrieval_trace=retrieval_trace
         )
 
         self._log(f"   [OK] Generated {len(methods)} methods for {column}", log_callback)
@@ -389,8 +413,7 @@ class Stage2PolicySynthesis:
             data_type: str = "",
             log_callback: Optional[Callable] = None
     ) -> List[PolicyAction]:
-        """
-        Generate recommended methods
+        """Generate recommended methods
          for Non-PII columns using LLM.
 
         Args:
@@ -528,8 +551,7 @@ class Stage2PolicySynthesis:
             source_docs: list[str] = None,
             log_callback: Optional[Callable] = None
     ) -> List[PolicyAction]:
-        """
-        Generate recommended methods
+        """Generate recommended methods
          using session (system prompt already set).
 
         Args:
@@ -687,10 +709,8 @@ class Stage2PolicySynthesis:
         return other_methods + keep_delete_methods
 
     def _generate_fallback_methods(self, column: str, pii_type: str, legal_evidence: str) -> List[PolicyAction]:
-        """
-        Generate fallback anonymization methods
+        """Generate fallback anonymization methods
          when LLM fails to produce sufficient methods
-
 
         Args:
             column: Column name
@@ -721,7 +741,7 @@ class Stage2PolicySynthesis:
                     rationale=f"Partial masking retains data utility while protecting {pii_type}",
                     legal_evidence=legal_evidence,
                     code_snippet=f"masked_{column} = str(record['{column}'])[:-4] + '****' if len(str(record['{column}'])) > 4 else '****'",
-                    parameters={"mask_char": "*", "keep_last": 4}
+                    parameters={"mask_char": "*", "mask_last": 4, "short_value_mask_length": 4}
                 )
             )
         else:
@@ -754,8 +774,7 @@ class Stage2PolicySynthesis:
         return fallback_methods
 
     def _log_cot_reasoning(self, column: str, pii_type: str, cot: Dict[str, Any], log_callback: Optional[Callable] = None):
-        """
-        Log chain-of-thought reasoning for policy synthesis.
+        """Log chain-of-thought reasoning for policy synthesis.
 
         Args:
             column: Column name
@@ -788,8 +807,7 @@ class Stage2PolicySynthesis:
         self._log("", log_callback)  # Empty line for readability
 
     def set_audit_logger(self, audit_logger):
-        """
-        Set audit logger for COT logging.
+        """Set audit logger for COT logging.
 
         Args:
             audit_logger: AuditLogger instance
@@ -797,9 +815,7 @@ class Stage2PolicySynthesis:
         self.audit_logger = audit_logger
 
     def _map_method_to_action(self, method: str) -> ActionType:
-        """
-        Map LLM-generated method name to ActionType enum
-        """
+        """Map LLM-generated method name to ActionType enum"""
         method_upper = method.upper()
 
         mapping = {
@@ -823,9 +839,7 @@ class Stage2PolicySynthesis:
         return mapping.get(method_upper, ActionType.HASH)
 
     def _log(self, message: str, callback: Optional[Callable] = None):
-        """
-        Helper for logging
-        """
+        """Helper for logging"""
         if callback:
             callback(message)
         else:

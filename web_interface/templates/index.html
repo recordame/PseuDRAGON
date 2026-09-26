@@ -100,22 +100,10 @@
                         <span class="runtime-state-badge" id="runtimeModeBadge">Loading</span>
                     </div>
                     <p class="runtime-cascade">
-                        Regex / approved feedback → configured LLM + authority-weighted RAG → HITL → template code
+                        Schema interpretation → expert review → pseudonymization
                     </p>
-                    <div class="runtime-alpha-control">
-                        <label for="alphaInput">Semantic similarity coefficient (α)</label>
-                        <div class="runtime-alpha-input-row">
-                            <input type="number" id="alphaInput" class="form-input runtime-alpha-input"
-                                   min="0" max="1" step="0.01" inputmode="decimal" disabled
-                                   aria-describedby="alphaConfigHint">
-                            <span id="authorityMixPreview">Loading...</span>
-                        </div>
-                        <small class="form-hint" id="alphaConfigHint">
-                            The environment value is the default; this value applies to the next run.
-                        </small>
-                    </div>
                     <div class="runtime-metric-row">
-                        <span>Reranking</span>
+                        <span>Retrieval</span>
                         <strong id="rankingMix">Loading...</strong>
                     </div>
                     <div class="runtime-metric-row">

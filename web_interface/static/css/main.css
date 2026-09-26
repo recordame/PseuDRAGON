@@ -268,46 +268,6 @@ body {
     line-height: 1.45;
 }
 
-.runtime-alpha-control {
-    margin: 0 0 0.65rem;
-    padding: 0.65rem;
-    border: 1px solid rgba(102, 126, 234, 0.2);
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.55);
-}
-
-.runtime-alpha-control > label {
-    display: block;
-    margin-bottom: 0.4rem;
-    color: var(--text-primary);
-    font-size: 0.72rem;
-    font-weight: 700;
-}
-
-.runtime-alpha-input-row {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-}
-
-.runtime-alpha-input {
-    width: 5.5rem;
-    flex: 0 0 5.5rem;
-    padding: 0.45rem 0.55rem;
-    text-align: center;
-}
-
-.runtime-alpha-input-row span {
-    color: var(--text-secondary);
-    font-size: 0.7rem;
-    line-height: 1.35;
-}
-
-.runtime-alpha-input:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-}
-
 .runtime-metric-row {
     display: grid;
     grid-template-columns: minmax(5.5rem, auto) 1fr;
@@ -351,6 +311,7 @@ body {
 
 .form-select[multiple] {
     /* Multi-select requires more height */
+    /* 다중 선택은 더 많은 높이가 필요함 */
     min-height: 120px;
 }
 
@@ -1890,6 +1851,7 @@ textarea.form-control {
 
 /* ========================================
    Session Monitoring Styles
+   세션 모니터링 스타일
    ======================================== */
 
 /* Session count badge in tab */
@@ -2107,6 +2069,7 @@ textarea.form-control {
 
 /* ========================================
    Add Table Button and Modal Styles
+   Add Table 버튼 및 모달 스타일
    ======================================== */
 
 /* Small button style */
@@ -2158,6 +2121,7 @@ textarea.form-control {
 
 /* ========================================
    Tab Content Display Fix
+   탭 내용 표시 수정
    ======================================== */
 
 /* Ensure only active tab content is visible */

@@ -1,12 +1,15 @@
 /**
  * PseuDRAGON - Main Application JavaScript
+ * PseuDRAGON - 메인 애플리케이션 JavaScript
  *
  * Handles UI interactions, API calls, and state management
+ * UI 상호작용, API 호출 및 상태 관리를 처리합니다
  */
 
 class PseuDRAGONApp {
     constructor() {
         // Application state management
+        // 애플리케이션 상태 관리
         this.state = {
             isRunning: false,
             currentStep: 'IDLE',
@@ -17,17 +20,19 @@ class PseuDRAGONApp {
                 stage2: null
             },
             // Session ID for multi-client support
+            // 다중 클라이언트 지원을 위한 세션 ID
             sessionId: null,
             // Session monitoring state
+            // 세션 모니터링 상태
             monitoredSessions: [],
             selectedMonitorSession: null,
             sessionAutoRefresh: false,
             sessionAutoRefreshInterval: null,
-            sessionLogOffset: 0,
-            semanticSimilarityWeight: null
+            sessionLogOffset: 0
         };
 
         // DOM element references
+        // DOM 요소 참조
         this.elements = {
             logsContent: document.getElementById('logsContent'),
             statusBadge: document.getElementById('statusBadge'),
@@ -52,9 +57,6 @@ class PseuDRAGONApp {
             submitPoliciesBtn: document.getElementById('submitPoliciesBtn'),
             reviewBtn: document.getElementById('reviewBtn'),
             closeModalBtn: document.getElementById('closeModalBtn'),
-            alphaInput: document.getElementById('alphaInput'),
-            alphaConfigHint: document.getElementById('alphaConfigHint'),
-            authorityMixPreview: document.getElementById('authorityMixPreview'),
             runtimeModeBadge: document.getElementById('runtimeModeBadge'),
             rankingMix: document.getElementById('rankingMix'),
             authorityHierarchy: document.getElementById('authorityHierarchy'),
@@ -64,6 +66,7 @@ class PseuDRAGONApp {
         };
 
         // Debug: Check if critical elements exist
+        // 디버그: 중요 요소가 존재하는지 확인
         if (!this.elements.stage3Content) {
             console.error('stage3Content element not found!');
         }
@@ -74,8 +77,10 @@ class PseuDRAGONApp {
     init() {
         /**
          * Initialize the application
+         * 애플리케이션 초기화
          */
         // Validate critical elements
+        // 중요 요소 검증
         this.validateElements();
 
         this.loadRuntimeConfig();
@@ -83,6 +88,7 @@ class PseuDRAGONApp {
         this.setupEventListeners();
 
         // Hide reopen policy button and stop button initially
+        // Reopen policy 버튼과 stop 버튼을 초기에는 숨김
         if (this.elements.reopenPolicyBtn) {
             this.elements.reopenPolicyBtn.classList.add('hidden');
         }
@@ -96,6 +102,7 @@ class PseuDRAGONApp {
     validateElements() {
         /**
          * Validate that all critical DOM elements exist
+         * 모든 중요 DOM 요소가 존재하는지 검증
          */
         const criticalElements = [
             'stage3Modal',
@@ -122,6 +129,7 @@ class PseuDRAGONApp {
     setupEventListeners() {
         /**
          * Setup event listeners for UI interactions
+         * UI 상호작용을 위한 이벤트 리스너 설정
          */
         if (this.elements.startBtn) {
             this.elements.startBtn.addEventListener('click', () => this.startPipeline());
@@ -160,6 +168,7 @@ class PseuDRAGONApp {
         });
 
         // Session monitoring event listeners
+        // 세션 모니터링 이벤트 리스너
         const refreshSessionsBtn = document.getElementById('refreshSessionsBtn');
         if (refreshSessionsBtn) {
             refreshSessionsBtn.addEventListener('click', () => this.loadSessions());
@@ -171,6 +180,7 @@ class PseuDRAGONApp {
         }
 
         // Add Table modal event listeners
+        // Add Table 모달 이벤트 리스너
         const addTableBtn = document.getElementById('addTableBtn');
         if (addTableBtn) {
             addTableBtn.addEventListener('click', () => this.openAddTableModal());
@@ -192,24 +202,16 @@ class PseuDRAGONApp {
         }
 
         // Drop Table button event listener
+        // Drop Table 버튼 이벤트 리스너
         const dropTableBtn = document.getElementById('dropTableBtn');
         if (dropTableBtn) {
             dropTableBtn.addEventListener('click', () => this.confirmDropTable());
         }
 
         // Update Drop Table button state when table selection changes
+        // 테이블 선택 변경 시 Drop Table 버튼 상태 업데이트
         if (this.elements.tableSelect) {
             this.elements.tableSelect.addEventListener('change', () => this.updateDropTableButtonState());
-        }
-
-        if (this.elements.alphaInput) {
-            this.elements.alphaInput.addEventListener('input', () => {
-                const alpha = this.getSelectedAlpha(false);
-                if (alpha !== null) {
-                    this.state.semanticSimilarityWeight = alpha;
-                    this.renderRankingMix(alpha);
-                }
-            });
         }
 
         if (this.elements.submitPoliciesBtn) {
@@ -311,9 +313,11 @@ class PseuDRAGONApp {
         }
 
         // Table schema modal event listeners
+        // 테이블 스키마 모달 이벤트 리스너
         if (this.elements.tableSelect) {
             this.elements.tableSelect.addEventListener('dblclick', (e) => {
                 // Get the table name from the clicked option or the selected option
+                // 클릭한 옵션 또는 선택된 옵션에서 테이블 이름 가져오기
                 let tableName = null;
 
                 if (e.target.tagName === 'OPTION') {
@@ -347,58 +351,10 @@ class PseuDRAGONApp {
         // Modal closing is now handled by the submit button and close button
     }
 
-    getSelectedAlpha(showAlert = true) {
-        /**
-         * Validate and return the alpha selected for the next pipeline run.
-         */
-        const input = this.elements.alphaInput;
-        const rawValue = input ? input.value.trim() : '';
-        const alpha = Number(rawValue);
-        const isValid = rawValue !== '' && Number.isFinite(alpha) && alpha >= 0 && alpha <= 1;
-
-        if (input) {
-            input.setCustomValidity(
-                isValid ? '' : 'Alpha must be a number between 0 and 1.'
-            );
-        }
-
-        if (!isValid) {
-            if (showAlert) {
-                alert('Alpha must be a number between 0 and 1.');
-                if (input) {
-                    input.reportValidity();
-                }
-            }
-            return null;
-        }
-
-        return alpha;
-    }
-
-    renderRankingMix(alpha) {
-        /**
-         * Keep the alpha input, formula preview, and runtime summary aligned.
-         */
-        const authorityMix = 1 - alpha;
-        if (this.elements.rankingMix) {
-            this.elements.rankingMix.textContent =
-                `α=${alpha.toFixed(2)}: similarity ${Math.round(alpha * 100)}% + authority ${Math.round(authorityMix * 100)}%`;
-        }
-        if (this.elements.authorityMixPreview) {
-            this.elements.authorityMixPreview.textContent =
-                `Similarity ${Math.round(alpha * 100)}% · authority ${Math.round(authorityMix * 100)}%`;
-        }
-    }
-
-    setAlphaInputEnabled(enabled) {
-        if (this.elements.alphaInput) {
-            this.elements.alphaInput.disabled = !enabled;
-        }
-    }
-
     async loadRuntimeConfig() {
         /**
-         * Load the same validated ranking configuration used by the retriever.
+         * Show the active retrieval route and its review requirement.
+         * 현재 검색 방식과 검토 조건을 표시합니다.
          */
         try {
             const response = await fetch('/api/runtime_config');
@@ -411,19 +367,9 @@ class PseuDRAGONApp {
             const ranking = data.ranking;
             const features = data.features;
             const sources = ranking.source_families || [];
-            const alpha = Number(ranking.alpha_semantic_similarity);
-            this.state.semanticSimilarityWeight = alpha;
-
-            if (this.elements.alphaInput) {
-                this.elements.alphaInput.min = String(ranking.minimum);
-                this.elements.alphaInput.max = String(ranking.maximum);
-                this.elements.alphaInput.step = String(ranking.step);
-                this.elements.alphaInput.value = String(alpha);
-                this.setAlphaInputEnabled(true);
-            }
-            if (this.elements.alphaConfigHint) {
-                this.elements.alphaConfigHint.textContent =
-                    `${ranking.environment_variable}=${alpha} is the environment default; the selected value applies only to the next run.`;
+            const mode = ranking.retrieval_mode;
+            if (!['source_order', 'legacy', 'lexical'].includes(mode)) {
+                throw new Error('Unknown retrieval mode');
             }
 
             if (this.elements.runtimeModeBadge) {
@@ -436,18 +382,42 @@ class PseuDRAGONApp {
                 );
             }
 
-            this.renderRankingMix(alpha);
+            if (this.elements.rankingMix) {
+                if (mode === 'source_order') {
+                    this.elements.rankingMix.textContent = ranking.summary;
+                } else if (mode === 'lexical') {
+                    this.elements.rankingMix.textContent =
+                        `Lexical retrieval · source gap ${Number(ranking.source_gap).toFixed(2)}`;
+                } else {
+                    const alpha = Number(ranking.alpha_semantic_similarity);
+                    const authorityMix = Number(ranking.authority_mixing_weight);
+                    this.elements.rankingMix.textContent =
+                        `Legacy · α=${alpha.toFixed(1)}: similarity ${Math.round(alpha * 100)}% + source preference ${Math.round(authorityMix * 100)}%`;
+                }
+            }
 
             if (this.elements.authorityHierarchy) {
                 const compactLabels = {
                     approved_expert_feedback: 'Feedback',
-                    institutional_policy: 'Policy',
-                    national_law: 'National',
-                    international_regulation: 'International'
+                    institutional_policy: 'Institutional policy',
+                    national_law: 'National law',
+                    international_regulation: 'International guidance'
                 };
                 this.elements.authorityHierarchy.textContent = sources
-                    .map(source => `${compactLabels[source.key] || source.label} ${Number(source.weight).toFixed(1)}`)
-                    .join(' > ');
+                    .map(source => mode === 'legacy'
+                        ? `${compactLabels[source.key] || source.label} ${Number(source.weight).toFixed(1)}`
+                        : (compactLabels[source.key] || source.label))
+                    .join(mode === 'lexical' ? ' · ' : ' → ');
+                const label = this.elements.authorityHierarchy.previousElementSibling;
+                if (label) {
+                    label.textContent = mode === 'source_order' ? 'Search order'
+                        : mode === 'lexical' ? 'Evidence sources' : 'Source preference (legacy)';
+                }
+            }
+
+            const cascade = document.querySelector('#runtimeProfile .runtime-cascade');
+            if (cascade) {
+                cascade.textContent = data.workflow.join(' → ');
             }
 
             if (this.elements.evidenceIndex) {
@@ -472,10 +442,9 @@ class PseuDRAGONApp {
                     ? 'prompt/response audit ON'
                     : 'prompt/response audit OFF';
                 this.elements.runtimeConfigNote.textContent =
-                    `Stage 1: ${data.models.stage_1} · temperature ${Number(data.models.temperature).toFixed(1)} · endpoint ${data.models.endpoint_scope} · ${rawRecordText} · ${auditText} · approved feedback is the highest operational priority; applicability conflicts go to HITL`;
+                    `Stage 1: ${data.models.stage_1} · temperature ${Number(data.models.temperature).toFixed(1)} · endpoint ${data.models.endpoint_scope} · ${rawRecordText} · ${auditText} · ${ranking.review_note}`;
             }
         } catch (error) {
-            this.setAlphaInputEnabled(false);
             if (this.elements.runtimeModeBadge) {
                 this.elements.runtimeModeBadge.textContent = 'CONFIG ERROR';
                 this.elements.runtimeModeBadge.classList.add('runtime-state-disabled');
@@ -517,6 +486,7 @@ class PseuDRAGONApp {
                     option.value = table;
                     option.textContent = table;
                     // Default to unselected - user must manually select tables
+                    // 기본값 미선택 - 사용자가 수동으로 테이블 선택 필요
                     option.selected = false;
                     this.elements.tableSelect.appendChild(option);
                 });
@@ -539,26 +509,16 @@ class PseuDRAGONApp {
             alert('Please select at least one table');
             return;
         }
-        const semanticSimilarityWeight = this.getSelectedAlpha();
-        if (semanticSimilarityWeight === null) {
-            return;
-        }
 
         this.state.isRunning = true;
-        this.state.semanticSimilarityWeight = semanticSimilarityWeight;
         this.updateStatus('RUNNING');
         this.elements.startBtn.disabled = true;
-        this.setAlphaInputEnabled(false);
         this.elements.startBtn.classList.add('hidden');
         this.elements.stopBtn.classList.remove('hidden');
         this.clearTerminal();
 
         this.log('[Start] Starting PseuDRAGON pipeline...', 'info');
         this.log(`[Stats] Selected tables: ${selectedTables.join(', ')}`, 'info');
-        this.log(
-            `[Config] α=${semanticSimilarityWeight.toFixed(3)}: similarity ${Math.round(semanticSimilarityWeight * 100)}% + authority ${Math.round((1 - semanticSimilarityWeight) * 100)}%`,
-            'info'
-        );
         if (purposeGoal) {
             this.log(`[Target] Pseudonymization purpose: ${purposeGoal}`, 'info');
         }
@@ -575,7 +535,6 @@ class PseuDRAGONApp {
                     tables: selectedTables,
                     purpose_goal: purposeGoal,
                     preferred_method: preferredMethod,
-                    semantic_similarity_weight: semanticSimilarityWeight,
                     session_id: this.state.sessionId  // Include existing session ID if any
                 })
             });
@@ -591,11 +550,8 @@ class PseuDRAGONApp {
             this.log(`[Data] Server response data: ${JSON.stringify(data)}`, 'info');
 
             if (data.status === 'started') {
-                this.state.semanticSimilarityWeight = Number(
-                    data.semantic_similarity_weight
-                );
-                this.renderRankingMix(this.state.semanticSimilarityWeight);
                 // Store session ID from server response
+                // 서버 응답에서 세션 ID 저장
                 if (data.session_id) {
                     this.state.sessionId = data.session_id;
                     this.log(`[Session] Session ID: ${this.state.sessionId.substring(0, 8)}...`, 'info');
@@ -609,7 +565,6 @@ class PseuDRAGONApp {
             this.log(`[ERROR] Error starting pipeline: ${error.message}`, 'error');
             this.updateStatus('ERROR');
             this.elements.startBtn.disabled = false;
-            this.setAlphaInputEnabled(true);
             this.state.isRunning = false;
         }
     }
@@ -621,6 +576,7 @@ class PseuDRAGONApp {
 
         this.log('[Connect] Establishing SSE connection...', 'info');
         // Include session ID in SSE connection URL
+        // SSE 연결 URL에 세션 ID 포함
         const sseUrl = this.state.sessionId ? `/stream?session_id=${this.state.sessionId}` : '/stream';
         this.state.eventSource = new EventSource(sseUrl);
 
@@ -651,14 +607,14 @@ class PseuDRAGONApp {
     async loadStage3Data() {
         /**
          * Load Stage 3 data for human-in-the-loop review
+         * Stage 3 사람-루프 검토를 위한 데이터 로드
          */
         try {
-            console.log('loadStage3Data: Starting to fetch stage 3 data');
             // Include session ID in request URL
+            // 요청 URL에 세션 ID 포함
             const url = this.state.sessionId ? `/get_stage3_data?session_id=${this.state.sessionId}` : '/get_stage3_data';
             const response = await fetch(url);
             const data = await response.json();
-            console.log('loadStage3Data: Received data:', data);
 
             if (data.error) {
                 this.log(`[ERROR] Error: ${data.error}`, 'error');
@@ -667,18 +623,19 @@ class PseuDRAGONApp {
             }
 
             // Store report filenames
+            // 보고서 파일명 저장
             if (data.reports) {
-                console.log('loadStage3Data: Found reports:', data.reports);
                 this.state.reports = data.reports;
                 await this.loadReports();
             }
 
             // Render modal with table data
-            console.log('loadStage3Data: About to render stage 3 modal');
+            // 테이블 데이터로 모달 렌더링
             const tableData = data.tables || data;
             this.renderStage3Modal(tableData);
 
             // Show modal
+            // 모달 표시
             if (this.elements.stage3Modal) {
                 this.elements.stage3Modal.classList.add('active');
             } else {
@@ -702,8 +659,8 @@ class PseuDRAGONApp {
     reopenPolicyModal() {
         /**
          * Reopen the Stage 3 policy selection modal
+         * Stage 3 정책 선택 모달 다시 열기
          */
-        console.log('[STAGE3] [Update] Reopening policy selection modal');
         this.log('[Update] Reopening policy selection...', 'info');
 
         if (this.elements.stage3Modal) {
@@ -717,6 +674,7 @@ class PseuDRAGONApp {
     stopPipeline() {
         /**
          * Stop the running pipeline
+         * 실행 중인 파이프라인 중지
          */
         if (!this.state.isRunning) {
             alert('No pipeline is currently running');
@@ -730,6 +688,7 @@ class PseuDRAGONApp {
         this.log('⛔ Stopping pipeline...', 'warning');
 
         // Call backend to stop pipeline with session ID
+        // 세션 ID와 함께 백엔드에 파이프라인 중지 요청
         fetch('/stop', {
             method: 'POST',
             headers: {
@@ -759,7 +718,6 @@ class PseuDRAGONApp {
         this.state.isRunning = false;
         this.updateStatus('IDLE');
         this.elements.startBtn.disabled = false;
-        this.setAlphaInputEnabled(true);
         this.elements.startBtn.classList.remove('hidden');
         this.elements.stopBtn.classList.add('hidden');
 
@@ -772,6 +730,7 @@ class PseuDRAGONApp {
     renderStage3Modal(data) {
         /**
          * Render Stage 3 modal with policy options
+         * 정책 옵션과 함께 Stage 3 모달 렌더링
          */
         if (!this.elements.stage3Content) {
             console.error('stage3Content element is null or undefined');
@@ -782,8 +741,6 @@ class PseuDRAGONApp {
         this.elements.stage3Content.innerHTML = '';
         this.state.selectedChoices = {};
         this.state.tableData = data; // Store table data for PII status changes
-        console.log('[STAGE3] renderStage3Modal: Initialized selectedChoices to empty object');
-        console.log('[STAGE3] Stage 3 data:', data);
 
         const validationSection = document.createElement('div');
         validationSection.className = 'validation-section';
@@ -807,6 +764,7 @@ class PseuDRAGONApp {
     createTableSection(tableName, columns) {
         /**
          * Create a table section for Stage 3 modal
+         * Stage 3 모달을 위한 테이블 섹션 생성
          */
         const section = document.createElement('div');
         section.className = 'table-section';
@@ -827,11 +785,10 @@ class PseuDRAGONApp {
     createColumnCard(tableName, columnName, info) {
         /**
          * Create a column card with PII information and method options
+         * PII 정보 및 방법 옵션이 포함된 컬럼 카드 생성
          */
         const uniqueKey = `method_${tableName}_${columnName}`;
         this.state.selectedChoices[uniqueKey] = 0;
-        console.log(`[STAGE3] createColumnCard: Set default selection for ${columnName} to index 0 (first method)`);
-        console.log(`[STAGE3] Methods available for ${columnName}:`, info.methods.map((m, i) => `${i}: ${m.method}`));
 
         const card = document.createElement('div');
         card.className = 'column-card';
@@ -846,7 +803,6 @@ class PseuDRAGONApp {
         const currentStatus = isPii ? 'PII' : 'Non-PII';
         const badgeClass = isPii ? 'pii-badge' : 'pii-badge non-pii-badge';
 
-        console.log(`[createColumnCard] Column: ${columnName}, is_pii: ${isPii}, currentStatus: ${currentStatus}, pii_type: ${info.pii_type}`);
 
         header.innerHTML = `
             <div class="column-name">
@@ -875,11 +831,9 @@ class PseuDRAGONApp {
             changeBtn.addEventListener('click', (event) => {
                 event.stopPropagation();  // Prevent event bubbling
                 event.preventDefault();   // Prevent default button behavior
-                console.log('[Button Click Event] Change Status button clicked');
                 const table = changeBtn.dataset.table;
                 const column = changeBtn.dataset.column;
                 const status = changeBtn.dataset.currentStatus;
-                console.log(`[Button Click Event] table=${table}, column=${column}, status=${status}`);
                 this.changePIIStatus(table, column, status);
             });
         } else {
@@ -889,6 +843,7 @@ class PseuDRAGONApp {
         const meta = document.createElement('div');
         meta.className = 'column-meta';
         // Check if identification evidence is valid and meaningful
+        // 식별 증거가 유효하고 의미 있는지 확인
         const showIdentification = info.id_evidence &&
             info.id_evidence !== 'Unknown' &&
             info.id_evidence !== 'None' &&
@@ -932,11 +887,12 @@ class PseuDRAGONApp {
     createMethodOption(uniqueKey, method, index) {
         /**
          * Create a method option element with radio button
+         * 라디오 버튼이 있는 기술 옵션 요소 생성
          */
         const option = document.createElement('div');
         option.className = `method-option ${index === 0 ? 'selected' : ''}`;
         option.onclick = (e) => {
-            if (!e.target.classList.contains('code-edit-input') && !e.target.classList.contains('desc-edit-input')) {
+            if (!e.target.closest('textarea, select, details')) {
                 this.selectMethod(uniqueKey, index);
             }
         };
@@ -983,6 +939,24 @@ class PseuDRAGONApp {
                             data-original="${this.escapeHtml(method.code_snippet)}"
                         >${this.escapeHtml(method.code_snippet)}</textarea>
                     </div>
+                    <details class="method-contract">
+                        <summary>Custom-code contract (for unsupported edits)</summary>
+                        <label>Method
+                            <select id="contract_method_${uniqueKey}_${index}">
+                                ${['KEEP', 'DELETE', 'HASH', 'MASK', 'TOKENIZE', 'GENERALIZE', 'ROUND', 'ENCRYPT'].map(name =>
+                                    `<option value="${name}" ${name === String(method.method).toUpperCase() ? 'selected' : ''}>${name}</option>`
+                                ).join('')}
+                            </select>
+                        </label>
+                        <label>Parameters (JSON object)
+                            <textarea id="contract_parameters_${uniqueKey}_${index}" rows="2">${this.escapeHtml(JSON.stringify(method.parameters || {}))}</textarea>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="contract_confirm_${uniqueKey}_${index}">
+                            I confirm that this method and these parameters describe my edited code.
+                            This declaration is recorded without automatic verification of custom code.
+                        </label>
+                    </details>
                 ` : ''}
             </div>
         `;
@@ -993,10 +967,9 @@ class PseuDRAGONApp {
     selectMethod(uniqueKey, index) {
         /**
          * Handle method selection
+         * 기술 선택 처리
          */
-        console.log(`[STAGE3] ✏️ USER SELECTION: ${uniqueKey} changed to index ${index}`);
         this.state.selectedChoices[uniqueKey] = index;
-        console.log('[STAGE3] Current selected choices:', this.state.selectedChoices);
 
         document.querySelectorAll(`input[name="${uniqueKey}"]`).forEach((radio, i) => {
             const option = radio.closest('.method-option');
@@ -1013,10 +986,8 @@ class PseuDRAGONApp {
     async submitPolicies() {
         /**
          * Submit selected policies and generate code
+         * 선택된 정책을 제출하고 코드 생성
          */
-        console.log('[STAGE3] 📤 submitPolicies: STARTING');
-        console.log('[STAGE3] [Stats] Selected choices to submit:', this.state.selectedChoices);
-        console.log('[STAGE3] [Stats] Total selections:', Object.keys(this.state.selectedChoices).length);
 
         this.elements.stage3Modal.classList.remove('active');
         this.log('[Update] Submitting selected policies...', 'info');
@@ -1025,6 +996,7 @@ class PseuDRAGONApp {
 
         const policiesWithCode = {
             // Include session ID in submission
+            // 제출에 세션 ID 포함
             session_id: this.state.sessionId
         };
         for (const [key, index] of Object.entries(this.state.selectedChoices)) {
@@ -1045,9 +1017,26 @@ class PseuDRAGONApp {
                 description: editedDesc,
                 description_modified: editedDesc !== originalDesc
             };
+            if (document.getElementById(`contract_confirm_${key}_${index}`)?.checked) {
+                try {
+                    const parameters = JSON.parse(document.getElementById(`contract_parameters_${key}_${index}`).value);
+                    if (parameters === null || Array.isArray(parameters) || typeof parameters !== 'object') {
+                        throw new Error('Parameters must be a JSON object.');
+                    }
+                    policiesWithCode[key].declared_contract = {
+                        method: document.getElementById(`contract_method_${key}_${index}`).value,
+                        parameters: parameters
+                    };
+                } catch (error) {
+                    this.log(`[ERROR] ${key}: ${error.message}`, 'error');
+                    this.elements.stage3Modal.classList.add('active');
+                    return;
+                }
+            }
         }
 
         // Include session ID for multi-client support
+        // 멀티 클라이언트 지원을 위해 세션 ID 포함
         if (this.state.sessionId) {
             policiesWithCode.session_id = this.state.sessionId;
         }
@@ -1067,10 +1056,12 @@ class PseuDRAGONApp {
                 this.state.eventSource.close();
 
                 // Update reports with regenerated integrated reports from Stage 3
+                // Stage 3에서 재생성된 통합 보고서로 reports 업데이트
                 if (data.reports) {
                     this.state.reports = data.reports;
                     this.log('[Stats] Updated report files with Stage 3 modifications', 'info');
                     // Reload reports to show updated content
+                    // 업데이트된 내용을 표시하기 위해 보고서 재로드
                     await this.loadReports();
                 }
 
@@ -1078,15 +1069,18 @@ class PseuDRAGONApp {
                 this.switchMainTab('code');
 
                 // Hide reopen policy button after successful code generation
+                // 코드가 정상적으로 생성되면 reopen policy 버튼 숨기기
                 if (this.elements.reopenPolicyBtn) {
                     this.elements.reopenPolicyBtn.classList.add('hidden');
                 }
 
                 // Show start button and hide stop button
+                // Start 버튼 표시하고 Stop 버튼 숨기기
                 this.elements.startBtn.classList.remove('hidden');
                 this.elements.stopBtn.classList.add('hidden');
 
                 // Show heuristic learning notification if patterns were learned
+                // 휴리스틱 패턴 학습이 완료되면 알림 팝업 표시
                 if (data.heuristic_learning && data.heuristic_learning.total_patterns > 0) {
                     const stats = data.heuristic_learning;
                     const piiCount = (stats.pii_patterns.suffixes || 0) + (stats.pii_patterns.prefixes || 0) +
@@ -1101,17 +1095,20 @@ class PseuDRAGONApp {
                     alert(message);
 
                     // Reload heuristics to show updated data
+                    // 업데이트된 데이터를 표시하기 위해 휴리스틱 재로드
                     this.loadHeuristics();
                 }
             } else {
-                throw new Error('Code generation failed');
+                if (data.status === 'validation_error') {
+                    this.elements.stage3Modal.classList.add('active');
+                }
+                throw new Error(data.error || 'Code generation failed');
             }
         } catch (error) {
             this.log(`[ERROR] Error: ${error.message}`, 'error');
             this.updateStatus('ERROR');
         } finally {
             this.elements.startBtn.disabled = false;
-            this.setAlphaInputEnabled(true);
             this.state.isRunning = false;
         }
     }
@@ -1119,11 +1116,13 @@ class PseuDRAGONApp {
     displayGeneratedCode(codes) {
         /**
          * Display generated pseudonymization code
+         * 생성된 가명처리 코드 표시
          */
         this.elements.codeTabsContainer.innerHTML = '';
         this.elements.codeViewers.innerHTML = '';
 
         // Check if codes object is empty or null
+        // 코드 객체가 비어있거나 null인지 확인
         if (!codes || Object.keys(codes).length === 0) {
             this.elements.emptyState.style.display = 'block';
             this.elements.codeContent.style.display = 'none';
@@ -1170,8 +1169,8 @@ class PseuDRAGONApp {
     async loadReports() {
         /**
          * Load and display generated reports for multiple tables
+         * 여러 테이블에 대한 생성된 보고서 로드 및 표시
          */
-        console.log('loadReports: Starting to load reports', this.state.reports);
 
         this.elements.emptyStateReports.style.display = 'none';
         this.elements.reportsContent.style.display = 'block';
@@ -1179,18 +1178,20 @@ class PseuDRAGONApp {
         this.elements.reportViewers.innerHTML = '';
 
         // Find all integrated reports (one per table)
+        // 모든 통합 보고서 찾기 (테이블당 하나)
         const integratedReportKeys = Object.keys(this.state.reports).filter(key => key.includes('_integrated'));
 
         if (integratedReportKeys.length > 0) {
-            console.log('loadReports: Found integrated reports:', integratedReportKeys);
 
             let isFirst = true;
             for (const reportKey of integratedReportKeys) {
                 // Extract table name from report key (e.g., "CUSTOMERS_integrated" -> "CUSTOMERS")
+                // 보고서 키에서 테이블 이름 추출
                 const tableName = reportKey.replace('_integrated', '');
                 const filename = this.state.reports[reportKey];
 
                 // Create tab button
+                // 탭 버튼 생성
                 const tabBtn = document.createElement('button');
                 tabBtn.className = `tab-btn ${isFirst ? 'active' : ''}`;
                 tabBtn.textContent = `${tableName}`;
@@ -1198,9 +1199,11 @@ class PseuDRAGONApp {
                 this.elements.reportTabsContainer.appendChild(tabBtn);
 
                 // Fetch report content
+                // 보고서 내용 가져오기
                 const content = await this.fetchReport(filename);
 
                 // Create report container
+                // 보고서 컨테이너 생성
                 const reportContainer = document.createElement('div');
                 reportContainer.id = `report-${reportKey}`;
                 reportContainer.className = `tab-content ${isFirst ? 'active' : ''}`;
@@ -1225,14 +1228,13 @@ class PseuDRAGONApp {
             }
 
             this.elements.reportTabsContainer.style.display = 'flex';
-            console.log('loadReports: All integrated reports loaded successfully');
 
             // Auto-switch to reports tab
+            // 보고서 탭으로 자동 전환
             this.switchMainTab('reports');
             const tableCount = integratedReportKeys.length;
             this.log(`[Stats] ${tableCount} integrated report(s) generated. Switching to Reports tab.`, 'success');
         } else {
-            console.log('loadReports: No integrated report found, showing empty state');
             this.elements.emptyStateReports.style.display = 'flex';
             this.elements.reportsContent.style.display = 'none';
         }
@@ -1241,6 +1243,7 @@ class PseuDRAGONApp {
     async fetchReport(filename) {
         /**
          * Fetch report content from server
+         * 서버에서 보고서 내용 가져오기
          */
         try {
             const response = await fetch(`/get_report/${filename}`);
@@ -1254,6 +1257,7 @@ class PseuDRAGONApp {
     renderMarkdown(markdown) {
         /**
          * Render the report locally without a CDN dependency.
+         * 외부 CDN 의존성 없이 보고서를 로컬에서 렌더링합니다.
          *
          * Input is escaped before applying the supported Markdown subset so
          * model-generated report content cannot inject executable HTML.
@@ -1386,6 +1390,7 @@ class PseuDRAGONApp {
     switchMainTab(tabName) {
         /**
          * Switch between main tabs (Logs, Code, Reports)
+         * 메인 탭 전환 (로그, 코드, 보고서)
          */
         document.querySelectorAll('.tab-nav-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tabName);
@@ -1399,6 +1404,7 @@ class PseuDRAGONApp {
     switchCodeTab(tableName, event) {
         /**
          * Switch between code tabs for different tables
+         * 다른 테이블의 코드 탭 전환
          */
         document.querySelectorAll('#codeTabsContainer .tab-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -1416,8 +1422,10 @@ class PseuDRAGONApp {
     switchReportTab(reportKey) {
         /**
          * Switch between report tabs
+         * 보고서 탭 전환
          */
         // Remove active class from all tabs and contents
+        // 모든 탭과 컨텐츠에서 active 클래스 제거
         document.querySelectorAll('#reportTabsContainer .tab-btn').forEach(btn => {
             btn.classList.remove('active');
         });
@@ -1426,6 +1434,7 @@ class PseuDRAGONApp {
         });
 
         // Find and activate the correct tab button
+        // 올바른 탭 버튼을 찾아 활성화
         const tableName = reportKey.replace('_integrated', '');
         document.querySelectorAll('#reportTabsContainer .tab-btn').forEach(btn => {
             if (btn.textContent === tableName) {
@@ -1434,12 +1443,14 @@ class PseuDRAGONApp {
         });
 
         // Activate the report content
+        // 보고서 컨텐츠 활성화
         document.getElementById(`report-${reportKey}`).classList.add('active');
     }
 
     copyCode(tableName) {
         /**
          * Copy generated code to clipboard
+         * 생성된 코드를 클립보드에 복사
          */
         const codeElement = document.querySelector(`#code-${tableName} pre code`);
         const code = codeElement.textContent;
@@ -1454,6 +1465,7 @@ class PseuDRAGONApp {
     downloadReport(reportKey) {
         /**
          * Download report file
+         * 보고서 파일 다운로드
          */
         const filename = this.state.reports[reportKey];
         window.open(`/download_report/${filename}`, '_blank');
@@ -1462,6 +1474,7 @@ class PseuDRAGONApp {
     viewReportAndCloseModal() {
         /**
          * Close Stage 3 modal and switch to report tab
+         * Stage 3 모달을 닫고 보고서 탭으로 전환
          */
         this.elements.stage3Modal.classList.remove('active');
         this.switchMainTab('reports');
@@ -1470,6 +1483,7 @@ class PseuDRAGONApp {
     updateStatus(status) {
         /**
          * Update pipeline status badge
+         * 파이프라인 상태 배지 업데이트
          */
         this.state.currentStep = status;
         this.elements.statusBadge.textContent = status;
@@ -1491,18 +1505,22 @@ class PseuDRAGONApp {
     log(message, type = 'info') {
         /**
          * Log message to the logs tab
+         * 로그 탭에 메시지 기록
          * @param {string} message - Message to log
          * @param {string} type - Log type (info/error/warning) - reserved for future use
          */
             // Check if message already has timestamp from backend (format: [HH:MM:SS])
+            // 백엔드에서 이미 타임스탬프가 있는지 확인 (형식: [HH:MM:SS])
         const hasTimestamp = /^\[\d{2}:\d{2}:\d{2}\]/.test(message);
 
         let formattedMessage;
         if (hasTimestamp) {
             // Use message as-is if it already has timestamp
+            // 이미 타임스탬프가 있으면 그대로 사용
             formattedMessage = message;
         } else {
             // Add timestamp if not present
+            // 타임스탬프가 없으면 추가
             const timestamp = new Date().toLocaleTimeString();
             formattedMessage = `[${timestamp}] ${message}`;
         }
@@ -1520,6 +1538,7 @@ class PseuDRAGONApp {
     clearTerminal() {
         /**
          * Clear all logs
+         * 모든 로그 지우기
          */
         this.elements.logsContent.innerHTML = '';
         const logsTab = document.querySelector('#logsTab .empty-state');
@@ -1532,6 +1551,7 @@ class PseuDRAGONApp {
     showNotification(message, type = 'info') {
         /**
          * Show notification to user
+         * 사용자에게 알림 표시
          * @param {string} message - Notification message
          * @param {string} type - Notification type (info/success/error) - reserved for future use
          */
@@ -1541,18 +1561,21 @@ class PseuDRAGONApp {
     async changePIIStatus(tableName, columnName, currentStatus) {
         /**
          * Handle PII status change for a column
+         * 컬럼의 PII 상태 변경 처리
          *
          * When changing from Non-PII to PII, this function:
+         * Non-PII에서 PII로 변경할 때, 이 함수는:
          * - Prompts user for PII type and rationale
+         *   사용자에게 PII 유형 및 사유 입력 요청
          * - Calls backend to re-run Stage 2 with LLM
+         *   LLM으로 Stage 2를 재실행하도록 백엔드 호출
          * - Updates UI with new pseudonymization methods
+         *   새로운 가명화 기법으로 UI 업데이트
          */
-        console.log(`[PII Status Change] Table: ${tableName}, Column: ${columnName}, Current: ${currentStatus}`);
 
         // Prevent duplicate modals
         const existingModal = document.getElementById('piiTypeModal');
         if (existingModal) {
-            console.log('[PII Status Change] Modal already exists, removing...');
             existingModal.remove();
         }
 
@@ -1564,7 +1587,6 @@ class PseuDRAGONApp {
         let rationale = '';
 
         if (newStatus === 'PII') {
-            console.log('[PII Status Change] Creating modal for PII type selection...');
 
             // Create modal for PII type selection
             const modalHtml = `
@@ -1602,11 +1624,9 @@ class PseuDRAGONApp {
             // Add modal to DOM
             document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-            console.log('[PII Status Change] Modal added to DOM');
 
             // Wait for user confirmation
             const confirmed = await new Promise((resolve) => {
-                console.log('[PII Status Change] Setting up modal event listeners...');
 
                 // Handle cancel button
                 const cancelBtn = document.getElementById('cancelPIIChange');
@@ -1618,31 +1638,24 @@ class PseuDRAGONApp {
                     return;
                 }
 
-                console.log('[PII Status Change] Modal buttons found');
 
                 cancelBtn.onclick = () => {
-                    console.log('[PII Status Change] User clicked Cancel');
                     document.getElementById('piiTypeModal').remove();
                     resolve(false); // User cancelled
                 };
 
                 confirmBtn.onclick = () => {
-                    console.log('[PII Status Change] User clicked Confirm');
                     piiType = document.getElementById('piiTypeSelect').value;
                     rationale = document.getElementById('piiRationale').value.trim();
-                    console.log(`[PII Status Change] Selected PII type: ${piiType}, Rationale length: ${rationale.length}`);
                     document.getElementById('piiTypeModal').remove();
                     resolve(true); // User confirmed
                 };
 
-                console.log('[PII Status Change] Event listeners attached, waiting for user action...');
             });
 
-            console.log(`[PII Status Change] User confirmation result: ${confirmed}`);
 
             // If user cancelled, exit
             if (!confirmed) {
-                console.log('[PII Status Change] User cancelled, exiting...');
                 return;
             }
         } else {
@@ -1673,17 +1686,6 @@ class PseuDRAGONApp {
 
         this.log(`[Update] Changing ${columnName} status from ${currentStatus} to ${newStatus}...`, 'info');
 
-        console.log('[changePIIStatus] currentStatus (parameter):', currentStatus);
-        console.log('[changePIIStatus] newStatus (calculated):', newStatus);
-        console.log('[changePIIStatus] piiType:', piiType);
-        console.log('[changePIIStatus] Request data:', {
-            table: tableName,
-            column: columnName,
-            old_status: currentStatus,
-            new_status: newStatus,
-            pii_type: piiType,
-            rationale: rationale
-        });
 
         try {
             // Call backend API
@@ -1693,7 +1695,7 @@ class PseuDRAGONApp {
                 body: JSON.stringify({
                     table: tableName,
                     column: columnName,
-                    old_status: currentStatus,  // CRITICAL: Explicitly send old_status
+                    old_status: currentStatus,  // Explicitly send old_status
                     new_status: newStatus,
                     pii_type: piiType,
                     rationale: rationale,
@@ -1708,9 +1710,6 @@ class PseuDRAGONApp {
 
             const result = await response.json();
 
-            console.log('[changePIIStatus] Backend response:', result);
-            console.log('[changePIIStatus] result.pii_type:', result.pii_type);
-            console.log('[changePIIStatus] newStatus:', newStatus);
 
             if (result.status === 'success') {
                 this.log(`[OK] ${result.message}`, 'success');
@@ -1723,7 +1722,6 @@ class PseuDRAGONApp {
                     column_comment: result.column_comment || ''
                 };
 
-                console.log('[changePIIStatus] Calling updateColumnCard with:', updateData);
 
                 this.updateColumnCard(tableName, columnName, updateData);
 
@@ -1735,7 +1733,6 @@ class PseuDRAGONApp {
                 }
 
                 // Success - no alert needed
-                console.log(`[PII Status Change] Successfully changed ${columnName} to ${newStatus}`);
             } else {
                 throw new Error('Unexpected response from server');
             }
@@ -1763,6 +1760,7 @@ class PseuDRAGONApp {
     updateColumnCard(tableName, columnName, newData) {
         /**
          * Update a column card with new data
+         * 새 데이터로 컬럼 카드 업데이트
          */
         const card = document.querySelector(`.column-card[data-table="${tableName}"][data-column="${columnName}"]`);
         if (!card) {
@@ -1770,14 +1768,11 @@ class PseuDRAGONApp {
             return;
         }
 
-        console.log(`[updateColumnCard] Updating card for ${tableName}.${columnName}`, newData);
-        console.log(`[updateColumnCard] is_pii: ${newData.is_pii}, pii_type: ${newData.pii_type}`);
 
         // Update PII badge
         const badge = card.querySelector('.pii-badge');
         const statusText = card.querySelector('.pii-status-text');
 
-        console.log(`[updateColumnCard] badge found: ${!!badge}, statusText found: ${!!statusText}`);
 
         if (badge && statusText) {
             // Clear previous state
@@ -1787,13 +1782,11 @@ class PseuDRAGONApp {
                 // PII: Red background
                 badge.dataset.status = 'PII';
                 statusText.textContent = newData.pii_type || 'PII';
-                console.log(`[updateColumnCard] Set to PII: ${newData.pii_type}`);
             } else {
                 // Non-PII: Green background
                 badge.classList.add('non-pii-badge');
                 badge.dataset.status = 'Non-PII';
                 statusText.textContent = 'Non-PII';
-                console.log(`[updateColumnCard] Set to Non-PII`);
             }
         } else {
             console.error(`[updateColumnCard] Badge or statusText not found in card`);
@@ -1821,11 +1814,9 @@ class PseuDRAGONApp {
                 const table = newBtn.dataset.table;
                 const column = newBtn.dataset.column;
                 const status = newBtn.dataset.currentStatus;
-                console.log(`[Button Click] Changing status for ${table}.${column} from ${status}`);
                 this.changePIIStatus(table, column, status);
             });
 
-            console.log(`[updateColumnCard] Updated Change Status button for status: ${currentStatusForButton}`);
         } else {
             console.error(`[updateColumnCard] Change Status button not found in card`);
         }
@@ -1853,7 +1844,6 @@ class PseuDRAGONApp {
                     methodsContainer.appendChild(option);
                 });
 
-                console.log(`[updateColumnCard] Added ${newData.methods.length} methods`);
             } else {
                 // No methods available
                 const noMethodsMsg = document.createElement('div');
@@ -1869,6 +1859,7 @@ class PseuDRAGONApp {
     async validatePolicies() {
         /**
          * Validate current policies using backend validator
+         * 백엔드 검증기를 사용하여 현재 정책 검증
          *
          * Implements real-time validation
          */
@@ -1913,6 +1904,7 @@ class PseuDRAGONApp {
     collectUserPolicies() {
         /**
          * Collect user-selected policies from UI
+         * UI에서 사용자가 선택한 정책 수집
          */
         const policies = {};
 
@@ -1943,6 +1935,7 @@ class PseuDRAGONApp {
     displayValidationResults(result) {
         /**
          * Display validation results in UI
+         * UI에 검증 결과 표시
          */
         const container = document.getElementById('validationResults');
         if (!container) return;
@@ -2011,6 +2004,7 @@ class PseuDRAGONApp {
     escapeHtml(text) {
         /**
          * Escape HTML special characters
+         * HTML 특수 문자 이스케이프
          */
         const div = document.createElement('div');
         div.textContent = text;
@@ -2020,6 +2014,7 @@ class PseuDRAGONApp {
     formatLegalEvidence(evidence) {
         /**
          * Format legal evidence to extract and display document names
+         * 법적 근거를 포맷하여 문서 이름 추출 및 표시
          */
         if (!evidence) return 'Unknown';
 
@@ -2042,11 +2037,13 @@ class PseuDRAGONApp {
 
     // ============================================================================
     // Heuristics Management Methods
+    // 휴리스틱 관리 메서드
     // ============================================================================
 
     async loadHeuristics() {
         /**
          * Load and display heuristics
+         * 휴리스틱 로드 및 표시
          */
         try {
             // Load heuristics and statistics in parallel
@@ -2090,6 +2087,7 @@ class PseuDRAGONApp {
     updateHeuristicsStats(stats) {
         /**
          * Update heuristics statistics display
+         * 휴리스틱 통계 표시 업데이트
          */
         document.getElementById('heurTotalPatterns').textContent = stats.total_patterns || 0;
         document.getElementById('heurManualPatterns').textContent = stats.manual_patterns || 0;
@@ -2106,6 +2104,7 @@ class PseuDRAGONApp {
     displayHeuristics(heuristics) {
         /**
          * Display heuristics in the UI
+         * UI에 휴리스틱 표시
          */
         const container = document.getElementById('heuristicsListContainer');
 
@@ -2182,6 +2181,7 @@ class PseuDRAGONApp {
     async editHeuristic(heuristicId) {
         /**
          * Open edit modal for heuristic
+         * 휴리스틱 편집 모달 열기
          */
         try {
             const response = await fetch(`/api/heuristics/${heuristicId}`);
@@ -2236,6 +2236,7 @@ class PseuDRAGONApp {
     async deleteHeuristic(heuristicId) {
         /**
          * Delete heuristic after confirmation
+         * 확인 후 휴리스틱 삭제
          */
         if (!confirm('Are you sure you want to delete this heuristic?')) {
             return;
@@ -2261,6 +2262,7 @@ class PseuDRAGONApp {
     async saveHeuristic() {
         /**
          * Save (add or update) heuristic
+         * 휴리스틱 저장 (추가 또는 업데이트)
          */
         const id = document.getElementById('heuristicId').value;
         const patternType = document.getElementById('heuristicPatternType').value;
@@ -2320,6 +2322,7 @@ class PseuDRAGONApp {
     async testRegexPattern() {
         /**
          * Test regex pattern against sample strings
+         * 샘플 문자열에 대해 정규식 패턴 테스트
          */
         const regex = document.getElementById('heuristicRegex').value;
         const testStringsText = document.getElementById('regexTestStrings').value;
@@ -2357,6 +2360,7 @@ class PseuDRAGONApp {
     displayRegexTestResults(result) {
         /**
          * Display regex test results
+         * 정규식 테스트 결과 표시
          */
         const container = document.getElementById('regexTestResultsContent');
         const resultsDiv = document.getElementById('regexTestResults');
@@ -2391,11 +2395,13 @@ class PseuDRAGONApp {
 
     // ============================================================================
     // Expert Feedback Methods
+    // 전문가 피드백 메서드
     // ============================================================================
 
     async loadExpertFeedback() {
         /**
          * Load and display expert feedback
+         * 전문가 피드백 로드 및 표시
          */
         try {
             const response = await fetch('/api/expert_feedback');
@@ -2414,6 +2420,7 @@ class PseuDRAGONApp {
     displayExpertFeedback(data) {
         /**
          * Display expert feedback data
+         * 전문가 피드백 데이터 표시
          */
             // Update statistics
         const stats = data.statistics || {};
@@ -2519,15 +2526,18 @@ class PseuDRAGONApp {
 
     // ============================================================================
     // Audit Log Methods
+    // 감사 로그 메서드
     // ============================================================================
 
     async loadAuditLog(filters = {}) {
         /**
          * Load and display audit log
+         * 감사 로그 로드 및 표시
          */
         try {
             let url = '/api/audit_log?';
             // Include session ID in request
+            // 요청에 세션 ID 포함
             if (this.state.sessionId) url += `session_id=${this.state.sessionId}&`;
             if (filters.event_type) url += `event_type=${filters.event_type}&`;
             if (filters.start_date) url += `start_date=${filters.start_date}&`;
@@ -2556,6 +2566,7 @@ class PseuDRAGONApp {
     displayAuditLog(events) {
         /**
          * Display audit log events
+         * 감사 로그 이벤트 표시
          */
         const container = document.getElementById('auditLogContainer');
 
@@ -2594,6 +2605,7 @@ class PseuDRAGONApp {
     async showTableSchema(tableName) {
         /**
          * Show table schema in a modal window
+         * 모달 창에 테이블 스키마 표시
          *
          * @param {string} tableName - Name of the table to display
          */
@@ -2716,11 +2728,13 @@ class PseuDRAGONApp {
 
     // ============================================================================
     // Session Monitoring Methods
+    // 세션 모니터링 메서드
     // ============================================================================
 
     async loadSessions() {
         /**
          * Load and display all active sessions for monitoring
+         * 모니터링을 위한 모든 활성 세션 로드 및 표시
          */
         try {
             const response = await fetch('/api/sessions');
@@ -2741,6 +2755,7 @@ class PseuDRAGONApp {
     updateSessionCount(count) {
         /**
          * Update the session count badge in the tab
+         * 탭의 세션 카운트 배지 업데이트
          */
         const badge = document.getElementById('sessionCount');
         if (badge) {
@@ -2752,6 +2767,7 @@ class PseuDRAGONApp {
     displaySessionsList(sessions) {
         /**
          * Display the list of sessions as tabs
+         * 세션 목록을 탭으로 표시
          */
         const noSessionsState = document.getElementById('noSessionsState');
         const tabsContainer = document.getElementById('sessionTabsContainer');
@@ -2759,6 +2775,7 @@ class PseuDRAGONApp {
         const detailsViewer = document.getElementById('sessionDetailsViewer');
 
         // Filter out current session from monitoring list
+        // 현재 세션은 모니터링 목록에서 제외
         const otherSessions = sessions.filter(s => s.session_id !== this.state.sessionId);
 
         if (otherSessions.length === 0) {
@@ -2772,6 +2789,7 @@ class PseuDRAGONApp {
         tabsContainer.style.display = 'block';
 
         // Generate session tabs
+        // 세션 탭 생성
         tabsList.innerHTML = '';
         otherSessions.forEach((session, index) => {
             const tab = document.createElement('button');
@@ -2794,10 +2812,12 @@ class PseuDRAGONApp {
         });
 
         // Auto-select first session if none selected
+        // 선택된 세션이 없으면 첫 번째 세션 자동 선택
         if (!this.state.selectedMonitorSession && otherSessions.length > 0) {
             this.selectMonitorSession(otherSessions[0].session_id);
         } else if (this.state.selectedMonitorSession) {
             // Refresh current session details
+            // 현재 세션 상세 정보 새로고침
             this.loadSessionLogs(this.state.selectedMonitorSession);
         }
     }
@@ -2805,26 +2825,31 @@ class PseuDRAGONApp {
     async selectMonitorSession(sessionId) {
         /**
          * Select a session for monitoring
+         * 모니터링할 세션 선택
          */
         this.state.selectedMonitorSession = sessionId;
         this.state.sessionLogOffset = 0;
 
         // Update tab active state
+        // 탭 활성 상태 업데이트
         document.querySelectorAll('.session-tab').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.sessionId === sessionId);
         });
 
         // Show details viewer
+        // 상세 뷰어 표시
         const detailsViewer = document.getElementById('sessionDetailsViewer');
         detailsViewer.style = '';
 
         // Load session logs
+        // 세션 로그 로드
         await this.loadSessionLogs(sessionId);
     }
 
     async loadSessionLogs(sessionId, append = false) {
         /**
          * Load logs from a specific session
+         * 특정 세션의 로그 로드
          */
         try {
             const limit = 200;
@@ -2850,8 +2875,10 @@ class PseuDRAGONApp {
     displaySessionDetails(data, append = false) {
         /**
          * Display session details and logs
+         * 세션 상세 정보 및 로그 표시
          */
         // Update header info
+        // 헤더 정보 업데이트
         document.getElementById('selectedSessionTitle').textContent = `Session: ${data.session_id_short}`;
 
         const statusBadge = document.getElementById('selectedSessionStatus');
@@ -2863,6 +2890,7 @@ class PseuDRAGONApp {
             data.tables.length > 0 ? `📊 ${data.tables.join(', ')}` : 'No tables';
 
         // Display logs
+        // 로그 표시
         const logsViewer = document.getElementById('sessionLogsViewer');
 
         if (!append) {
@@ -2878,6 +2906,7 @@ class PseuDRAGONApp {
             });
 
             // Auto-scroll to bottom
+            // 자동 스크롤
             logsViewer.scrollTop = logsViewer.scrollHeight;
         } else if (!append) {
             logsViewer.innerHTML = `
@@ -2893,10 +2922,12 @@ class PseuDRAGONApp {
     formatLogMessage(message) {
         /**
          * Format log message with proper styling
+         * 적절한 스타일링으로 로그 메시지 포맷
          */
         let formatted = this.escapeHtml(message);
 
         // Highlight different log levels
+        // 다른 로그 레벨 강조
         if (formatted.includes('✓') || formatted.includes('✅')) {
             formatted = `<span style="color: #28a745;">${formatted}</span>`;
         } else if (formatted.includes('✗') || formatted.includes('❌') || formatted.includes('Error')) {
@@ -2913,6 +2944,7 @@ class PseuDRAGONApp {
     toggleSessionAutoRefresh() {
         /**
          * Toggle auto-refresh for session monitoring
+         * 세션 모니터링 자동 새로고침 토글
          */
         this.state.sessionAutoRefresh = !this.state.sessionAutoRefresh;
 
@@ -2922,6 +2954,7 @@ class PseuDRAGONApp {
             btn.classList.add('active');
 
             // Start auto-refresh interval (every 2 seconds)
+            // 자동 새로고침 시작 (2초마다)
             this.state.sessionAutoRefreshInterval = setInterval(() => {
                 if (this.state.selectedMonitorSession) {
                     this.loadSessionLogs(this.state.selectedMonitorSession);
@@ -2933,6 +2966,7 @@ class PseuDRAGONApp {
             btn.classList.remove('active');
 
             // Stop auto-refresh
+            // 자동 새로고침 중지
             if (this.state.sessionAutoRefreshInterval) {
                 clearInterval(this.state.sessionAutoRefreshInterval);
                 this.state.sessionAutoRefreshInterval = null;
@@ -2942,11 +2976,13 @@ class PseuDRAGONApp {
 
     // ============================================================================
     // Logo Click Handler
+    // 로고 클릭 핸들러
     // ============================================================================
 
     handleLogoClick() {
         /**
          * Handle logo click - warn if pipeline is running
+         * 로고 클릭 처리 - 파이프라인 실행 중이면 경고
          */
         if (this.state.isRunning) {
             const confirmed = confirm(
@@ -2963,22 +2999,26 @@ class PseuDRAGONApp {
         }
 
         // Reload the page
+        // 페이지 새로고침
         location.reload();
     }
 
     // ============================================================================
     // Add Table Modal Methods
+    // Add Table 모달 메서드
     // ============================================================================
 
     openAddTableModal() {
         /**
          * Open the Add Table DDL modal
+         * Add Table DDL 모달 열기
          */
         const modal = document.getElementById('addTableModal');
         const ddlInput = document.getElementById('ddlInput');
         const errorMessage = document.getElementById('ddlErrorMessage');
 
         // Clear previous input and error
+        // 이전 입력 및 오류 지우기
         ddlInput.value = '';
         errorMessage.style.display = 'none';
         errorMessage.textContent = '';
@@ -2989,6 +3029,7 @@ class PseuDRAGONApp {
     closeAddTableModal() {
         /**
          * Close the Add Table DDL modal
+         * Add Table DDL 모달 닫기
          */
         const modal = document.getElementById('addTableModal');
         modal.classList.remove('active');
@@ -2997,6 +3038,7 @@ class PseuDRAGONApp {
     async executeAddTable() {
         /**
          * Execute the DDL and create the table
+         * DDL을 실행하고 테이블 생성
          */
         const ddlInput = document.getElementById('ddlInput');
         const errorMessage = document.getElementById('ddlErrorMessage');
@@ -3011,6 +3053,7 @@ class PseuDRAGONApp {
         }
 
         // Disable button during execution
+        // 실행 중 버튼 비활성화
         executeBtn.disabled = true;
         executeBtn.innerHTML = '<span class="btn-icon">⏳</span><span>Creating...</span>';
 
@@ -3030,13 +3073,16 @@ class PseuDRAGONApp {
             }
 
             // Success - close modal and reload tables
+            // 성공 - 모달 닫기 및 테이블 다시 로드
             this.closeAddTableModal();
             this.log(`[OK] ${data.message}`, 'success');
 
             // Reload tables and select the new table
+            // 테이블 다시 로드하고 새 테이블 선택
             await this.loadTables();
 
             // Select the newly created table
+            // 새로 생성된 테이블 선택
             const tableSelect = this.elements.tableSelect;
             const newOption = Array.from(tableSelect.options).find(opt => opt.value === data.table_name);
             if (newOption) {
@@ -3048,6 +3094,7 @@ class PseuDRAGONApp {
             errorMessage.style.display = 'block';
         } finally {
             // Re-enable button
+            // 버튼 다시 활성화
             executeBtn.disabled = false;
             executeBtn.innerHTML = '<span class="btn-icon">💾</span><span>Execute</span>';
         }
@@ -3056,6 +3103,7 @@ class PseuDRAGONApp {
     updateDropTableButtonState() {
         /**
          * Update the Drop Table button state based on table selection
+         * 테이블 선택에 따라 Drop Table 버튼 상태 업데이트
          */
         const dropTableBtn = document.getElementById('dropTableBtn');
         if (!dropTableBtn) return;
@@ -3077,6 +3125,7 @@ class PseuDRAGONApp {
     confirmDropTable() {
         /**
          * Show confirmation dialog before dropping a table
+         * 테이블 삭제 전 확인 대화상자 표시
          */
         const selectedTables = Array.from(this.elements.tableSelect.selectedOptions).map(opt => opt.value);
 
@@ -3088,6 +3137,7 @@ class PseuDRAGONApp {
         const tableName = selectedTables[0];
 
         // Show confirmation dialog
+        // 확인 대화상자 표시
         const confirmed = confirm(
             `⚠️ WARNING: This action cannot be undone!\n` +
             `경고: 이 작업은 되돌릴 수 없습니다!\n\n` +
@@ -3105,10 +3155,12 @@ class PseuDRAGONApp {
     async dropTable(tableName) {
         /**
          * Drop the specified table from the database
+         * 데이터베이스에서 지정된 테이블 삭제
          */
         const dropTableBtn = document.getElementById('dropTableBtn');
 
         // Disable button during execution
+        // 실행 중 버튼 비활성화
         if (dropTableBtn) {
             dropTableBtn.disabled = true;
             dropTableBtn.innerHTML = '<span class="btn-icon">⏳</span><span>Dropping...</span>';
@@ -3130,6 +3182,7 @@ class PseuDRAGONApp {
             }
 
             // Success - reload tables
+            // 성공 - 테이블 다시 로드
             this.log(`[OK] ${data.message}`, 'success');
             await this.loadTables();
 
@@ -3138,6 +3191,7 @@ class PseuDRAGONApp {
             this.log(`[ERROR] Error dropping table: ${error.message}`, 'error');
         } finally {
             // Re-enable button and update state
+            // 버튼 다시 활성화 및 상태 업데이트
             if (dropTableBtn) {
                 dropTableBtn.innerHTML = '<span class="btn-icon">-</span><span>Drop Table</span>';
             }

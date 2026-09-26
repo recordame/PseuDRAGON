@@ -1,5 +1,4 @@
-"""
-Universal Session Manager with Provider Detection
+"""Universal Session Manager with Provider Detection
 
 Automatically detects LLM provider (OpenAI, Ollama, etc.) and applies
 appropriate caching strategy.
@@ -16,9 +15,8 @@ from config.config import Settings
 
 
 class UniversalLLMSession:
-    """
-    Universal LLM session with provider-specific optimizations.
-    
+    """Universal LLM session with provider-specific optimizations.
+
     Supports:
     - OpenAI: Automatic prompt caching
     - Ollama: KV cache optimization with keep_alive
@@ -26,9 +24,8 @@ class UniversalLLMSession:
     """
 
     def __init__(self, client, system_prompt: str, session_id: str, ttl_minutes: int = 60, provider: str = "auto", base_url: Optional[str] = None, max_history: int = 10):
-        """
-        Initialize universal LLM session.
-        
+        """Initialize universal LLM session.
+
         Args:
             client: LLM client
             system_prompt: System prompt (sent once at session start)
@@ -37,7 +34,9 @@ class UniversalLLMSession:
             provider: LLM provider ("auto", "openai", "ollama", "other")
             base_url: Base URL for API (used for provider detection)
             max_history: Maximum number of conversation turns to keep (0 = no history, -1 = unlimited)
+
                         Stage 1 should use 0 or 1 (each column is independent)
+
                         Stage 2 can use higher values if context is needed
         """
         self.client = client
@@ -60,13 +59,12 @@ class UniversalLLMSession:
         self.ollama_keep_alive = "60m" if self.provider == "ollama" else None
 
     def _detect_provider(self, provider: str, base_url: Optional[str]) -> str:
-        """
-        Auto-detect LLM provider.
-        
+        """Auto-detect LLM provider.
+
         Args:
             provider: Manual provider specification or "auto"
             base_url: Base URL for API
-            
+
         Returns:
             Detected provider: "openai", "ollama", or "other"
         """
@@ -90,48 +88,48 @@ class UniversalLLMSession:
         return "other"
 
     def add_user_message(self, content: str) -> None:
-        """
-        Add user message to conversation history.
-        """
+        """Add user message to conversation history."""
         self.messages.append({"role": "user", "content": content})
         # Do not trim here! We need to send this message.
         self.last_used = datetime.now()
 
     def add_assistant_message(self, content: str) -> None:
-        """
-        Add assistant message to conversation history.
-        """
+        """Add assistant message to conversation history."""
         self.messages.append({"role": "assistant", "content": content})
         self._trim_history()
 
     def _trim_history(self) -> None:
-        """
-        Trim conversation history to max_history limit.
-        
+        """Trim conversation history to max_history limit.
+
         Keeps system prompt + last N conversation turns.
         """
         if self.max_history < 0:
             # max_history=-1: Unlimited history (no trimming)
+
             return
         elif self.max_history == 0:
             # max_history=0: Keep only system prompt (no conversation history)
+
             # Stage 1 should use this mode since each column is independent
+
             self.messages = [self.messages[0]]  # Keep only system prompt
         elif self.max_history > 0 and len(self.messages) > 1:
             # max_history=N: Keep system prompt + last N*2 messages (N user + N assistant pairs)
+
             # Calculate how many messages to keep (system + user/assistant pairs)
+
             max_messages = 1 + (self.max_history * 2)  # 1 system + N pairs
 
             if len(self.messages) > max_messages:
                 # Keep system prompt + last N conversation turns
+
                 system_prompt = self.messages[0]
                 recent_messages = self.messages[-(self.max_history * 2):]
                 self.messages = [system_prompt] + recent_messages
 
     def supports_streaming(self) -> bool:
-        """
-        Check if current provider supports streaming.
-        
+        """Check if current provider supports streaming.
+
         Returns:
             True if provider supports streaming, False otherwise
         """
@@ -146,9 +144,8 @@ class UniversalLLMSession:
             stream: bool = False,
             stream_callback: Optional[Any] = None,
             **kwargs, ) -> Any:
-        """
-        Send a message and get response with provider-specific optimizations.
-        
+        """Send a message and get response with provider-specific optimizations.
+
         Args:
             user_prompt: User's message
             model: Model name
@@ -157,7 +154,7 @@ class UniversalLLMSession:
             stream: Enable streaming mode for real-time token delivery
             stream_callback: Optional callback function for streaming chunks
             **kwargs: Additional provider-specific parameters
-            
+
         Returns:
             LLM response (accumulated if streaming)
         """
@@ -172,6 +169,7 @@ class UniversalLLMSession:
             self.last_used = datetime.now()
         else:
             # Ensure history is trimmed before starting new turn
+
             self._trim_history()
 
             # Add user message to history
@@ -243,8 +241,7 @@ class UniversalLLMSession:
             stream: bool,
             response_content: str,
     ) -> None:
-        """
-        Persist one complete prompt/response exchange for local auditing.
+        """Persist one complete prompt/response exchange for local auditing.
 
         Each request receives its own atomically renamed JSON file, avoiding
         cross-thread record interleaving. The cache contains no credentials;
@@ -300,13 +297,12 @@ class UniversalLLMSession:
             print(f"[WARN] Failed to persist LLM audit record: {exc}")
 
     def _handle_streaming_response(self, api_kwargs: Dict[str, Any], stream_callback: Optional[Any]) -> Any:
-        """
-        Handle streaming response from OpenAI API.
-        
+        """Handle streaming response from OpenAI API.
+
         Args:
             api_kwargs: API call arguments
             stream_callback: Optional callback for streaming chunks
-            
+
         Returns:
             Mock response object with accumulated content
         """
@@ -341,12 +337,11 @@ class UniversalLLMSession:
         return self._create_mock_response(accumulated_content)
 
     def _create_mock_response(self, content: str) -> Any:
-        """
-        Create a mock response object for streaming compatibility.
-        
+        """Create a mock response object for streaming compatibility.
+
         Args:
             content: Accumulated response content
-            
+
         Returns:
             Mock response object with structure matching OpenAI response
         """
@@ -392,9 +387,8 @@ class UniversalLLMSession:
             return "Manual Conversation History"
 
     def reset(self, new_system_prompt: Optional[str] = None) -> None:
-        """
-        Reset session with optional new system prompt.
-        
+        """Reset session with optional new system prompt.
+
         Args:
             new_system_prompt: New system prompt (if None, keeps current)
         """
@@ -410,9 +404,8 @@ class UniversalLLMSession:
 
     @staticmethod
     def _estimate_tokens(text: str) -> int:
-        """
-        Rough estimation of token count.
-        
+        """Rough estimation of token count.
+
         Note: For accurate counting, use tiktoken library.
         """
         # Rough estimate: ~4 characters per token for English
@@ -420,14 +413,11 @@ class UniversalLLMSession:
 
 
 class UniversalSessionManager:
-    """
-    Manages multiple universal LLM sessions with provider detection.
-    """
+    """Manages multiple universal LLM sessions with provider detection."""
 
     def __init__(self, client, provider: str = "auto", base_url: Optional[str] = None):
-        """
-        Initialize universal session manager.
-        
+        """Initialize universal session manager.
+
         Args:
             client: LLM client
             provider: LLM provider ("auto", "openai", "ollama", "other")
@@ -439,15 +429,14 @@ class UniversalSessionManager:
         self.sessions: Dict[str, UniversalLLMSession] = {}
 
     def get_or_create_session(self, session_id: str, system_prompt: str, ttl_minutes: int = 60, max_history: int = 10) -> UniversalLLMSession:
-        """
-        Get existing session or create new one with provider detection.
-        
+        """Get existing session or create new one with provider detection.
+
         Args:
             session_id: Session identifier
             system_prompt: System prompt for new sessions
             ttl_minutes: Session TTL
             max_history: Maximum conversation history to keep (0 = no history, -1 = unlimited)
-            
+
         Returns:
             Universal LLM session
         """

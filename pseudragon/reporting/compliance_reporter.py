@@ -16,8 +16,7 @@ class ReportGenerator:
 
     @staticmethod
     def generate_integrated_report(table_name: str, pii_analysis: Dict[str, Any], policy: Any, timestamp: str = None, output_dir: str = None, ) -> str:
-        """
-        Generate integrated report combining Stage 1 (PII Detection) and Stage 2 (Policy Synthesis)
+        """Generate integrated report combining Stage 1 (PII Detection) and Stage 2 (Policy Synthesis)
 
         Args:
             table_name: Name of the table

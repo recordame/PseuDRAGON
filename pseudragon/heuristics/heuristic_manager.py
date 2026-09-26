@@ -1,9 +1,9 @@
-"""
-Heuristic Manager
+"""Heuristic Manager
 
 Manages heuristic rules for PII detection.
 
 This module provides:
+
 - CRUD operations for heuristic patterns
 - Regex validation
 - Priority-based pattern matching
@@ -19,16 +19,14 @@ from typing import Any, Dict, List, Optional
 
 
 class HeuristicManager:
-    """
-    Manager for heuristic rules
-    
+    """Manager for heuristic rules
+
     Handles loading, saving, and querying heuristic patterns.
     """
 
     def __init__(self, heuristics_file: Optional[str] = None):
-        """
-        Initialize heuristic manager
-        
+        """Initialize heuristic manager
+
         Args:
             heuristics_file: Path to heuristics.json file
         """
@@ -55,8 +53,7 @@ class HeuristicManager:
             self.save()
 
     def _create_empty_heuristics(self) -> Dict[str, Any]:
-        """
-        Create empty heuristics structure (v2.0 format)
+        """Create empty heuristics structure (v2.0 format)
 
         Returns:
             Empty heuristics dictionary
@@ -75,9 +72,7 @@ class HeuristicManager:
         }
 
     def load(self) -> None:
-        """
-        Load heuristics from file
-        """
+        """Load heuristics from file"""
         try:
             with open(self.heuristics_file, 'r', encoding='utf-8') as f:
                 self.heuristics = json.load(f)
@@ -89,8 +84,7 @@ class HeuristicManager:
             self.heuristics = self._create_empty_heuristics()
 
     def _migrate_v1_to_v2(self, old_heuristics: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Migrate v1.0 heuristics format to v2.0
+        """Migrate v1.0 heuristics format to v2.0
 
         Args:
             old_heuristics: Old format heuristics
@@ -109,9 +103,7 @@ class HeuristicManager:
         return new_heuristics
 
     def save(self) -> None:
-        """
-        Save heuristics to file
-        """
+        """Save heuristics to file"""
         now = datetime.now().isoformat()
 
         # Update statistics
@@ -130,12 +122,11 @@ class HeuristicManager:
             json.dump(self.heuristics, f, indent=2, ensure_ascii=False)
 
     def get_all(self, enabled_only: bool = False) -> List[Dict[str, Any]]:
-        """
-        Get all heuristics
-        
+        """Get all heuristics
+
         Args:
             enabled_only: Only return enabled heuristics
-        
+
         Returns:
             List of heuristic dictionaries
         """
@@ -148,12 +139,11 @@ class HeuristicManager:
         return sorted(heuristics, key=lambda h: h.get("priority", 0), reverse=True)
 
     def get_by_id(self, heuristic_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get heuristic by ID
-        
+        """Get heuristic by ID
+
         Args:
             heuristic_id: Heuristic ID
-        
+
         Returns:
             Heuristic dictionary or None
         """
@@ -167,17 +157,23 @@ class HeuristicManager:
             priority: int = 50, enabled: bool = True, source: str = "manual",
             pattern_type: str = ""
     ) -> Dict[str, Any]:
-        """
-        Add new heuristic
+        """Add new heuristic
 
         Args:
             name: Heuristic name
+
             regex: Regular expression pattern
+
             pii_type: PII type (PII or Non-PII)
+
             rationale: Reason for this heuristic
+
             priority: Priority (higher = more important)
+
             enabled: Whether heuristic is enabled
+
             source: Source of heuristic ("manual" or "auto_learned")
+
             pattern_type: Type of pattern ("suffix", "prefix", "keyword", "custom")
 
         Returns:
@@ -219,16 +215,16 @@ class HeuristicManager:
         return heuristic
 
     def update(self, heuristic_id: str, **kwargs) -> Optional[Dict[str, Any]]:
-        """
-        Update existing heuristic
-        
+        """Update existing heuristic
+
         Args:
             heuristic_id: Heuristic ID to update
+
             **kwargs: Fields to update
-        
+
         Returns:
             Updated heuristic or None if not found
-        
+
         Raises:
             ValueError: If regex is invalid
         """
@@ -253,12 +249,11 @@ class HeuristicManager:
         return heuristic
 
     def delete(self, heuristic_id: str) -> bool:
-        """
-        Delete heuristic
-        
+        """Delete heuristic
+
         Args:
             heuristic_id: Heuristic ID to delete
-        
+
         Returns:
             True if deleted, False if not found
         """
@@ -276,13 +271,13 @@ class HeuristicManager:
         return False
 
     def test_pattern(self, regex: str, test_strings: List[str]) -> Dict[str, Any]:
-        """
-        Test regex pattern against sample strings
-        
+        """Test regex pattern against sample strings
+
         Args:
             regex: Regular expression pattern to test
+
             test_strings: List of strings to test against
-        
+
         Returns:
             Dictionary with test results
         """
@@ -319,12 +314,11 @@ class HeuristicManager:
             }
 
     def match_column(self, column_name: str) -> Optional[Dict[str, Any]]:
-        """
-        Find matching heuristic for a column name
-        
+        """Find matching heuristic for a column name
+
         Args:
             column_name: Column name to match
-        
+
         Returns:
             Best matching heuristic or None
         """
@@ -343,12 +337,11 @@ class HeuristicManager:
 
     @staticmethod
     def validate_regex(regex: str) -> bool:
-        """
-        Validate regex pattern
-        
+        """Validate regex pattern
+
         Args:
             regex: Regular expression pattern
-        
+
         Returns:
             True if valid, False otherwise
         """
@@ -362,12 +355,11 @@ class HeuristicManager:
             return False
 
     def _generate_id(self, existing_ids: List[str]) -> str:
-        """
-        Generate unique heuristic ID
-        
+        """Generate unique heuristic ID
+
         Args:
             existing_ids: List of existing IDs
-        
+
         Returns:
             New unique ID
         """
@@ -389,8 +381,7 @@ class HeuristicManager:
         return f"h{next_num:03d}"
 
     def get_statistics(self) -> Dict[str, Any]:
-        """
-        Get statistics about heuristic patterns
+        """Get statistics about heuristic patterns
 
         Returns:
             Dictionary with pattern statistics
@@ -404,11 +395,11 @@ class HeuristicManager:
         })
 
     def get_by_source(self, source: str, enabled_only: bool = False) -> List[Dict[str, Any]]:
-        """
-        Get heuristics filtered by source
+        """Get heuristics filtered by source
 
         Args:
             source: Source to filter by ("manual" or "auto_learned")
+
             enabled_only: Only return enabled heuristics
 
         Returns:

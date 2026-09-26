@@ -1,9 +1,9 @@
-"""
-PseuDRAGON Configuration Module
+"""PseuDRAGON Configuration Module
 
 This module manages all configuration settings for the PseuDRAGON framework.
 
 Configuration includes:
+
 - OpenAI API settings
 - Model configurations
 - Directory paths
@@ -11,33 +11,38 @@ Configuration includes:
 - Database configurations
 """
 
-# Standard library imports
+
+# 표준 라이브러리 import
 import os
 import ssl
 from typing import Optional
 
-# Third-party imports
+
+# 서드파티 라이브러리 import
 import httpx
 from dotenv import load_dotenv
 from openai import OpenAI
 
 # Load environment variables
+
 load_dotenv()
 
 
 class ModelConfig:
-    """
-    Model Configuration
+    """Model Configuration
 
     Defines the AI models used for embeddings and language generation.
     """
 
     # Embedding Configuration
 
+
     # Provider: "openai" or "local"
+
     EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "local")
 
     # Model Name for Legal Document RAG
+
     # OpenAI: "text-embedding-3-small"
     # Legal-BERT (English): "nlpaueb/legal-bert-base-uncased"
     # Ko-Legal-SBERT (Korean, default): "woong0322/ko-legal-sbert-finetuned"
@@ -47,10 +52,14 @@ class ModelConfig:
     )
 
     # Model Name for PII Classification Similarity Search
+
     # General-purpose models are better for database column description matching
+
     #
     # Note: Legal-BERT produces high false positives for PII classification similarity search
     # because it finds superficial structural similarities rather than semantic PII-related meanings.
+
+
     FEEDBACK_EMBEDDING_MODEL = os.getenv("FEEDBACK_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 
     # LLM Settings
@@ -61,8 +70,7 @@ class ModelConfig:
 
 
 class DirectoryConfig:
-    """
-    Directory Configuration
+    """Directory Configuration
 
     Defines paths for documentation, output, and other directories.
     """
@@ -74,25 +82,21 @@ class DirectoryConfig:
 
     @classmethod
     def ensure_directories_exist(cls) -> None:
-        """
-        Create necessary directories if they don't exist
-        """
+        """Create necessary directories if they don't exist"""
         os.makedirs(cls.DOCS_DIR, exist_ok=True)
         os.makedirs(cls.OUTPUT_DIR, exist_ok=True)
         os.makedirs(cls.SAMPLE_DB_DIR, exist_ok=True)
 
 
 class HeuristicConfig:
-    """
-    Heuristic Pattern Configuration for Stage 1 PII Detection
+    """Heuristic Pattern Configuration for Stage 1 PII Detection
 
     Allows domain experts to customize PII detection patterns for their organization.
     """
 
     @classmethod
     def get_heuristic_patterns(cls) -> dict:
-        """
-        Load heuristic patterns from environment variables.
+        """Load heuristic patterns from environment variables.
 
         Returns:
             Dictionary mapping pattern names to regex patterns
@@ -109,12 +113,11 @@ class HeuristicConfig:
 
     @classmethod
     def get_non_pii_patterns(cls) -> dict:
-        """
-        Load Non-PII heuristic patterns from environment variables.
-        
+        """Load Non-PII heuristic patterns from environment variables.
+
         These patterns identify columns that are clearly NOT PII,
         allowing the system to skip expensive LLM verification.
-        
+
         Returns:
             Dictionary mapping pattern names to regex patterns
         """
@@ -130,8 +133,7 @@ class HeuristicConfig:
 
     @classmethod
     def get_pii_type_keywords(cls) -> dict:
-        """
-        Load PII type inference keywords from environment variables.
+        """Load PII type inference keywords from environment variables.
 
         Returns:
             Dictionary mapping PII types to lists of keywords
@@ -144,6 +146,7 @@ class HeuristicConfig:
             if key.startswith(prefix) and key.endswith(suffix) and value.strip():
                 type_name = key[len(prefix):-len(suffix)]
                 # Format type name: replace underscores with spaces and title case
+
                 type_name = type_name.replace("_", " ").title()
                 keywords[type_name] = [kw.strip() for kw in value.split(",") if kw.strip()]
 
@@ -151,15 +154,14 @@ class HeuristicConfig:
 
 
 class DatabaseConfig:
-    """
-    Database Configuration
+    """Database Configuration
 
     Manages database connection settings for both sample and production databases.
     """
 
     SAMPLE_DB_PATH = os.path.join(
         DirectoryConfig.SAMPLE_DB_DIR,
-        "sample_table_schemas.duckdb",
+        "institution_a_synthetic_schema.duckdb",
     )
 
     USE_SAMPLE_DB = os.getenv("USE_SAMPLE_DB", "true").lower() == "true"
@@ -173,8 +175,7 @@ class DatabaseConfig:
 
     @classmethod
     def get_db_path(cls) -> str:
-        """
-        Get the appropriate database path based on configuration
+        """Get the appropriate database path based on configuration
 
         Returns:
             Database path or connection string
@@ -193,8 +194,7 @@ class DatabaseConfig:
 
     @classmethod
     def validate_config(cls) -> bool:
-        """
-        Validate database configuration
+        """Validate database configuration
 
         Returns:
             True if configuration is valid
@@ -202,9 +202,9 @@ class DatabaseConfig:
         if cls.USE_SAMPLE_DB:
             if not os.path.exists(cls.SAMPLE_DB_PATH):
                 print(f"[WARN] Sample database not found at {cls.SAMPLE_DB_PATH}")
-                print("   Please run setup_test_db_duckdb.py to create it.")
+                print("   Please run setup_test_db_duckdb_for_1st_loop.py to create it.")
                 print(f"   경고: 샘플 데이터베이스를 찾을 수 없습니다: {cls.SAMPLE_DB_PATH}")
-                print("   setup_test_db_duckdb.py를 실행하여 생성하세요.")
+                print("   setup_test_db_duckdb_for_1st_loop.py를 실행하여 생성하세요.")
                 return False
             return True
         else:
@@ -218,33 +218,34 @@ class DatabaseConfig:
 
 
 class PolicyConfig:
-    """
-    Policy Configuration
+    """Policy Configuration
 
     Defines default actions for PII and Non-PII columns.
     """
 
     # Default action for PII columns (identified as containing personal information)
+
     DEFAULT_PII_ACTION = "DELETE"
 
     # Default action for Non-PII columns (identified as not containing personal information)
+
     DEFAULT_NON_PII_ACTION = "KEEP"
 
     # Available action types
+
     AVAILABLE_ACTIONS = [
-        "KEEP",
-        "DELETE",
-        "HASH",
-        "MASK",
-        "TOKENIZE",
-        "GENERALIZE",
-        "ENCRYPT",
+        "KEEP",  # Keep the data as-is
+        "DELETE",  # Remove the column
+        "HASH",  # Hash the values
+        "MASK",  # Mask the values
+        "TOKENIZE",  # Tokenize the values
+        "GENERALIZE",  # Generalize the values
+        "ENCRYPT",  # Encrypt the values
     ]
 
     @classmethod
     def validate_action(cls, action: str) -> bool:
-        """
-        Validate if an action is available
+        """Validate if an action is available
 
         Args:
             action: Action type to validate
@@ -256,8 +257,7 @@ class PolicyConfig:
 
     @classmethod
     def get_default_action(cls, is_pii: bool) -> str:
-        """
-        Get default action based on PII classification
+        """Get default action based on PII classification
 
         Args:
             is_pii: Whether the column is classified as PII
@@ -269,19 +269,23 @@ class PolicyConfig:
 
 
 class RAGConfig:
-    """
-    RAG System Configuration
+    """RAG System Configuration
 
     Defines parameters for the Retrieval-Augmented Generation system.
     """
 
     # RAG System Enable/Disable Switch
+
     # When disabled, Stage 1 PII detection will use LLM-only mode without RAG context
+
     RAG_ENABLED = os.getenv("RAG_ENABLED", "true").lower() == "true"
 
     # Heuristics Enable/Disable Switch
+
     # When disabled, Stage 1 skips all heuristic pattern matching (learned + manual)
+
     # This includes: HeuristicManager patterns, ExpertPreferenceManager, env-based patterns
+
     HEURISTICS_ENABLED = os.getenv("HEURISTICS_ENABLED", "true").lower() == "true"
 
     # Defaults match the configuration reported in the paper. Environment
@@ -292,10 +296,12 @@ class RAGConfig:
     MAX_CONTEXT_TOKENS = int(os.getenv("MAX_CONTEXT_TOKENS", "30000"))
 
     # Feedback document settings for SBERT embedding
+
     # SBERT (all-MiniLM-L6-v2) supports max 256 tokens, ~200 words is safe
     FEEDBACK_MAX_LENGTH = int(os.getenv("FEEDBACK_MAX_LENGTH", "200"))  # Max characters per feedback doc
 
-    # Source-authority defaults reported in the paper.
+    # Retained only for explicitly selected legacy runs and their reproduction.
+
     DEFAULT_AUTHORITY_WEIGHTS = {
         0: 1.0,  # Approved expert feedback
         1: 0.8,  # Institutional policy
@@ -304,81 +310,40 @@ class RAGConfig:
     }
 
     @staticmethod
-    def _validate_unit_interval(
-            value: object,
-            setting_name: str,
-    ) -> float:
-        """
-        Validate and normalize a score weight in the closed interval [0, 1].
-        """
-        if isinstance(value, bool):
-            raise ValueError(
-                f"{setting_name} must be a number between 0 and 1; got {value!r}"
-            )
-
-        try:
-            normalized = float(value)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(
-                f"{setting_name} must be a number between 0 and 1; got {value!r}"
-            ) from exc
-
-        if not 0.0 <= normalized <= 1.0:
-            raise ValueError(
-                f"{setting_name} must be between 0 and 1; got {normalized}"
-            )
-
-        return normalized
-
-    @classmethod
     def _read_unit_interval(
-            cls,
             env_name: str,
-            default: Optional[float] = None,
+            default: float,
     ) -> float:
-        """
-        Read and validate a score weight in the closed interval [0, 1].
-        """
+        """Read and validate a score weight in the closed interval [0, 1]."""
         raw_value = os.getenv(env_name)
         if raw_value is None:
-            if default is None:
-                raise ValueError(
-                    f"{env_name} must be defined in the environment or .env file"
-                )
-            raw_value = default
+            raw_value = str(default)
 
-        return cls._validate_unit_interval(raw_value, env_name)
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"{env_name} must be a number between 0 and 1; got {raw_value!r}"
+            ) from exc
+
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(
+                f"{env_name} must be between 0 and 1; got {value}"
+            )
+
+        return value
 
     @classmethod
     def get_semantic_similarity_weight(cls) -> float:
-        """
-        Return alpha in score = alpha * similarity + (1-alpha) * authority.
-
-        Alpha has no code-level fallback. Deployments must define
-        SEMANTIC_SIMILARITY_WEIGHT in their environment or .env file.
-        """
-        return cls._read_unit_interval("SEMANTIC_SIMILARITY_WEIGHT")
-
-    @classmethod
-    def resolve_semantic_similarity_weight(
-            cls,
-            override: Optional[object] = None,
-    ) -> float:
-        """
-        Resolve a per-run alpha override or the environment-defined default.
-        """
-        if override is None:
-            return cls.get_semantic_similarity_weight()
-        return cls._validate_unit_interval(
-            override,
-            "semantic_similarity_weight",
+        """Return alpha in score = alpha * similarity + (1-alpha) * authority."""
+        return cls._read_unit_interval(
+            "SEMANTIC_SIMILARITY_WEIGHT",
+            0.7,
         )
 
     @classmethod
     def get_authority_weights(cls) -> dict:
-        """
-        Return the audited source-authority hierarchy used for reranking.
-        """
+        """Return the audited source-authority hierarchy used for reranking."""
         return {
             0: cls._read_unit_interval(
                 "EXPERT_FEEDBACK_WEIGHT",
@@ -399,16 +364,37 @@ class RAGConfig:
         }
 
     @classmethod
-    def get_ranking_config(
-            cls,
-            semantic_similarity_weight: Optional[object] = None,
-    ) -> dict:
+    def get_retrieval_mode(cls) -> str:
+        mode = os.getenv("RAG_RETRIEVAL_MODE", "source_order").strip().lower()
+        if mode not in {"source_order", "legacy", "lexical"}:
+            raise ValueError("RAG_RETRIEVAL_MODE must be source_order, legacy or lexical")
+        return mode
+
+    @classmethod
+    def get_retrieval_config(cls) -> dict:
+        """Describe the active route without reading irrelevant legacy weights."""
+        mode = cls.get_retrieval_mode()
+        if mode == "source_order":
+            return {
+                "retrieval_mode": mode,
+                "source_order": [1, 2, 3],
+                "ranking": "description_bm25_with_adjacent_source_windows",
+                "stop_condition": "validated_relevance_selection",
+                "automatic_treatment_approval": False,
+                "legal_applicability_review_required": True,
+            }
+        return {"retrieval_mode": mode, **cls.get_ranking_config()}
+
+    @classmethod
+    def get_lexical_source_gap(cls) -> float:
+        return cls._read_unit_interval("RAG_LEXICAL_SOURCE_GAP", 0.0)
+
+    @classmethod
+    def get_ranking_config(cls) -> dict:
+        """Describe the retained legacy score. Use get_retrieval_config for the
+        active route; source_order does not use these coefficients.
         """
-        Return a single, UI-safe description of the implemented score.
-        """
-        alpha = cls.resolve_semantic_similarity_weight(
-            semantic_similarity_weight
-        )
+        alpha = cls.get_semantic_similarity_weight()
         return {
             "semantic_similarity_weight": alpha,
             "authority_mixing_weight": round(1.0 - alpha, 10),
@@ -417,8 +403,7 @@ class RAGConfig:
 
 
 class Settings:
-    """
-    Main Configuration Class
+    """Main Configuration Class
 
     Aggregates all configuration settings and provides initialization.
     """
@@ -427,15 +412,14 @@ class Settings:
     PROMPT_MODE: str = os.getenv("PROMPT_MODE", "full")
 
     # Streaming Configuration
-    ENABLE_STREAMING: bool = os.getenv("ENABLE_STREAMING", "true").lower() == "true"
-    STREAMING_LOG_CHUNKS: bool = os.getenv("STREAMING_LOG_CHUNKS", "true").lower() == "true"
 
-    # Verify TLS certificates by default. A private CA bundle can be supplied
-    # without disabling verification for the whole application.
+    ENABLE_STREAMING: bool = os.getenv("ENABLE_STREAMING", "true").lower() == "true"
+    STREAMING_LOG_CHUNKS: bool = os.getenv("STREAMING_LOG_CHUNKS", "false").lower() == "true"
     TLS_VERIFY: bool = os.getenv("TLS_VERIFY", "true").lower() == "true"
-    TLS_CA_BUNDLE: str = os.getenv("TLS_CA_BUNDLE", "").strip()
+    TLS_CA_BUNDLE: Optional[str] = os.getenv("TLS_CA_BUNDLE")
 
     # Local audit cache for the exact LLM prompts and responses used in a run.
+
     LLM_AUDIT_ENABLED: bool = os.getenv("LLM_AUDIT_ENABLED", "true").lower() == "true"
     LLM_AUDIT_DIR: str = os.getenv(
         "LLM_AUDIT_DIR",
@@ -443,8 +427,9 @@ class Settings:
     )
 
     # Batch Processing Configuration for LLM calls
-    LLM_BATCH_SIZE: int = int(os.getenv("LLM_BATCH_SIZE", "4"))
-    MAX_CONCURRENT_LLM_REQUESTS: int = int(os.getenv("MAX_CONCURRENT_LLM_REQUESTS", "4"))
+
+    LLM_BATCH_SIZE: int = int(os.getenv("LLM_BATCH_SIZE", "4"))  # Number of columns to process in parallel
+    MAX_CONCURRENT_LLM_REQUESTS: int = int(os.getenv("MAX_CONCURRENT_LLM_REQUESTS", "4"))  # Rate limit semaphore
     LLM_PARSE_MAX_ATTEMPTS: int = max(
         1, int(os.getenv("LLM_PARSE_MAX_ATTEMPTS", "3"))
     )
@@ -492,8 +477,7 @@ class Settings:
 
     @classmethod
     def validate_api_key(cls) -> bool:
-        """
-        Check if OpenAI API key is set
+        """Check if OpenAI API key is set
 
         Returns:
             True if API key is set, False otherwise
@@ -508,13 +492,12 @@ class Settings:
 
     @staticmethod
     def get_prompt_path(stage: str, prompt_type: str) -> str:
-        """
-        Get prompt file path based on PROMPT_MODE setting
-        
+        """Get prompt file path based on PROMPT_MODE setting
+
         Args:
             stage: "stage1" or "stage2"
             prompt_type: "system" or "user"
-        
+
         Returns:
             Path to the appropriate prompt file
         """
@@ -532,8 +515,7 @@ class Settings:
 
     @classmethod
     def initialize(cls) -> None:
-        """
-        Initialize configuration
+        """Initialize configuration
 
         Creates necessary directories and validates settings.
         """
@@ -551,14 +533,11 @@ class Settings:
 
 
 class OpenAIClientFactory:
-    """
-    Factory for creating OpenAI client instances
-    """
+    """Factory for creating OpenAI client instances"""
 
     @staticmethod
     def create_client(model_type: str) -> Optional[OpenAI]:
-        """
-        Create an OpenAI client
+        """Create an OpenAI client
 
         Args:
             model_type: Client type (EMBEDDING_CLIENT, DEFAULT_LLM_CLIENT, etc.)
@@ -619,6 +598,7 @@ class OpenAIClientFactory:
 
 
 # Initialize settings and create client instances
+
 Settings.initialize()
 EMBEDDING_CLIENT = OpenAIClientFactory.create_client("EMBEDDING_CLIENT")
 DEFAULT_LLM_CLIENT = OpenAIClientFactory.create_client("DEFAULT_LLM_CLIENT")
