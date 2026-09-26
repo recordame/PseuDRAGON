@@ -1,1 +1,1 @@
-"""Database adapters for PseuDRAGON"""
+"""Database adapters for PseuDRAGON."""

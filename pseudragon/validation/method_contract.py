@@ -2,7 +2,7 @@
 
 This is deliberately a small structural recognizer, not general Python semantic
 inference. Unknown edited code needs an explicit user declaration and remains
-marked unverified. Historical inputs are never modified in place.
+marked unverified. Input records are never modified in place.
 """
 
 import ast
@@ -10,10 +10,17 @@ import copy
 import hashlib
 
 
-METHODS = frozenset({"KEEP", "DELETE", "HASH", "MASK", "TOKENIZE", "GENERALIZE", "ROUND", "ENCRYPT"})
+METHODS = frozenset(
+    {"KEEP", "DELETE", "HASH", "MASK", "TOKENIZE", "GENERALIZE", "ROUND", "ENCRYPT"}
+)
 INTERVAL_1000 = 'lambda x: f"{(int(x)//1000)*1000}~{(int(x)//1000)*1000+999}" if pd.notna(x) and str(x).isdigit() else str(x)'
-INTERVAL_PARAMETERS = {"strategy": "integer_interval", "interval_width": 1000,
-                       "interval_origin": 0, "separator": "~", "non_numeric": "stringify"}
+INTERVAL_PARAMETERS = {
+    "strategy": "integer_interval",
+    "interval_width": 1000,
+    "interval_origin": 0,
+    "separator": "~",
+    "non_numeric": "stringify",
+}
 MASK_LAST_FOUR_PARAMETERS = {"mask_char": "*", "mask_last": 4, "short_value_mask_length": 4}
 
 
@@ -30,11 +37,19 @@ def _structure(code):
 
 def _declared_contract(declaration):
     if not isinstance(declaration, dict) or set(declaration) != {"method", "parameters"}:
-        raise MethodContractError("Provide both an explicit method and a parameters object for edited custom code.")
+        raise MethodContractError(
+            "Provide both an explicit method and a parameters object for edited custom code."
+        )
     method = declaration["method"]
     parameters = declaration["parameters"]
-    if not isinstance(method, str) or method.upper() not in METHODS or not isinstance(parameters, dict):
-        raise MethodContractError("Custom-code method must be supported and parameters must be a JSON object.")
+    if (
+        not isinstance(method, str)
+        or method.upper() not in METHODS
+        or not isinstance(parameters, dict)
+    ):
+        raise MethodContractError(
+            "Custom-code method must be supported and parameters must be a JSON object."
+        )
     if method.upper() == "MASK" and not parameters:
         raise MethodContractError("A MASK declaration needs explicit nonempty parameters.")
     return method.upper(), copy.deepcopy(parameters)
@@ -43,7 +58,7 @@ def _declared_contract(declaration):
 def normalize_method_metadata(selected, column, code_modified=False, declared_contract=None):
     """Return a detached candidate with a truthful code/metadata contract.
 
-    Supported full-AST forms: the retained 1,000-wide interval lambda and the
+    Supported full-AST forms: the 1,000-wide interval lambda and the
     generated suffix-four masking assignment for this exact column. Whitespace,
     comments and quote style are immaterial; extra statements, changed operands,
     predicates and other columns do not match. The code itself is never changed.
@@ -58,12 +73,15 @@ def normalize_method_metadata(selected, column, code_modified=False, declared_co
     result = copy.deepcopy(selected)
     # Template identity verifies execution metadata, not legal appropriateness.
     from pseudragon.validation.display_requirement import validate_display_candidate
+
     try:
         compiled_display = validate_display_candidate(result)
     except ValueError as exc:
         raise MethodContractError(str(exc)) from exc
     if compiled_display:
-        declaration = _declared_contract(declared_contract) if declared_contract is not None else None
+        declaration = (
+            _declared_contract(declared_contract) if declared_contract is not None else None
+        )
         if declaration is not None and declaration != ("MASK", result["parameters"]):
             raise MethodContractError("The declaration disagrees with the compiled display rule.")
         result["contract_verification"] = "compiled_display_requirement"
@@ -74,14 +92,22 @@ def normalize_method_metadata(selected, column, code_modified=False, declared_co
         raise MethodContractError("Code snippet must be a string.")
     if not code.strip():
         if result.get("method", result.get("action", "")).upper() == "MASK":
-            raise MethodContractError("A MASK selection needs executable code and explicit parameters.")
+            raise MethodContractError(
+                "A MASK selection needs executable code and explicit parameters."
+            )
         if code_modified:
-            raise MethodContractError("Edited code is empty; select KEEP or DELETE explicitly instead.")
+            raise MethodContractError(
+                "Edited code is empty; select KEEP or DELETE explicitly instead."
+            )
         return result
     try:
         tree = _structure(code)
     except MethodContractError:
-        if code_modified or declared_contract is not None or result.get("method", result.get("action", "")).upper() == "MASK":
+        if (
+            code_modified
+            or declared_contract is not None
+            or result.get("method", result.get("action", "")).upper() == "MASK"
+        ):
             raise
         return result
     recognized = None
@@ -95,23 +121,32 @@ def normalize_method_metadata(selected, column, code_modified=False, declared_co
     if recognized is not None:
         method, parameters = recognized
         if declaration is not None and declaration != recognized:
-            raise MethodContractError("The explicit method/parameters disagree with the supported code pattern.")
+            raise MethodContractError(
+                "The explicit method/parameters disagree with the supported code pattern."
+            )
         verification = "supported_ast_pattern"
     elif code_modified or declaration is not None:
         if declaration is None:
             raise MethodContractError(
                 "Edited custom code is outside the supported patterns. Confirm its method and parameters "
-                "in Custom-code contract before approval; this declaration will remain unverified.")
+                "in Custom-code contract before approval; this declaration will remain unverified."
+            )
         method, parameters = declaration
         verification = "user_declared_unverified"
     else:
-        if result.get("method", result.get("action", "")).upper() == "MASK" and not result.get("parameters"):
+        if result.get("method", result.get("action", "")).upper() == "MASK" and not result.get(
+            "parameters"
+        ):
             raise MethodContractError(
                 "This MASK candidate has no declared parameters. Select a source-compiled candidate "
-                "or provide an explicit custom-code contract before approval.")
+                "or provide an explicit custom-code contract before approval."
+            )
         return result
     key = "method" if "method" in result else "action"
-    previous = {"method": result.get(key), "parameters": copy.deepcopy(result.get("parameters", {}))}
+    previous = {
+        "method": result.get(key),
+        "parameters": copy.deepcopy(result.get("parameters", {})),
+    }
     result[key] = method
     if "method" in result and "action" in result:
         result["action"] = method
@@ -139,4 +174,6 @@ def prepare_method_selection(selected, column, selection):
         if not isinstance(selection.get("description"), str):
             raise MethodContractError("Edited description must be a string.")
         result["description"] = selection["description"]
-    return normalize_method_metadata(result, column, code_changed, selection.get("declared_contract"))
+    return normalize_method_metadata(
+        result, column, code_changed, selection.get("declared_contract")
+    )

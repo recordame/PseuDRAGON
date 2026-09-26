@@ -1,74 +1,72 @@
 /**
  * PseuDRAGON - Main Application JavaScript
- * PseuDRAGON - 메인 애플리케이션 JavaScript
  *
  * Handles UI interactions, API calls, and state management
- * UI 상호작용, API 호출 및 상태 관리를 처리합니다
  */
 
 class PseuDRAGONApp {
     constructor() {
-        // Application state management
-        // 애플리케이션 상태 관리
+        // Application state management.
+        // Application state.
         this.state = {
             isRunning: false,
-            currentStep: 'IDLE',
+            currentStep: "IDLE",
             selectedChoices: {},
             eventSource: null,
             reports: {
                 stage1: null,
-                stage2: null
+                stage2: null,
             },
-            // Session ID for multi-client support
-            // 다중 클라이언트 지원을 위한 세션 ID
+            // Session ID for multi-client support.
+            // Keep each client session separate.
             sessionId: null,
-            // Session monitoring state
-            // 세션 모니터링 상태
+            // Session monitoring state.
+            // Session monitoring state.
             monitoredSessions: [],
             selectedMonitorSession: null,
             sessionAutoRefresh: false,
             sessionAutoRefreshInterval: null,
-            sessionLogOffset: 0
+            sessionLogOffset: 0,
         };
 
-        // DOM element references
-        // DOM 요소 참조
+        // DOM element references.
+        // DOM references.
         this.elements = {
-            logsContent: document.getElementById('logsContent'),
-            statusBadge: document.getElementById('statusBadge'),
-            statusIndicator: document.getElementById('statusIndicator'),
-            tableSelect: document.getElementById('tableSelect'),
-            purposeGoalInput: document.getElementById('purposeGoalInput'),
-            preferredMethodInput: document.getElementById('preferredMethodInput'),
-            startBtn: document.getElementById('startBtn'),
-            stopBtn: document.getElementById('stopBtn'),
-            reopenPolicyBtn: document.getElementById('reopenPolicyBtn'),
-            stage3Modal: document.getElementById('stage3Modal'),
-            stage3Content: document.getElementById('stage3Content'),
-            tabsContainer: document.getElementById('tabsContainer'),
-            codeTabsContainer: document.getElementById('codeTabsContainer'),
-            codeViewers: document.getElementById('codeViewers'),
-            reportTabsContainer: document.getElementById('reportTabsContainer'),
-            reportViewers: document.getElementById('reportViewers'),
-            emptyState: document.getElementById('emptyState'),
-            codeContent: document.getElementById('codeContent'),
-            reportsContent: document.getElementById('reportsContent'),
-            emptyStateReports: document.getElementById('emptyStateReports'),
-            submitPoliciesBtn: document.getElementById('submitPoliciesBtn'),
-            reviewBtn: document.getElementById('reviewBtn'),
-            closeModalBtn: document.getElementById('closeModalBtn'),
-            runtimeModeBadge: document.getElementById('runtimeModeBadge'),
-            rankingMix: document.getElementById('rankingMix'),
-            authorityHierarchy: document.getElementById('authorityHierarchy'),
-            evidenceIndex: document.getElementById('evidenceIndex'),
-            hitlRuleGate: document.getElementById('hitlRuleGate'),
-            runtimeConfigNote: document.getElementById('runtimeConfigNote')
+            logsContent: document.getElementById("logsContent"),
+            statusBadge: document.getElementById("statusBadge"),
+            statusIndicator: document.getElementById("statusIndicator"),
+            tableSelect: document.getElementById("tableSelect"),
+            purposeGoalInput: document.getElementById("purposeGoalInput"),
+            preferredMethodInput: document.getElementById("preferredMethodInput"),
+            startBtn: document.getElementById("startBtn"),
+            stopBtn: document.getElementById("stopBtn"),
+            reopenPolicyBtn: document.getElementById("reopenPolicyBtn"),
+            stage3Modal: document.getElementById("stage3Modal"),
+            stage3Content: document.getElementById("stage3Content"),
+            tabsContainer: document.getElementById("tabsContainer"),
+            codeTabsContainer: document.getElementById("codeTabsContainer"),
+            codeViewers: document.getElementById("codeViewers"),
+            reportTabsContainer: document.getElementById("reportTabsContainer"),
+            reportViewers: document.getElementById("reportViewers"),
+            emptyState: document.getElementById("emptyState"),
+            codeContent: document.getElementById("codeContent"),
+            reportsContent: document.getElementById("reportsContent"),
+            emptyStateReports: document.getElementById("emptyStateReports"),
+            submitPoliciesBtn: document.getElementById("submitPoliciesBtn"),
+            reviewBtn: document.getElementById("reviewBtn"),
+            closeModalBtn: document.getElementById("closeModalBtn"),
+            runtimeModeBadge: document.getElementById("runtimeModeBadge"),
+            rankingMix: document.getElementById("rankingMix"),
+            authorityHierarchy: document.getElementById("authorityHierarchy"),
+            evidenceIndex: document.getElementById("evidenceIndex"),
+            hitlRuleGate: document.getElementById("hitlRuleGate"),
+            runtimeConfigNote: document.getElementById("runtimeConfigNote"),
         };
 
-        // Debug: Check if critical elements exist
-        // 디버그: 중요 요소가 존재하는지 확인
+        // Debug: Check if critical elements exist.
+
         if (!this.elements.stage3Content) {
-            console.error('stage3Content element not found!');
+            console.error("stage3Content element not found!");
         }
 
         this.init();
@@ -77,39 +75,37 @@ class PseuDRAGONApp {
     init() {
         /**
          * Initialize the application
-         * 애플리케이션 초기화
          */
-        // Validate critical elements
-        // 중요 요소 검증
+        // Validate critical elements.
+
         this.validateElements();
 
         this.loadRuntimeConfig();
         this.loadTables();
         this.setupEventListeners();
 
-        // Hide reopen policy button and stop button initially
-        // Reopen policy 버튼과 stop 버튼을 초기에는 숨김
+        // Hide reopen policy button and stop button initially.
+        // Hide review and stop controls until a pipeline starts.
         if (this.elements.reopenPolicyBtn) {
-            this.elements.reopenPolicyBtn.classList.add('hidden');
+            this.elements.reopenPolicyBtn.classList.add("hidden");
         }
         if (this.elements.stopBtn) {
-            this.elements.stopBtn.classList.add('hidden');
+            this.elements.stopBtn.classList.add("hidden");
         }
 
-        this.log('PseuDRAGON initialized. Ready to start!', 'info');
+        this.log("PseuDRAGON initialized. Ready to start!", "info");
     }
 
     validateElements() {
         /**
          * Validate that all critical DOM elements exist
-         * 모든 중요 DOM 요소가 존재하는지 검증
          */
         const criticalElements = [
-            'stage3Modal',
-            'stage3Content',
-            'submitPoliciesBtn',
-            'logsContent',
-            'statusBadge'
+            "stage3Modal",
+            "stage3Content",
+            "submitPoliciesBtn",
+            "logsContent",
+            "statusBadge",
         ];
 
         const missing = [];
@@ -121,425 +117,430 @@ class PseuDRAGONApp {
         }
 
         if (missing.length > 0) {
-            console.error('Missing critical elements:', missing);
-            alert(`Error: Missing UI elements: ${missing.join(', ')}. Please refresh the page.`);
+            console.error("Missing critical elements:", missing);
+            alert(`Error: Missing UI elements: ${missing.join(", ")}. Please refresh the page.`);
         }
     }
 
     setupEventListeners() {
         /**
          * Setup event listeners for UI interactions
-         * UI 상호작용을 위한 이벤트 리스너 설정
          */
         if (this.elements.startBtn) {
-            this.elements.startBtn.addEventListener('click', () => this.startPipeline());
+            this.elements.startBtn.addEventListener("click", () => this.startPipeline());
         }
 
         if (this.elements.stopBtn) {
-            this.elements.stopBtn.addEventListener('click', () => this.stopPipeline());
+            this.elements.stopBtn.addEventListener("click", () => this.stopPipeline());
         }
 
         if (this.elements.reopenPolicyBtn) {
-            this.elements.reopenPolicyBtn.addEventListener('click', () => this.reopenPolicyModal());
+            this.elements.reopenPolicyBtn.addEventListener("click", () => this.reopenPolicyModal());
         }
 
         if (this.elements.reviewBtn) {
-            this.elements.reviewBtn.addEventListener('click', () => {
-                this.elements.stage3Modal.classList.add('active');
+            this.elements.reviewBtn.addEventListener("click", () => {
+                this.elements.stage3Modal.classList.add("active");
             });
         }
 
-        document.querySelectorAll('.tab-nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        document.querySelectorAll(".tab-nav-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
                 const tab = e.target.dataset.tab;
                 this.switchMainTab(tab);
 
-                // Load data when switching to certain tabs
-                if (tab === 'heuristics') {
+                // Load data when switching to certain tabs.
+                if (tab === "heuristics") {
                     this.loadHeuristics();
-                } else if (tab === 'expert-feedback') {
+                } else if (tab === "expert-feedback") {
                     this.loadExpertFeedback();
-                } else if (tab === 'audit') {
+                } else if (tab === "audit") {
                     this.loadAuditLog();
-                } else if (tab === 'sessions') {
+                } else if (tab === "sessions") {
                     this.loadSessions();
                 }
             });
         });
 
-        // Session monitoring event listeners
-        // 세션 모니터링 이벤트 리스너
-        const refreshSessionsBtn = document.getElementById('refreshSessionsBtn');
+        // Session monitoring event listeners.
+        // Bind session monitoring controls.
+        const refreshSessionsBtn = document.getElementById("refreshSessionsBtn");
         if (refreshSessionsBtn) {
-            refreshSessionsBtn.addEventListener('click', () => this.loadSessions());
+            refreshSessionsBtn.addEventListener("click", () => this.loadSessions());
         }
 
-        const autoRefreshToggle = document.getElementById('autoRefreshToggle');
+        const autoRefreshToggle = document.getElementById("autoRefreshToggle");
         if (autoRefreshToggle) {
-            autoRefreshToggle.addEventListener('click', () => this.toggleSessionAutoRefresh());
+            autoRefreshToggle.addEventListener("click", () => this.toggleSessionAutoRefresh());
         }
 
-        // Add Table modal event listeners
-        // Add Table 모달 이벤트 리스너
-        const addTableBtn = document.getElementById('addTableBtn');
+        // Add Table modal event listeners.
+        // Bind the table creation dialog.
+        const addTableBtn = document.getElementById("addTableBtn");
         if (addTableBtn) {
-            addTableBtn.addEventListener('click', () => this.openAddTableModal());
+            addTableBtn.addEventListener("click", () => this.openAddTableModal());
         }
 
-        const closeAddTableModalBtn = document.getElementById('closeAddTableModalBtn');
+        const closeAddTableModalBtn = document.getElementById("closeAddTableModalBtn");
         if (closeAddTableModalBtn) {
-            closeAddTableModalBtn.addEventListener('click', () => this.closeAddTableModal());
+            closeAddTableModalBtn.addEventListener("click", () => this.closeAddTableModal());
         }
 
-        const cancelAddTableBtn = document.getElementById('cancelAddTableBtn');
+        const cancelAddTableBtn = document.getElementById("cancelAddTableBtn");
         if (cancelAddTableBtn) {
-            cancelAddTableBtn.addEventListener('click', () => this.closeAddTableModal());
+            cancelAddTableBtn.addEventListener("click", () => this.closeAddTableModal());
         }
 
-        const executeAddTableBtn = document.getElementById('executeAddTableBtn');
+        const executeAddTableBtn = document.getElementById("executeAddTableBtn");
         if (executeAddTableBtn) {
-            executeAddTableBtn.addEventListener('click', () => this.executeAddTable());
+            executeAddTableBtn.addEventListener("click", () => this.executeAddTable());
         }
 
-        // Drop Table button event listener
-        // Drop Table 버튼 이벤트 리스너
-        const dropTableBtn = document.getElementById('dropTableBtn');
+        // Drop Table button event listener.
+        // Bind the table deletion control.
+        const dropTableBtn = document.getElementById("dropTableBtn");
         if (dropTableBtn) {
-            dropTableBtn.addEventListener('click', () => this.confirmDropTable());
+            dropTableBtn.addEventListener("click", () => this.confirmDropTable());
         }
 
-        // Update Drop Table button state when table selection changes
-        // 테이블 선택 변경 시 Drop Table 버튼 상태 업데이트
+        // Update Drop Table button state when table selection changes.
+
         if (this.elements.tableSelect) {
-            this.elements.tableSelect.addEventListener('change', () => this.updateDropTableButtonState());
+            this.elements.tableSelect.addEventListener("change", () =>
+                this.updateDropTableButtonState()
+            );
         }
 
         if (this.elements.submitPoliciesBtn) {
-            this.elements.submitPoliciesBtn.addEventListener('click', () => this.submitPolicies());
+            this.elements.submitPoliciesBtn.addEventListener("click", () => this.submitPolicies());
         }
 
         if (this.elements.closeModalBtn) {
-            this.elements.closeModalBtn.addEventListener('click', () => {
-                this.elements.stage3Modal.classList.remove('active');
+            this.elements.closeModalBtn.addEventListener("click", () => {
+                this.elements.stage3Modal.classList.remove("active");
             });
         }
 
-        // Heuristics modal event listeners
-        const addHeuristicBtn = document.getElementById('addHeuristicBtn');
+        // Heuristics modal event listeners.
+        const addHeuristicBtn = document.getElementById("addHeuristicBtn");
         if (addHeuristicBtn) {
-            addHeuristicBtn.addEventListener('click', () => {
-                // Reset form for new heuristic
-                document.getElementById('heuristicId').value = '';
-                document.getElementById('heuristicSource').value = 'manual';
-                document.getElementById('heuristicForm').reset();
-                document.getElementById('heuristicPatternType').value = '';
-                document.getElementById('heuristicPriority').value = '50';
-                document.getElementById('heuristicEnabled').checked = true;
+            addHeuristicBtn.addEventListener("click", () => {
+                // Reset form for new heuristic.
+                document.getElementById("heuristicId").value = "";
+                document.getElementById("heuristicSource").value = "manual";
+                document.getElementById("heuristicForm").reset();
+                document.getElementById("heuristicPatternType").value = "";
+                document.getElementById("heuristicPriority").value = "50";
+                document.getElementById("heuristicEnabled").checked = true;
 
                 // Hide source display and sample columns (for new manual heuristics)
-                document.getElementById('heuristicSourceDisplay').style.display = 'none';
-                document.getElementById('heuristicSampleColumnsGroup').style.display = 'none';
+                document.getElementById("heuristicSourceDisplay").style.display = "none";
+                document.getElementById("heuristicSampleColumnsGroup").style.display = "none";
 
-                document.getElementById('heuristicModalTitle').textContent = 'Add Deterministic Regex Rule';
-                document.getElementById('heuristicModal').classList.add('active');
+                document.getElementById("heuristicModalTitle").textContent =
+                    "Add Deterministic Regex Rule";
+                document.getElementById("heuristicModal").classList.add("active");
             });
         }
 
-        const closeHeuristicModalBtn = document.getElementById('closeHeuristicModalBtn');
+        const closeHeuristicModalBtn = document.getElementById("closeHeuristicModalBtn");
         if (closeHeuristicModalBtn) {
-            closeHeuristicModalBtn.addEventListener('click', () => {
-                document.getElementById('heuristicModal').classList.remove('active');
+            closeHeuristicModalBtn.addEventListener("click", () => {
+                document.getElementById("heuristicModal").classList.remove("active");
             });
         }
 
-        const cancelHeuristicBtn = document.getElementById('cancelHeuristicBtn');
+        const cancelHeuristicBtn = document.getElementById("cancelHeuristicBtn");
         if (cancelHeuristicBtn) {
-            cancelHeuristicBtn.addEventListener('click', () => {
-                document.getElementById('heuristicModal').classList.remove('active');
+            cancelHeuristicBtn.addEventListener("click", () => {
+                document.getElementById("heuristicModal").classList.remove("active");
             });
         }
 
-        const saveHeuristicBtn = document.getElementById('saveHeuristicBtn');
+        const saveHeuristicBtn = document.getElementById("saveHeuristicBtn");
         if (saveHeuristicBtn) {
-            saveHeuristicBtn.addEventListener('click', () => this.saveHeuristic());
+            saveHeuristicBtn.addEventListener("click", () => this.saveHeuristic());
         }
 
-        const testRegexBtn = document.getElementById('testRegexBtn');
+        const testRegexBtn = document.getElementById("testRegexBtn");
         if (testRegexBtn) {
-            testRegexBtn.addEventListener('click', () => {
-                const regex = document.getElementById('heuristicRegex').value;
-                document.getElementById('regexTestPattern').value = regex;
-                document.getElementById('regexTesterModal').classList.add('active');
+            testRegexBtn.addEventListener("click", () => {
+                const regex = document.getElementById("heuristicRegex").value;
+                document.getElementById("regexTestPattern").value = regex;
+                document.getElementById("regexTesterModal").classList.add("active");
             });
         }
 
-        // Regex tester modal event listeners
-        const closeRegexTesterBtn = document.getElementById('closeRegexTesterBtn');
+        // Regex tester modal event listeners.
+        const closeRegexTesterBtn = document.getElementById("closeRegexTesterBtn");
         if (closeRegexTesterBtn) {
-            closeRegexTesterBtn.addEventListener('click', () => {
-                document.getElementById('regexTesterModal').classList.remove('active');
+            closeRegexTesterBtn.addEventListener("click", () => {
+                document.getElementById("regexTesterModal").classList.remove("active");
             });
         }
 
-        const closeRegexTesterModalBtn = document.getElementById('closeRegexTesterModalBtn');
+        const closeRegexTesterModalBtn = document.getElementById("closeRegexTesterModalBtn");
         if (closeRegexTesterModalBtn) {
-            closeRegexTesterModalBtn.addEventListener('click', () => {
-                document.getElementById('regexTesterModal').classList.remove('active');
+            closeRegexTesterModalBtn.addEventListener("click", () => {
+                document.getElementById("regexTesterModal").classList.remove("active");
             });
         }
 
-        const runRegexTestBtn = document.getElementById('runRegexTestBtn');
+        const runRegexTestBtn = document.getElementById("runRegexTestBtn");
         if (runRegexTestBtn) {
-            runRegexTestBtn.addEventListener('click', () => this.testRegexPattern());
+            runRegexTestBtn.addEventListener("click", () => this.testRegexPattern());
         }
 
-        // Audit log filter event listeners
-        const applyAuditFilters = document.getElementById('applyAuditFilters');
+        // Audit log filter event listeners.
+        const applyAuditFilters = document.getElementById("applyAuditFilters");
         if (applyAuditFilters) {
-            applyAuditFilters.addEventListener('click', () => {
+            applyAuditFilters.addEventListener("click", () => {
                 const filters = {
-                    event_type: document.getElementById('auditEventTypeFilter').value,
-                    start_date: document.getElementById('auditStartDate').value,
-                    end_date: document.getElementById('auditEndDate').value
+                    event_type: document.getElementById("auditEventTypeFilter").value,
+                    start_date: document.getElementById("auditStartDate").value,
+                    end_date: document.getElementById("auditEndDate").value,
                 };
                 this.loadAuditLog(filters);
             });
         }
 
-        // Expert feedback refresh button
-        const refreshExpertFeedback = document.getElementById('refreshExpertFeedback');
+        // Expert feedback refresh button.
+        const refreshExpertFeedback = document.getElementById("refreshExpertFeedback");
         if (refreshExpertFeedback) {
-            refreshExpertFeedback.addEventListener('click', () => this.loadExpertFeedback());
+            refreshExpertFeedback.addEventListener("click", () => this.loadExpertFeedback());
         }
 
-        // Table schema modal event listeners
-        // 테이블 스키마 모달 이벤트 리스너
+        // Table schema modal event listeners.
+        // Bind the schema viewer.
         if (this.elements.tableSelect) {
-            this.elements.tableSelect.addEventListener('dblclick', (e) => {
-                // Get the table name from the clicked option or the selected option
-                // 클릭한 옵션 또는 선택된 옵션에서 테이블 이름 가져오기
+            this.elements.tableSelect.addEventListener("dblclick", (e) => {
+                // Get the table name from the clicked option or the selected option.
+                // Resolve the table from the clicked or selected option.
                 let tableName = null;
 
-                if (e.target.tagName === 'OPTION') {
-                    // Double-clicked on an option element
+                if (e.target.tagName === "OPTION") {
+                    // Double-clicked on an option element.
                     tableName = e.target.value;
                 } else if (e.target.selectedOptions && e.target.selectedOptions.length > 0) {
-                    // Double-clicked on the select element
+                    // Double-clicked on the select element.
                     tableName = e.target.selectedOptions[0].value;
                 }
 
-                if (tableName && tableName !== 'Loading tables...') {
+                if (tableName && tableName !== "Loading tables...") {
                     this.showTableSchema(tableName);
                 }
             });
         }
 
-        const closeSchemaModalBtn = document.getElementById('closeSchemaModalBtn');
+        const closeSchemaModalBtn = document.getElementById("closeSchemaModalBtn");
         if (closeSchemaModalBtn) {
-            closeSchemaModalBtn.addEventListener('click', () => {
-                document.getElementById('tableSchemaModal').classList.remove('active');
+            closeSchemaModalBtn.addEventListener("click", () => {
+                document.getElementById("tableSchemaModal").classList.remove("active");
             });
         }
 
-        const closeSchemaModalFooterBtn = document.getElementById('closeSchemaModalFooterBtn');
+        const closeSchemaModalFooterBtn = document.getElementById("closeSchemaModalFooterBtn");
         if (closeSchemaModalFooterBtn) {
-            closeSchemaModalFooterBtn.addEventListener('click', () => {
-                document.getElementById('tableSchemaModal').classList.remove('active');
+            closeSchemaModalFooterBtn.addEventListener("click", () => {
+                document.getElementById("tableSchemaModal").classList.remove("active");
             });
         }
 
-        // Modal closing is now handled by the submit button and close button
+        // Submit and close controls dismiss the dialog.
     }
 
     async loadRuntimeConfig() {
         /**
          * Show the active retrieval route and its review requirement.
-         * 현재 검색 방식과 검토 조건을 표시합니다.
          */
         try {
-            const response = await fetch('/api/runtime_config');
+            const response = await fetch("/api/runtime_config");
             const data = await response.json();
 
-            if (!response.ok || data.status !== 'success') {
-                throw new Error(data.message || 'Runtime profile is unavailable');
+            if (!response.ok || data.status !== "success") {
+                throw new Error(data.message || "Runtime profile is unavailable");
             }
 
             const ranking = data.ranking;
             const features = data.features;
             const sources = ranking.source_families || [];
             const mode = ranking.retrieval_mode;
-            if (!['source_order', 'legacy', 'lexical'].includes(mode)) {
-                throw new Error('Unknown retrieval mode');
+            if (!["source_order", "legacy", "lexical"].includes(mode)) {
+                throw new Error("Unknown retrieval mode");
             }
 
             if (this.elements.runtimeModeBadge) {
-                const ragState = features.rag_enabled ? 'RAG ON' : 'RAG OFF';
-                const rulesState = features.heuristics_enabled ? 'RULES ON' : 'RULES OFF';
+                const ragState = features.rag_enabled ? "RAG ON" : "RAG OFF";
+                const rulesState = features.heuristics_enabled ? "RULES ON" : "RULES OFF";
                 this.elements.runtimeModeBadge.textContent = `${ragState} · ${rulesState}`;
                 this.elements.runtimeModeBadge.classList.toggle(
-                    'runtime-state-disabled',
+                    "runtime-state-disabled",
                     !features.rag_enabled || !features.heuristics_enabled
                 );
             }
 
             if (this.elements.rankingMix) {
-                if (mode === 'source_order') {
+                if (mode === "source_order") {
                     this.elements.rankingMix.textContent = ranking.summary;
-                } else if (mode === 'lexical') {
-                    this.elements.rankingMix.textContent =
-                        `Lexical retrieval · source gap ${Number(ranking.source_gap).toFixed(2)}`;
+                } else if (mode === "lexical") {
+                    this.elements.rankingMix.textContent = `Lexical retrieval · source gap ${Number(ranking.source_gap).toFixed(2)}`;
                 } else {
                     const alpha = Number(ranking.alpha_semantic_similarity);
                     const authorityMix = Number(ranking.authority_mixing_weight);
-                    this.elements.rankingMix.textContent =
-                        `Legacy · α=${alpha.toFixed(1)}: similarity ${Math.round(alpha * 100)}% + source preference ${Math.round(authorityMix * 100)}%`;
+                    this.elements.rankingMix.textContent = `Legacy · α=${alpha.toFixed(1)}: similarity ${Math.round(alpha * 100)}% + source preference ${Math.round(authorityMix * 100)}%`;
                 }
             }
 
             if (this.elements.authorityHierarchy) {
                 const compactLabels = {
-                    approved_expert_feedback: 'Feedback',
-                    institutional_policy: 'Institutional policy',
-                    national_law: 'National law',
-                    international_regulation: 'International guidance'
+                    approved_expert_feedback: "Feedback",
+                    institutional_policy: "Institutional policy",
+                    national_law: "National law",
+                    international_regulation: "International guidance",
                 };
                 this.elements.authorityHierarchy.textContent = sources
-                    .map(source => mode === 'legacy'
-                        ? `${compactLabels[source.key] || source.label} ${Number(source.weight).toFixed(1)}`
-                        : (compactLabels[source.key] || source.label))
-                    .join(mode === 'lexical' ? ' · ' : ' → ');
+                    .map((source) =>
+                        mode === "legacy"
+                            ? `${compactLabels[source.key] || source.label} ${Number(source.weight).toFixed(1)}`
+                            : compactLabels[source.key] || source.label
+                    )
+                    .join(mode === "lexical" ? " · " : " → ");
                 const label = this.elements.authorityHierarchy.previousElementSibling;
                 if (label) {
-                    label.textContent = mode === 'source_order' ? 'Search order'
-                        : mode === 'lexical' ? 'Evidence sources' : 'Source preference (legacy)';
+                    label.textContent =
+                        mode === "source_order"
+                            ? "Search order"
+                            : mode === "lexical"
+                              ? "Evidence sources"
+                              : "Source preference (legacy)";
                 }
             }
 
-            const cascade = document.querySelector('#runtimeProfile .runtime-cascade');
+            const cascade = document.querySelector("#runtimeProfile .runtime-cascade");
             if (cascade) {
-                cascade.textContent = data.workflow.join(' → ');
+                cascade.textContent = data.workflow.join(" → ");
             }
 
             if (this.elements.evidenceIndex) {
                 const pdfCount = sources.reduce(
-                    (total, source) => total + (Number.isInteger(source.document_count) ? source.document_count : 0),
+                    (total, source) =>
+                        total +
+                        (Number.isInteger(source.document_count) ? source.document_count : 0),
                     0
                 );
-                this.elements.evidenceIndex.textContent =
-                    `${pdfCount} PDFs · chunks ${data.retrieval.chunk_size}/${data.retrieval.chunk_overlap} · Top-${data.retrieval.top_k}`;
+                this.elements.evidenceIndex.textContent = `${pdfCount} PDFs · chunks ${data.retrieval.chunk_size}/${data.retrieval.chunk_overlap} · Top-${data.retrieval.top_k}`;
             }
 
             if (this.elements.hitlRuleGate) {
-                this.elements.hitlRuleGate.textContent =
-                    `θ=${data.knowledge_update.minimum_consistent_corrections} · conflict ≤${Math.round(Number(data.knowledge_update.maximum_conflict_rate) * 100)}%`;
+                this.elements.hitlRuleGate.textContent = `θ=${data.knowledge_update.minimum_consistent_corrections} · conflict ≤${Math.round(Number(data.knowledge_update.maximum_conflict_rate) * 100)}%`;
             }
 
             if (this.elements.runtimeConfigNote) {
                 const rawRecordText = features.raw_records_accessed
-                    ? 'Raw records enabled'
-                    : 'Schema metadata only; no raw records';
+                    ? "Raw records enabled"
+                    : "Schema metadata only; no raw records";
                 const auditText = features.llm_audit_enabled
-                    ? 'prompt/response audit ON'
-                    : 'prompt/response audit OFF';
-                this.elements.runtimeConfigNote.textContent =
-                    `Stage 1: ${data.models.stage_1} · temperature ${Number(data.models.temperature).toFixed(1)} · endpoint ${data.models.endpoint_scope} · ${rawRecordText} · ${auditText} · ${ranking.review_note}`;
+                    ? "prompt/response audit ON"
+                    : "prompt/response audit OFF";
+                this.elements.runtimeConfigNote.textContent = `Stage 1: ${data.models.stage_1} · temperature ${Number(data.models.temperature).toFixed(1)} · endpoint ${data.models.endpoint_scope} · ${rawRecordText} · ${auditText} · ${ranking.review_note}`;
             }
         } catch (error) {
             if (this.elements.runtimeModeBadge) {
-                this.elements.runtimeModeBadge.textContent = 'CONFIG ERROR';
-                this.elements.runtimeModeBadge.classList.add('runtime-state-disabled');
+                this.elements.runtimeModeBadge.textContent = "CONFIG ERROR";
+                this.elements.runtimeModeBadge.classList.add("runtime-state-disabled");
             }
             if (this.elements.rankingMix) {
-                this.elements.rankingMix.textContent = 'Unavailable';
+                this.elements.rankingMix.textContent = "Unavailable";
             }
             if (this.elements.authorityHierarchy) {
-                this.elements.authorityHierarchy.textContent = 'Check server configuration';
+                this.elements.authorityHierarchy.textContent = "Check server configuration";
             }
             if (this.elements.evidenceIndex) {
-                this.elements.evidenceIndex.textContent = 'Unavailable';
+                this.elements.evidenceIndex.textContent = "Unavailable";
             }
             if (this.elements.hitlRuleGate) {
-                this.elements.hitlRuleGate.textContent = 'Unavailable';
+                this.elements.hitlRuleGate.textContent = "Unavailable";
             }
             if (this.elements.runtimeConfigNote) {
                 this.elements.runtimeConfigNote.textContent = error.message;
             }
-            console.error('Failed to load runtime profile:', error);
+            console.error("Failed to load runtime profile:", error);
         }
     }
 
     async loadTables() {
         try {
-            const response = await fetch('/get_tables');
+            const response = await fetch("/get_tables");
             const data = await response.json();
 
             if (data.error) {
-                this.log(`[ERROR] Error loading tables: ${data.error}`, 'error');
+                this.log(`[ERROR] Error loading tables: ${data.error}`, "error");
                 return;
             }
 
-            this.elements.tableSelect.innerHTML = '';
+            this.elements.tableSelect.innerHTML = "";
 
             if (data.tables && data.tables.length > 0) {
-                data.tables.forEach(table => {
-                    const option = document.createElement('option');
+                data.tables.forEach((table) => {
+                    const option = document.createElement("option");
                     option.value = table;
                     option.textContent = table;
-                    // Default to unselected - user must manually select tables
-                    // 기본값 미선택 - 사용자가 수동으로 테이블 선택 필요
+                    // Default to unselected - user must manually select tables.
+                    // Require an explicit table selection.
                     option.selected = false;
                     this.elements.tableSelect.appendChild(option);
                 });
-                this.log(`[OK] Loaded ${data.tables.length} table(s)`, 'success');
+                this.log(`[OK] Loaded ${data.tables.length} table(s)`, "success");
             } else {
-                this.log('[WARN] No tables found in database', 'warning');
+                this.log("[WARN] No tables found in database", "warning");
             }
         } catch (error) {
-            this.log(`[ERROR] Failed to load tables: ${error.message}`, 'error');
+            this.log(`[ERROR] Failed to load tables: ${error.message}`, "error");
         }
     }
 
     async startPipeline() {
-        const selectedTables = Array.from(this.elements.tableSelect.selectedOptions)
-            .map(opt => opt.value);
+        const selectedTables = Array.from(this.elements.tableSelect.selectedOptions).map(
+            (opt) => opt.value
+        );
         const purposeGoal = this.elements.purposeGoalInput.value.trim();
         const preferredMethod = this.elements.preferredMethodInput.value.trim();
 
         if (selectedTables.length === 0) {
-            alert('Please select at least one table');
+            alert("Please select at least one table");
             return;
         }
 
         this.state.isRunning = true;
-        this.updateStatus('RUNNING');
+        this.updateStatus("RUNNING");
         this.elements.startBtn.disabled = true;
-        this.elements.startBtn.classList.add('hidden');
-        this.elements.stopBtn.classList.remove('hidden');
+        this.elements.startBtn.classList.add("hidden");
+        this.elements.stopBtn.classList.remove("hidden");
         this.clearTerminal();
 
-        this.log('[Start] Starting PseuDRAGON pipeline...', 'info');
-        this.log(`[Stats] Selected tables: ${selectedTables.join(', ')}`, 'info');
+        this.log("[Start] Starting PseuDRAGON pipeline...", "info");
+        this.log(`[Stats] Selected tables: ${selectedTables.join(", ")}`, "info");
         if (purposeGoal) {
-            this.log(`[Target] Pseudonymization purpose: ${purposeGoal}`, 'info');
+            this.log(`[Target] Pseudonymization purpose: ${purposeGoal}`, "info");
         }
         if (preferredMethod) {
-            this.log(`[Tool] Preferred method: ${preferredMethod}`, 'info');
+            this.log(`[Tool] Preferred method: ${preferredMethod}`, "info");
         }
 
         try {
-            this.log('[Wait] Sending start request to server...', 'info');
-            const response = await fetch('/start', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+            this.log("[Wait] Sending start request to server...", "info");
+            const response = await fetch("/start", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     tables: selectedTables,
                     purpose_goal: purposeGoal,
                     preferred_method: preferredMethod,
-                    session_id: this.state.sessionId  // Include existing session ID if any
-                })
+                    session_id: this.state.sessionId, // Include existing session ID if any.
+                }),
             });
 
-            this.log(`[Server] Server response status: ${response.status}`, 'info');
+            this.log(`[Server] Server response status: ${response.status}`, "info");
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -547,23 +548,26 @@ class PseuDRAGONApp {
             }
 
             const data = await response.json();
-            this.log(`[Data] Server response data: ${JSON.stringify(data)}`, 'info');
+            this.log(`[Data] Server response data: ${JSON.stringify(data)}`, "info");
 
-            if (data.status === 'started') {
-                // Store session ID from server response
-                // 서버 응답에서 세션 ID 저장
+            if (data.status === "started") {
+                // Store session ID from server response.
+                // Retain the server-assigned session identifier.
                 if (data.session_id) {
                     this.state.sessionId = data.session_id;
-                    this.log(`[Session] Session ID: ${this.state.sessionId.substring(0, 8)}...`, 'info');
+                    this.log(
+                        `[Session] Session ID: ${this.state.sessionId.substring(0, 8)}...`,
+                        "info"
+                    );
                 }
-                this.log('[OK] Pipeline started on server. Connecting to event stream...', 'info');
+                this.log("[OK] Pipeline started on server. Connecting to event stream...", "info");
                 this.connectSSE();
             } else {
-                throw new Error('Failed to start pipeline: ' + (data.status || 'Unknown error'));
+                throw new Error("Failed to start pipeline: " + (data.status || "Unknown error"));
             }
         } catch (error) {
-            this.log(`[ERROR] Error starting pipeline: ${error.message}`, 'error');
-            this.updateStatus('ERROR');
+            this.log(`[ERROR] Error starting pipeline: ${error.message}`, "error");
+            this.updateStatus("ERROR");
             this.elements.startBtn.disabled = false;
             this.state.isRunning = false;
         }
@@ -574,32 +578,34 @@ class PseuDRAGONApp {
             this.state.eventSource.close();
         }
 
-        this.log('[Connect] Establishing SSE connection...', 'info');
-        // Include session ID in SSE connection URL
-        // SSE 연결 URL에 세션 ID 포함
-        const sseUrl = this.state.sessionId ? `/stream?session_id=${this.state.sessionId}` : '/stream';
+        this.log("[Connect] Establishing SSE connection...", "info");
+        // Include session ID in SSE connection URL.
+        // Associate the event stream with this session.
+        const sseUrl = this.state.sessionId
+            ? `/stream?session_id=${this.state.sessionId}`
+            : "/stream";
         this.state.eventSource = new EventSource(sseUrl);
 
         this.state.eventSource.onopen = () => {
-            this.log('[Active] SSE Connection opened.', 'info');
+            this.log("[Active] SSE Connection opened.", "info");
         };
 
         this.state.eventSource.onmessage = (event) => {
-            // this.log('📨 Received event: ' + event.data.substring(0, 50) + '...', 'stream'); // Too verbose
-            this.log(event.data, 'stream');
+            // this.log('📨 Received event: ' + event.data.substring(0, 50) + '...', 'stream'); // Too verbose.
+            this.log(event.data, "stream");
         };
 
-        this.state.eventSource.addEventListener('stage2_complete', () => {
-            this.log('\n[OK] Stage 1 & 2 Complete!', 'success');
-            this.log('[User] Opening Human-in-the-Loop review...', 'info');
+        this.state.eventSource.addEventListener("stage2_complete", () => {
+            this.log("\n[OK] Stage 1 & 2 Complete!", "success");
+            this.log("[User] Opening Human-in-the-Loop review...", "info");
             this.loadStage3Data();
         });
 
         this.state.eventSource.onerror = (err) => {
-            console.error('SSE Error:', err);
-            // Only log if we are supposed to be running
+            console.error("SSE Error:", err);
+            // Only log if we are supposed to be running.
             if (this.state.isRunning) {
-                this.log('[WARN] SSE Connection error. Retrying or check console.', 'warning');
+                this.log("[WARN] SSE Connection error. Retrying or check console.", "warning");
             }
         };
     }
@@ -607,143 +613,141 @@ class PseuDRAGONApp {
     async loadStage3Data() {
         /**
          * Load Stage 3 data for human-in-the-loop review
-         * Stage 3 사람-루프 검토를 위한 데이터 로드
          */
         try {
-            // Include session ID in request URL
-            // 요청 URL에 세션 ID 포함
-            const url = this.state.sessionId ? `/get_stage3_data?session_id=${this.state.sessionId}` : '/get_stage3_data';
+            // Include session ID in request URL.
+            // Associate the request with this session.
+            const url = this.state.sessionId
+                ? `/get_stage3_data?session_id=${this.state.sessionId}`
+                : "/get_stage3_data";
             const response = await fetch(url);
             const data = await response.json();
 
             if (data.error) {
-                this.log(`[ERROR] Error: ${data.error}`, 'error');
-                console.error('loadStage3Data: Error in response:', data.error);
+                this.log(`[ERROR] Error: ${data.error}`, "error");
+                console.error("loadStage3Data: Error in response:", data.error);
                 return;
             }
 
-            // Store report filenames
-            // 보고서 파일명 저장
+            // Store report filenames.
+            // Retain the report filenames.
             if (data.reports) {
                 this.state.reports = data.reports;
                 await this.loadReports();
             }
 
-            // Render modal with table data
-            // 테이블 데이터로 모달 렌더링
+            // Render modal with table data.
+            // Render the review dialog from table metadata.
             const tableData = data.tables || data;
             this.renderStage3Modal(tableData);
 
-            // Show modal
-            // 모달 표시
+            // Show modal.
+            // Show the dialog.
             if (this.elements.stage3Modal) {
-                this.elements.stage3Modal.classList.add('active');
+                this.elements.stage3Modal.classList.add("active");
             } else {
-                console.error('stage3Modal element not found');
-                this.log('[ERROR] Error: Cannot show Stage 3 modal - element not found', 'error');
+                console.error("stage3Modal element not found");
+                this.log("[ERROR] Error: Cannot show Stage 3 modal - element not found", "error");
             }
 
-            // Show Review button and Reopen Policy button
+            // Show Review button and Reopen Policy button.
             if (this.elements.reviewBtn) {
-                this.elements.reviewBtn.style.display = 'flex';
+                this.elements.reviewBtn.style.display = "flex";
             }
             if (this.elements.reopenPolicyBtn) {
-                this.elements.reopenPolicyBtn.classList.remove('hidden');
+                this.elements.reopenPolicyBtn.classList.remove("hidden");
             }
         } catch (error) {
-            console.error('Stage 3 load error:', error);
-            this.log(`[ERROR] Failed to load Stage 3 data: ${error.message}`, 'error');
+            console.error("Stage 3 load error:", error);
+            this.log(`[ERROR] Failed to load Stage 3 data: ${error.message}`, "error");
         }
     }
 
     reopenPolicyModal() {
         /**
          * Reopen the Stage 3 policy selection modal
-         * Stage 3 정책 선택 모달 다시 열기
          */
-        this.log('[Update] Reopening policy selection...', 'info');
+        this.log("[Update] Reopening policy selection...", "info");
 
         if (this.elements.stage3Modal) {
-            this.elements.stage3Modal.classList.add('active');
+            this.elements.stage3Modal.classList.add("active");
         } else {
-            console.error('stage3Modal element not found');
-            this.log('[ERROR] Error: Cannot show Stage 3 modal - element not found', 'error');
+            console.error("stage3Modal element not found");
+            this.log("[ERROR] Error: Cannot show Stage 3 modal - element not found", "error");
         }
     }
 
     stopPipeline() {
         /**
          * Stop the running pipeline
-         * 실행 중인 파이프라인 중지
          */
         if (!this.state.isRunning) {
-            alert('No pipeline is currently running');
+            alert("No pipeline is currently running");
             return;
         }
 
-        if (!confirm('Are you sure you want to stop the pipeline?')) {
+        if (!confirm("Are you sure you want to stop the pipeline?")) {
             return;
         }
 
-        this.log('⛔ Stopping pipeline...', 'warning');
+        this.log("⛔ Stopping pipeline...", "warning");
 
-        // Call backend to stop pipeline with session ID
-        // 세션 ID와 함께 백엔드에 파이프라인 중지 요청
-        fetch('/stop', {
-            method: 'POST',
+        // Call backend to stop pipeline with session ID.
+        // Stop only this session’s pipeline.
+        fetch("/stop", {
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                session_id: this.state.sessionId
-            })
+                session_id: this.state.sessionId,
+            }),
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'stopping') {
-                    this.log('[OK] Stop request sent to backend', 'success');
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === "stopping") {
+                    this.log("[OK] Stop request sent to backend", "success");
                 }
             })
-            .catch(error => {
-                this.log(`[WARN] Error stopping pipeline: ${error}`, 'error');
+            .catch((error) => {
+                this.log(`[WARN] Error stopping pipeline: ${error}`, "error");
             });
 
-        // Close event source if open
+        // Close event source if open.
         if (this.state.eventSource) {
             this.state.eventSource.close();
             this.state.eventSource = null;
         }
 
-        // Reset state
+        // Reset state.
         this.state.isRunning = false;
-        this.updateStatus('IDLE');
+        this.updateStatus("IDLE");
         this.elements.startBtn.disabled = false;
-        this.elements.startBtn.classList.remove('hidden');
-        this.elements.stopBtn.classList.add('hidden');
+        this.elements.startBtn.classList.remove("hidden");
+        this.elements.stopBtn.classList.add("hidden");
 
-        // Hide reopen policy button as well
-        this.elements.reopenPolicyBtn.classList.add('hidden');
+        // Hide reopen policy button as well.
+        this.elements.reopenPolicyBtn.classList.add("hidden");
 
-        this.log('⛔ Pipeline stopped by user', 'warning');
+        this.log("⛔ Pipeline stopped by user", "warning");
     }
 
     renderStage3Modal(data) {
         /**
          * Render Stage 3 modal with policy options
-         * 정책 옵션과 함께 Stage 3 모달 렌더링
          */
         if (!this.elements.stage3Content) {
-            console.error('stage3Content element is null or undefined');
-            this.log('[ERROR] Error: Cannot render Stage 3 modal - element not found', 'error');
+            console.error("stage3Content element is null or undefined");
+            this.log("[ERROR] Error: Cannot render Stage 3 modal - element not found", "error");
             return;
         }
 
-        this.elements.stage3Content.innerHTML = '';
+        this.elements.stage3Content.innerHTML = "";
         this.state.selectedChoices = {};
-        this.state.tableData = data; // Store table data for PII status changes
+        this.state.tableData = data; // Store table data for PII status changes.
 
-        const validationSection = document.createElement('div');
-        validationSection.className = 'validation-section';
+        const validationSection = document.createElement("div");
+        validationSection.className = "validation-section";
         validationSection.innerHTML = `
             <div class="validation-header">
                 <h3>🔍 Policy Validation</h3>
@@ -764,13 +768,12 @@ class PseuDRAGONApp {
     createTableSection(tableName, columns) {
         /**
          * Create a table section for Stage 3 modal
-         * Stage 3 모달을 위한 테이블 섹션 생성
          */
-        const section = document.createElement('div');
-        section.className = 'table-section';
+        const section = document.createElement("div");
+        section.className = "table-section";
 
-        const header = document.createElement('div');
-        header.className = 'table-header';
+        const header = document.createElement("div");
+        header.className = "table-header";
         header.innerHTML = `<span>📊</span> <span>Table: ${tableName}</span>`;
         section.appendChild(header);
 
@@ -785,24 +788,22 @@ class PseuDRAGONApp {
     createColumnCard(tableName, columnName, info) {
         /**
          * Create a column card with PII information and method options
-         * PII 정보 및 방법 옵션이 포함된 컬럼 카드 생성
          */
         const uniqueKey = `method_${tableName}_${columnName}`;
         this.state.selectedChoices[uniqueKey] = 0;
 
-        const card = document.createElement('div');
-        card.className = 'column-card';
+        const card = document.createElement("div");
+        card.className = "column-card";
         card.dataset.table = tableName;
         card.dataset.column = columnName;
 
-        const header = document.createElement('div');
-        header.className = 'column-header';
+        const header = document.createElement("div");
+        header.className = "column-header";
 
-        // Determine current PII status
+        // Determine current PII status.
         const isPii = info.is_pii;
-        const currentStatus = isPii ? 'PII' : 'Non-PII';
-        const badgeClass = isPii ? 'pii-badge' : 'pii-badge non-pii-badge';
-
+        const currentStatus = isPii ? "PII" : "Non-PII";
+        const badgeClass = isPii ? "pii-badge" : "pii-badge non-pii-badge";
 
         header.innerHTML = `
             <div class="column-name">
@@ -826,47 +827,56 @@ class PseuDRAGONApp {
         card.appendChild(header);
 
         // Add event listener to Change Status button (instead of inline onclick)
-        const changeBtn = header.querySelector('.btn-change-pii-status');
+        const changeBtn = header.querySelector(".btn-change-pii-status");
         if (changeBtn) {
-            changeBtn.addEventListener('click', (event) => {
-                event.stopPropagation();  // Prevent event bubbling
-                event.preventDefault();   // Prevent default button behavior
+            changeBtn.addEventListener("click", (event) => {
+                event.stopPropagation(); // Prevent event bubbling.
+                event.preventDefault(); // Prevent default button behavior.
                 const table = changeBtn.dataset.table;
                 const column = changeBtn.dataset.column;
                 const status = changeBtn.dataset.currentStatus;
                 this.changePIIStatus(table, column, status);
             });
         } else {
-            console.error('[createColumnCard] Change Status button not found in header!');
+            console.error("[createColumnCard] Change Status button not found in header!");
         }
 
-        const meta = document.createElement('div');
-        meta.className = 'column-meta';
-        // Check if identification evidence is valid and meaningful
-        // 식별 증거가 유효하고 의미 있는지 확인
-        const showIdentification = info.id_evidence &&
-            info.id_evidence !== 'Unknown' &&
-            info.id_evidence !== 'None' &&
-            info.id_evidence.trim() !== '';
+        const meta = document.createElement("div");
+        meta.className = "column-meta";
+        // Check if identification evidence is valid and meaningful.
+        // Display nonempty identification evidence.
+        const showIdentification =
+            info.id_evidence &&
+            info.id_evidence !== "Unknown" &&
+            info.id_evidence !== "None" &&
+            info.id_evidence.trim() !== "";
 
         meta.innerHTML = `
-            ${info.column_comment ? `<div class="meta-item">
+            ${
+                info.column_comment
+                    ? `<div class="meta-item">
                 <span class="meta-label">💬 Description:</span>
                 <span class="meta-value">${info.column_comment}</span>
-            </div>` : ''}
-            ${showIdentification ? `<div class="meta-item">
+            </div>`
+                    : ""
+            }
+            ${
+                showIdentification
+                    ? `<div class="meta-item">
                 <span class="meta-label">📋 Identification:</span>
                 <span class="meta-value">${info.id_evidence}</span>
-            </div>` : ''}
+            </div>`
+                    : ""
+            }
         `;
         card.appendChild(meta);
 
-        const methodsContainer = document.createElement('div');
-        methodsContainer.className = 'methods-container';
+        const methodsContainer = document.createElement("div");
+        methodsContainer.className = "methods-container";
 
-        const methodsTitle = document.createElement('div');
-        methodsTitle.className = 'methods-title';
-        methodsTitle.innerHTML = '<span>🛠️</span> <span>Select Pseudonymization Method:</span>';
+        const methodsTitle = document.createElement("div");
+        methodsTitle.className = "methods-title";
+        methodsTitle.innerHTML = "<span>🛠️</span> <span>Select Pseudonymization Method:</span>";
         methodsContainer.appendChild(methodsTitle);
 
         info.methods.forEach((method, index) => {
@@ -880,19 +890,18 @@ class PseuDRAGONApp {
     }
 
     formatLegalEvidence(evidence) {
-        if (!evidence) return '';
-        return this.escapeHtml(evidence).replace(/\n/g, '<br>');
+        if (!evidence) return "";
+        return this.escapeHtml(evidence).replace(/\n/g, "<br>");
     }
 
     createMethodOption(uniqueKey, method, index) {
         /**
          * Create a method option element with radio button
-         * 라디오 버튼이 있는 기술 옵션 요소 생성
          */
-        const option = document.createElement('div');
-        option.className = `method-option ${index === 0 ? 'selected' : ''}`;
+        const option = document.createElement("div");
+        option.className = `method-option ${index === 0 ? "selected" : ""}`;
         option.onclick = (e) => {
-            if (!e.target.closest('textarea, select, details')) {
+            if (!e.target.closest("textarea, select, details")) {
                 this.selectMethod(uniqueKey, index);
             }
         };
@@ -906,7 +915,7 @@ class PseuDRAGONApp {
                    name="${uniqueKey}"
                    value="${index}"
                    class="method-radio"
-                   ${index === 0 ? 'checked' : ''}>
+                   ${index === 0 ? "checked" : ""}>
             <div class="method-content">
                 <div class="method-header">
                     <span class="method-name">${method.method}</span>
@@ -923,13 +932,19 @@ class PseuDRAGONApp {
                         data-original="${this.escapeHtml(method.description)}"
                     >${this.escapeHtml(method.description)}</textarea>
                 </div>
-                ${method.legal_evidence ? `
+                ${
+                    method.legal_evidence
+                        ? `
                     <div class="method-legal-source">
                         <div class="legal-source-label">📄 Legal Source:</div>
                         <div class="legal-source-content">${this.formatLegalEvidence(method.legal_evidence)}</div>
                     </div>
-                ` : ''}
-                ${method.code_snippet ? `
+                `
+                        : ""
+                }
+                ${
+                    method.code_snippet
+                        ? `
                     <div class="method-code">
                         <div class="code-label">💻 Code Snippet (editable):</div>
                         <textarea
@@ -943,9 +958,21 @@ class PseuDRAGONApp {
                         <summary>Custom-code contract (for unsupported edits)</summary>
                         <label>Method
                             <select id="contract_method_${uniqueKey}_${index}">
-                                ${['KEEP', 'DELETE', 'HASH', 'MASK', 'TOKENIZE', 'GENERALIZE', 'ROUND', 'ENCRYPT'].map(name =>
-                                    `<option value="${name}" ${name === String(method.method).toUpperCase() ? 'selected' : ''}>${name}</option>`
-                                ).join('')}
+                                ${[
+                                    "KEEP",
+                                    "DELETE",
+                                    "HASH",
+                                    "MASK",
+                                    "TOKENIZE",
+                                    "GENERALIZE",
+                                    "ROUND",
+                                    "ENCRYPT",
+                                ]
+                                    .map(
+                                        (name) =>
+                                            `<option value="${name}" ${name === String(method.method).toUpperCase() ? "selected" : ""}>${name}</option>`
+                                    )
+                                    .join("")}
                             </select>
                         </label>
                         <label>Parameters (JSON object)
@@ -957,7 +984,9 @@ class PseuDRAGONApp {
                             This declaration is recorded without automatic verification of custom code.
                         </label>
                     </details>
-                ` : ''}
+                `
+                        : ""
+                }
             </div>
         `;
 
@@ -967,18 +996,17 @@ class PseuDRAGONApp {
     selectMethod(uniqueKey, index) {
         /**
          * Handle method selection
-         * 기술 선택 처리
          */
         this.state.selectedChoices[uniqueKey] = index;
 
         document.querySelectorAll(`input[name="${uniqueKey}"]`).forEach((radio, i) => {
-            const option = radio.closest('.method-option');
+            const option = radio.closest(".method-option");
             if (i === index) {
                 radio.checked = true;
-                option.classList.add('selected');
+                option.classList.add("selected");
             } else {
                 radio.checked = false;
-                option.classList.remove('selected');
+                option.classList.remove("selected");
             }
         });
     }
@@ -986,127 +1014,142 @@ class PseuDRAGONApp {
     async submitPolicies() {
         /**
          * Submit selected policies and generate code
-         * 선택된 정책을 제출하고 코드 생성
          */
 
-        this.elements.stage3Modal.classList.remove('active');
-        this.log('[Update] Submitting selected policies...', 'info');
-        this.log('[Processing] Generating pseudonymization code...', 'info');
-        this.log(`[Stats] Submitting ${Object.keys(this.state.selectedChoices).length} selections`, 'info');
+        this.elements.stage3Modal.classList.remove("active");
+        this.log("[Update] Submitting selected policies...", "info");
+        this.log("[Processing] Generating pseudonymization code...", "info");
+        this.log(
+            `[Stats] Submitting ${Object.keys(this.state.selectedChoices).length} selections`,
+            "info"
+        );
 
         const policiesWithCode = {
-            // Include session ID in submission
-            // 제출에 세션 ID 포함
-            session_id: this.state.sessionId
+            // Include session ID in submission.
+            // Associate the submission with this session.
+            session_id: this.state.sessionId,
         };
         for (const [key, index] of Object.entries(this.state.selectedChoices)) {
             const codeInputId = `code_${key}_${index}`;
             const codeInput = document.getElementById(codeInputId);
-            const originalCode = codeInput?.dataset.original || '';
-            const editedCode = codeInput?.value || '';
+            const originalCode = codeInput?.dataset.original || "";
+            const editedCode = codeInput?.value || "";
 
             const descInputId = `desc_${key}_${index}`;
             const descInput = document.getElementById(descInputId);
-            const originalDesc = descInput?.dataset.original || '';
-            const editedDesc = descInput?.value || '';
+            const originalDesc = descInput?.dataset.original || "";
+            const editedDesc = descInput?.value || "";
 
             policiesWithCode[key] = {
                 index: index,
                 code_snippet: editedCode,
                 code_modified: editedCode !== originalCode,
                 description: editedDesc,
-                description_modified: editedDesc !== originalDesc
+                description_modified: editedDesc !== originalDesc,
             };
             if (document.getElementById(`contract_confirm_${key}_${index}`)?.checked) {
                 try {
-                    const parameters = JSON.parse(document.getElementById(`contract_parameters_${key}_${index}`).value);
-                    if (parameters === null || Array.isArray(parameters) || typeof parameters !== 'object') {
-                        throw new Error('Parameters must be a JSON object.');
+                    const parameters = JSON.parse(
+                        document.getElementById(`contract_parameters_${key}_${index}`).value
+                    );
+                    if (
+                        parameters === null ||
+                        Array.isArray(parameters) ||
+                        typeof parameters !== "object"
+                    ) {
+                        throw new Error("Parameters must be a JSON object.");
                     }
                     policiesWithCode[key].declared_contract = {
                         method: document.getElementById(`contract_method_${key}_${index}`).value,
-                        parameters: parameters
+                        parameters: parameters,
                     };
                 } catch (error) {
-                    this.log(`[ERROR] ${key}: ${error.message}`, 'error');
-                    this.elements.stage3Modal.classList.add('active');
+                    this.log(`[ERROR] ${key}: ${error.message}`, "error");
+                    this.elements.stage3Modal.classList.add("active");
                     return;
                 }
             }
         }
 
-        // Include session ID for multi-client support
-        // 멀티 클라이언트 지원을 위해 세션 ID 포함
+        // Include session ID for multi-client support.
+        // Keep the submission scoped to this client session.
         if (this.state.sessionId) {
             policiesWithCode.session_id = this.state.sessionId;
         }
 
         try {
-            const response = await fetch('/submit_stage3', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(policiesWithCode)
+            const response = await fetch("/submit_stage3", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(policiesWithCode),
             });
 
             const data = await response.json();
 
-            if (data.status === 'completed') {
-                this.log('\n✨ Pipeline Completed Successfully!', 'success');
-                this.updateStatus('COMPLETED');
+            if (data.status === "completed") {
+                this.log("\n✨ Pipeline Completed Successfully!", "success");
+                this.updateStatus("COMPLETED");
                 this.state.eventSource.close();
 
-                // Update reports with regenerated integrated reports from Stage 3
-                // Stage 3에서 재생성된 통합 보고서로 reports 업데이트
+                // Update reports with regenerated integrated reports from Stage 3.
+
                 if (data.reports) {
                     this.state.reports = data.reports;
-                    this.log('[Stats] Updated report files with Stage 3 modifications', 'info');
-                    // Reload reports to show updated content
-                    // 업데이트된 내용을 표시하기 위해 보고서 재로드
+                    this.log("[Stats] Updated report files with Stage 3 modifications", "info");
+                    // Reload reports to show updated content.
+
                     await this.loadReports();
                 }
 
                 this.displayGeneratedCode(data.codes);
-                this.switchMainTab('code');
+                this.switchMainTab("code");
 
-                // Hide reopen policy button after successful code generation
-                // 코드가 정상적으로 생성되면 reopen policy 버튼 숨기기
+                // Hide reopen policy button after successful code generation.
+                // Hide the reopen control after code generation succeeds.
                 if (this.elements.reopenPolicyBtn) {
-                    this.elements.reopenPolicyBtn.classList.add('hidden');
+                    this.elements.reopenPolicyBtn.classList.add("hidden");
                 }
 
-                // Show start button and hide stop button
-                // Start 버튼 표시하고 Stop 버튼 숨기기
-                this.elements.startBtn.classList.remove('hidden');
-                this.elements.stopBtn.classList.add('hidden');
+                // Show start button and hide stop button.
+                // Restore the idle pipeline controls.
+                this.elements.startBtn.classList.remove("hidden");
+                this.elements.stopBtn.classList.add("hidden");
 
-                // Show heuristic learning notification if patterns were learned
-                // 휴리스틱 패턴 학습이 완료되면 알림 팝업 표시
+                // Show heuristic learning notification if patterns were learned.
+                // Show the rule-learning completion notice.
                 if (data.heuristic_learning && data.heuristic_learning.total_patterns > 0) {
                     const stats = data.heuristic_learning;
-                    const piiCount = (stats.pii_patterns.suffixes || 0) + (stats.pii_patterns.prefixes || 0) +
-                                     (stats.pii_patterns.keywords || 0) + (stats.pii_patterns.exact || 0);
-                    const nonPiiCount = (stats.non_pii_patterns.suffixes || 0) + (stats.non_pii_patterns.prefixes || 0) +
-                                        (stats.non_pii_patterns.keywords || 0) + (stats.non_pii_patterns.exact || 0);
-                    const message = `휴리스틱이 자동으로 업데이트되었습니다.\n\n` +
+                    const piiCount =
+                        (stats.pii_patterns.suffixes || 0) +
+                        (stats.pii_patterns.prefixes || 0) +
+                        (stats.pii_patterns.keywords || 0) +
+                        (stats.pii_patterns.exact || 0);
+                    const nonPiiCount =
+                        (stats.non_pii_patterns.suffixes || 0) +
+                        (stats.non_pii_patterns.prefixes || 0) +
+                        (stats.non_pii_patterns.keywords || 0) +
+                        (stats.non_pii_patterns.exact || 0);
+                    const message =
+                        `휴리스틱이 자동으로 업데이트되었습니다.\n\n` +
                         `총 ${stats.total_patterns}개의 패턴이 학습되었습니다.\n` +
                         `• PII 패턴: ${piiCount}개\n` +
                         `• Non-PII 패턴: ${nonPiiCount}개\n\n` +
                         `Heuristics 탭에서 확인할 수 있습니다.`;
                     alert(message);
 
-                    // Reload heuristics to show updated data
-                    // 업데이트된 데이터를 표시하기 위해 휴리스틱 재로드
+                    // Reload heuristics to show updated data.
+
                     this.loadHeuristics();
                 }
             } else {
-                if (data.status === 'validation_error') {
-                    this.elements.stage3Modal.classList.add('active');
+                if (data.status === "validation_error") {
+                    this.elements.stage3Modal.classList.add("active");
                 }
-                throw new Error(data.error || 'Code generation failed');
+                throw new Error(data.error || "Code generation failed");
             }
         } catch (error) {
-            this.log(`[ERROR] Error: ${error.message}`, 'error');
-            this.updateStatus('ERROR');
+            this.log(`[ERROR] Error: ${error.message}`, "error");
+            this.updateStatus("ERROR");
         } finally {
             this.elements.startBtn.disabled = false;
             this.state.isRunning = false;
@@ -1116,34 +1159,33 @@ class PseuDRAGONApp {
     displayGeneratedCode(codes) {
         /**
          * Display generated pseudonymization code
-         * 생성된 가명처리 코드 표시
          */
-        this.elements.codeTabsContainer.innerHTML = '';
-        this.elements.codeViewers.innerHTML = '';
+        this.elements.codeTabsContainer.innerHTML = "";
+        this.elements.codeViewers.innerHTML = "";
 
-        // Check if codes object is empty or null
-        // 코드 객체가 비어있거나 null인지 확인
+        // Check if codes object is empty or null.
+        // Handle missing generated code.
         if (!codes || Object.keys(codes).length === 0) {
-            this.elements.emptyState.style.display = 'block';
-            this.elements.codeContent.style.display = 'none';
-            this.log('[WARN] No generated code available', 'warning');
+            this.elements.emptyState.style.display = "block";
+            this.elements.codeContent.style.display = "none";
+            this.log("[WARN] No generated code available", "warning");
             return;
         }
 
-        this.elements.emptyState.style.display = 'none';
-        this.elements.codeContent.style.display = '';
+        this.elements.emptyState.style.display = "none";
+        this.elements.codeContent.style.display = "";
 
         let isFirst = true;
         for (const [tableName, code] of Object.entries(codes)) {
-            const tabBtn = document.createElement('button');
-            tabBtn.className = `tab-btn ${isFirst ? 'active' : ''}`;
+            const tabBtn = document.createElement("button");
+            tabBtn.className = `tab-btn ${isFirst ? "active" : ""}`;
             tabBtn.textContent = `pseudonymize_${tableName}.py`;
             tabBtn.onclick = () => this.switchCodeTab(tableName);
             this.elements.codeTabsContainer.appendChild(tabBtn);
 
-            const codeContainer = document.createElement('div');
+            const codeContainer = document.createElement("div");
             codeContainer.id = `code-${tableName}`;
-            codeContainer.className = `tab-content ${isFirst ? 'active' : ''}`;
+            codeContainer.className = `tab-content ${isFirst ? "active" : ""}`;
 
             codeContainer.innerHTML = `
                 <div class="code-viewer">
@@ -1163,50 +1205,50 @@ class PseuDRAGONApp {
             isFirst = false;
         }
 
-        this.elements.codeTabsContainer.style.display = 'flex';
+        this.elements.codeTabsContainer.style.display = "flex";
     }
 
     async loadReports() {
         /**
          * Load and display generated reports for multiple tables
-         * 여러 테이블에 대한 생성된 보고서 로드 및 표시
          */
 
-        this.elements.emptyStateReports.style.display = 'none';
-        this.elements.reportsContent.style.display = 'block';
-        this.elements.reportTabsContainer.innerHTML = '';
-        this.elements.reportViewers.innerHTML = '';
+        this.elements.emptyStateReports.style.display = "none";
+        this.elements.reportsContent.style.display = "block";
+        this.elements.reportTabsContainer.innerHTML = "";
+        this.elements.reportViewers.innerHTML = "";
 
         // Find all integrated reports (one per table)
-        // 모든 통합 보고서 찾기 (테이블당 하나)
-        const integratedReportKeys = Object.keys(this.state.reports).filter(key => key.includes('_integrated'));
+        // Collect one integrated report per table.
+        const integratedReportKeys = Object.keys(this.state.reports).filter((key) =>
+            key.includes("_integrated")
+        );
 
         if (integratedReportKeys.length > 0) {
-
             let isFirst = true;
             for (const reportKey of integratedReportKeys) {
                 // Extract table name from report key (e.g., "CUSTOMERS_integrated" -> "CUSTOMERS")
-                // 보고서 키에서 테이블 이름 추출
-                const tableName = reportKey.replace('_integrated', '');
+                // Read the table name from the report key.
+                const tableName = reportKey.replace("_integrated", "");
                 const filename = this.state.reports[reportKey];
 
-                // Create tab button
-                // 탭 버튼 생성
-                const tabBtn = document.createElement('button');
-                tabBtn.className = `tab-btn ${isFirst ? 'active' : ''}`;
+                // Create tab button.
+                // Create the report tab.
+                const tabBtn = document.createElement("button");
+                tabBtn.className = `tab-btn ${isFirst ? "active" : ""}`;
                 tabBtn.textContent = `${tableName}`;
                 tabBtn.onclick = () => this.switchReportTab(reportKey);
                 this.elements.reportTabsContainer.appendChild(tabBtn);
 
-                // Fetch report content
-                // 보고서 내용 가져오기
+                // Fetch report content.
+                // Fetch the report content.
                 const content = await this.fetchReport(filename);
 
-                // Create report container
-                // 보고서 컨테이너 생성
-                const reportContainer = document.createElement('div');
+                // Create report container.
+                // Create the report container.
+                const reportContainer = document.createElement("div");
                 reportContainer.id = `report-${reportKey}`;
-                reportContainer.className = `tab-content ${isFirst ? 'active' : ''}`;
+                reportContainer.className = `tab-content ${isFirst ? "active" : ""}`;
                 reportContainer.innerHTML = `
                     <div class="report-viewer">
                         <div class="report-header">
@@ -1227,23 +1269,25 @@ class PseuDRAGONApp {
                 isFirst = false;
             }
 
-            this.elements.reportTabsContainer.style.display = 'flex';
+            this.elements.reportTabsContainer.style.display = "flex";
 
-            // Auto-switch to reports tab
-            // 보고서 탭으로 자동 전환
-            this.switchMainTab('reports');
+            // Auto-switch to reports tab.
+            // Activate the report tab.
+            this.switchMainTab("reports");
             const tableCount = integratedReportKeys.length;
-            this.log(`[Stats] ${tableCount} integrated report(s) generated. Switching to Reports tab.`, 'success');
+            this.log(
+                `[Stats] ${tableCount} integrated report(s) generated. Switching to Reports tab.`,
+                "success"
+            );
         } else {
-            this.elements.emptyStateReports.style.display = 'flex';
-            this.elements.reportsContent.style.display = 'none';
+            this.elements.emptyStateReports.style.display = "flex";
+            this.elements.reportsContent.style.display = "none";
         }
     }
 
     async fetchReport(filename) {
         /**
          * Fetch report content from server
-         * 서버에서 보고서 내용 가져오기
          */
         try {
             const response = await fetch(`/get_report/${filename}`);
@@ -1257,36 +1301,40 @@ class PseuDRAGONApp {
     renderMarkdown(markdown) {
         /**
          * Render the report locally without a CDN dependency.
-         * 외부 CDN 의존성 없이 보고서를 로컬에서 렌더링합니다.
          *
          * Input is escaped before applying the supported Markdown subset so
          * model-generated report content cannot inject executable HTML.
          */
-        const escapeHtml = (text) => String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        const escapeHtml = (text) =>
+            String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
 
-        const renderInline = (text) => escapeHtml(text)
-            .replace(/`([^`]+)`/g, '<code>$1</code>')
-            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        const renderInline = (text) =>
+            escapeHtml(text)
+                .replace(/`([^`]+)`/g, "<code>$1</code>")
+                .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+                .replace(/\*([^*]+)\*/g, "<em>$1</em>");
 
-        const splitTableRow = (line) => line
-            .trim()
-            .replace(/^\|/, '')
-            .replace(/\|$/, '')
-            .split('|')
-            .map(cell => cell.trim());
+        const splitTableRow = (line) =>
+            line
+                .trim()
+                .replace(/^\|/, "")
+                .replace(/\|$/, "")
+                .split("|")
+                .map((cell) => cell.trim());
 
         const isTableSeparator = (line) => {
             const cells = splitTableRow(line);
-            return cells.length > 0 && cells.every(cell => /^:?-{3,}:?$/.test(cell));
+            return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
         };
 
-        const lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
+        const lines = String(markdown || "")
+            .replace(/\r\n/g, "\n")
+            .split("\n");
         const output = [];
         let inCodeBlock = false;
         let codeLines = [];
@@ -1305,7 +1353,7 @@ class PseuDRAGONApp {
             if (/^```/.test(line.trim())) {
                 closeList();
                 if (inCodeBlock) {
-                    output.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+                    output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
                     codeLines = [];
                     inCodeBlock = false;
                 } else {
@@ -1319,23 +1367,27 @@ class PseuDRAGONApp {
                 continue;
             }
 
-            if (line.includes('|') && index + 1 < lines.length && isTableSeparator(lines[index + 1])) {
+            if (
+                line.includes("|") &&
+                index + 1 < lines.length &&
+                isTableSeparator(lines[index + 1])
+            ) {
                 closeList();
                 const headers = splitTableRow(line);
                 output.push('<div class="markdown-table-wrap"><table><thead><tr>');
-                headers.forEach(header => output.push(`<th>${renderInline(header)}</th>`));
-                output.push('</tr></thead><tbody>');
+                headers.forEach((header) => output.push(`<th>${renderInline(header)}</th>`));
+                output.push("</tr></thead><tbody>");
                 index += 2;
 
-                while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
+                while (index < lines.length && lines[index].includes("|") && lines[index].trim()) {
                     const cells = splitTableRow(lines[index]);
-                    output.push('<tr>');
-                    cells.forEach(cell => output.push(`<td>${renderInline(cell)}</td>`));
-                    output.push('</tr>');
+                    output.push("<tr>");
+                    cells.forEach((cell) => output.push(`<td>${renderInline(cell)}</td>`));
+                    output.push("</tr>");
                     index += 1;
                 }
 
-                output.push('</tbody></table></div>');
+                output.push("</tbody></table></div>");
                 index -= 1;
                 continue;
             }
@@ -1349,22 +1401,22 @@ class PseuDRAGONApp {
             }
 
             if (/^\s*[-*]\s+/.test(line)) {
-                if (listType !== 'ul') {
+                if (listType !== "ul") {
                     closeList();
-                    listType = 'ul';
-                    output.push('<ul>');
+                    listType = "ul";
+                    output.push("<ul>");
                 }
-                output.push(`<li>${renderInline(line.replace(/^\s*[-*]\s+/, ''))}</li>`);
+                output.push(`<li>${renderInline(line.replace(/^\s*[-*]\s+/, ""))}</li>`);
                 continue;
             }
 
             if (/^\s*\d+\.\s+/.test(line)) {
-                if (listType !== 'ol') {
+                if (listType !== "ol") {
                     closeList();
-                    listType = 'ol';
-                    output.push('<ol>');
+                    listType = "ol";
+                    output.push("<ol>");
                 }
-                output.push(`<li>${renderInline(line.replace(/^\s*\d+\.\s+/, ''))}</li>`);
+                output.push(`<li>${renderInline(line.replace(/^\s*\d+\.\s+/, ""))}</li>`);
                 continue;
             }
 
@@ -1373,7 +1425,7 @@ class PseuDRAGONApp {
                 continue;
             }
             if (/^\s*---+\s*$/.test(line)) {
-                output.push('<hr>');
+                output.push("<hr>");
             } else {
                 output.push(`<p>${renderInline(line)}</p>`);
             }
@@ -1381,177 +1433,170 @@ class PseuDRAGONApp {
 
         closeList();
         if (inCodeBlock) {
-            output.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+            output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
         }
 
-        return output.join('');
+        return output.join("");
     }
 
     switchMainTab(tabName) {
         /**
          * Switch between main tabs (Logs, Code, Reports)
-         * 메인 탭 전환 (로그, 코드, 보고서)
          */
-        document.querySelectorAll('.tab-nav-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        document.querySelectorAll(".tab-nav-btn").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.tab === tabName);
         });
 
-        document.querySelectorAll('.main-tab-content').forEach(content => {
-            content.classList.toggle('active', content.id === `${tabName}Tab`);
+        document.querySelectorAll(".main-tab-content").forEach((content) => {
+            content.classList.toggle("active", content.id === `${tabName}Tab`);
         });
     }
 
     switchCodeTab(tableName, event) {
         /**
          * Switch between code tabs for different tables
-         * 다른 테이블의 코드 탭 전환
          */
-        document.querySelectorAll('#codeTabsContainer .tab-btn').forEach(btn => {
-            btn.classList.remove('active');
+        document.querySelectorAll("#codeTabsContainer .tab-btn").forEach((btn) => {
+            btn.classList.remove("active");
         });
-        document.querySelectorAll('#codeViewers .tab-content').forEach(content => {
-            content.classList.remove('active');
+        document.querySelectorAll("#codeViewers .tab-content").forEach((content) => {
+            content.classList.remove("active");
         });
 
         if (event && event.target) {
-            event.target.classList.add('active');
+            event.target.classList.add("active");
         }
-        document.getElementById(`code-${tableName}`).classList.add('active');
+        document.getElementById(`code-${tableName}`).classList.add("active");
     }
 
     switchReportTab(reportKey) {
         /**
          * Switch between report tabs
-         * 보고서 탭 전환
          */
-        // Remove active class from all tabs and contents
-        // 모든 탭과 컨텐츠에서 active 클래스 제거
-        document.querySelectorAll('#reportTabsContainer .tab-btn').forEach(btn => {
-            btn.classList.remove('active');
+        // Remove active class from all tabs and contents.
+
+        document.querySelectorAll("#reportTabsContainer .tab-btn").forEach((btn) => {
+            btn.classList.remove("active");
         });
-        document.querySelectorAll('#reportViewers .tab-content').forEach(content => {
-            content.classList.remove('active');
+        document.querySelectorAll("#reportViewers .tab-content").forEach((content) => {
+            content.classList.remove("active");
         });
 
-        // Find and activate the correct tab button
-        // 올바른 탭 버튼을 찾아 활성화
-        const tableName = reportKey.replace('_integrated', '');
-        document.querySelectorAll('#reportTabsContainer .tab-btn').forEach(btn => {
+        // Find and activate the correct tab button.
+        // Activate the matching tab button.
+        const tableName = reportKey.replace("_integrated", "");
+        document.querySelectorAll("#reportTabsContainer .tab-btn").forEach((btn) => {
             if (btn.textContent === tableName) {
-                btn.classList.add('active');
+                btn.classList.add("active");
             }
         });
 
-        // Activate the report content
-        // 보고서 컨텐츠 활성화
-        document.getElementById(`report-${reportKey}`).classList.add('active');
+        // Activate the report content.
+        // Show the selected report.
+        document.getElementById(`report-${reportKey}`).classList.add("active");
     }
 
     copyCode(tableName) {
         /**
          * Copy generated code to clipboard
-         * 생성된 코드를 클립보드에 복사
          */
         const codeElement = document.querySelector(`#code-${tableName} pre code`);
         const code = codeElement.textContent;
 
-        navigator.clipboard.writeText(code).then(() => {
-            this.showNotification('Code copied to clipboard!', 'success');
-        }).catch(() => {
-            this.showNotification('Failed to copy code', 'error');
-        });
+        navigator.clipboard
+            .writeText(code)
+            .then(() => {
+                this.showNotification("Code copied to clipboard!", "success");
+            })
+            .catch(() => {
+                this.showNotification("Failed to copy code", "error");
+            });
     }
 
     downloadReport(reportKey) {
         /**
          * Download report file
-         * 보고서 파일 다운로드
          */
         const filename = this.state.reports[reportKey];
-        window.open(`/download_report/${filename}`, '_blank');
+        window.open(`/download_report/${filename}`, "_blank");
     }
 
     viewReportAndCloseModal() {
         /**
          * Close Stage 3 modal and switch to report tab
-         * Stage 3 모달을 닫고 보고서 탭으로 전환
          */
-        this.elements.stage3Modal.classList.remove('active');
-        this.switchMainTab('reports');
+        this.elements.stage3Modal.classList.remove("active");
+        this.switchMainTab("reports");
     }
 
     updateStatus(status) {
         /**
          * Update pipeline status badge
-         * 파이프라인 상태 배지 업데이트
          */
         this.state.currentStep = status;
         this.elements.statusBadge.textContent = status;
-        this.elements.statusBadge.className = 'status-badge';
+        this.elements.statusBadge.className = "status-badge";
 
         switch (status) {
-            case 'RUNNING':
-                this.elements.statusBadge.classList.add('running');
+            case "RUNNING":
+                this.elements.statusBadge.classList.add("running");
                 break;
-            case 'COMPLETED':
-                this.elements.statusBadge.classList.add('completed');
+            case "COMPLETED":
+                this.elements.statusBadge.classList.add("completed");
                 break;
-            case 'ERROR':
-                this.elements.statusBadge.classList.add('error');
+            case "ERROR":
+                this.elements.statusBadge.classList.add("error");
                 break;
         }
     }
 
-    log(message, type = 'info') {
+    log(message, type = "info") {
         /**
          * Log message to the logs tab
-         * 로그 탭에 메시지 기록
          * @param {string} message - Message to log
          * @param {string} type - Log type (info/error/warning) - reserved for future use
          */
-            // Check if message already has timestamp from backend (format: [HH:MM:SS])
-            // 백엔드에서 이미 타임스탬프가 있는지 확인 (형식: [HH:MM:SS])
+        // Check if message already has timestamp from backend (format: [HH:MM:SS])
+        // Recognize server timestamps in [HH:MM:SS] format.
         const hasTimestamp = /^\[\d{2}:\d{2}:\d{2}\]/.test(message);
 
         let formattedMessage;
         if (hasTimestamp) {
-            // Use message as-is if it already has timestamp
-            // 이미 타임스탬프가 있으면 그대로 사용
+            // Use message as-is if it already has timestamp.
+            // Preserve the server timestamp.
             formattedMessage = message;
         } else {
-            // Add timestamp if not present
-            // 타임스탬프가 없으면 추가
+            // Add timestamp if not present.
+            // Timestamp messages that have no server timestamp.
             const timestamp = new Date().toLocaleTimeString();
             formattedMessage = `[${timestamp}] ${message}`;
         }
 
-        const logsTab = document.querySelector('#logsTab .empty-state');
+        const logsTab = document.querySelector("#logsTab .empty-state");
         if (logsTab) {
-            logsTab.style.display = 'none';
+            logsTab.style.display = "none";
         }
 
-        this.elements.logsContent.style.display = 'block';
-        this.elements.logsContent.innerHTML += formattedMessage + '\n';
+        this.elements.logsContent.style.display = "block";
+        this.elements.logsContent.innerHTML += formattedMessage + "\n";
         this.elements.logsContent.scrollTop = this.elements.logsContent.scrollHeight;
     }
 
     clearTerminal() {
         /**
          * Clear all logs
-         * 모든 로그 지우기
          */
-        this.elements.logsContent.innerHTML = '';
-        const logsTab = document.querySelector('#logsTab .empty-state');
+        this.elements.logsContent.innerHTML = "";
+        const logsTab = document.querySelector("#logsTab .empty-state");
         if (logsTab) {
-            logsTab.style.display = 'flex';
+            logsTab.style.display = "flex";
         }
-        this.elements.logsContent.style.display = 'none';
+        this.elements.logsContent.style.display = "none";
     }
 
-    showNotification(message, type = 'info') {
+    showNotification(message, type = "info") {
         /**
          * Show notification to user
-         * 사용자에게 알림 표시
          * @param {string} message - Notification message
          * @param {string} type - Notification type (info/success/error) - reserved for future use
          */
@@ -1561,34 +1606,28 @@ class PseuDRAGONApp {
     async changePIIStatus(tableName, columnName, currentStatus) {
         /**
          * Handle PII status change for a column
-         * 컬럼의 PII 상태 변경 처리
          *
          * When changing from Non-PII to PII, this function:
-         * Non-PII에서 PII로 변경할 때, 이 함수는:
          * - Prompts user for PII type and rationale
-         *   사용자에게 PII 유형 및 사유 입력 요청
          * - Calls backend to re-run Stage 2 with LLM
-         *   LLM으로 Stage 2를 재실행하도록 백엔드 호출
          * - Updates UI with new pseudonymization methods
-         *   새로운 가명화 기법으로 UI 업데이트
          */
 
-        // Prevent duplicate modals
-        const existingModal = document.getElementById('piiTypeModal');
+        // Prevent duplicate modals.
+        const existingModal = document.getElementById("piiTypeModal");
         if (existingModal) {
             existingModal.remove();
         }
 
-        // Determine new status
-        const newStatus = currentStatus === 'PII' ? 'Non-PII' : 'PII';
+        // Determine new status.
+        const newStatus = currentStatus === "PII" ? "Non-PII" : "PII";
 
-        // If changing to PII, prompt for PII type and rationale
-        let piiType = 'PII';
-        let rationale = '';
+        // If changing to PII, prompt for PII type and rationale.
+        let piiType = "PII";
+        let rationale = "";
 
-        if (newStatus === 'PII') {
-
-            // Create modal for PII type selection
+        if (newStatus === "PII") {
+            // Create modal for PII type selection.
             const modalHtml = `
                 <div class="modal-overlay active" id="piiTypeModal" style="display: flex;">
                     <div class="modal-content" style="max-width: 500px;">
@@ -1621,52 +1660,49 @@ class PseuDRAGONApp {
                 </div>
             `;
 
-            // Add modal to DOM
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            // Add modal to DOM.
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
 
-
-            // Wait for user confirmation
+            // Wait for user confirmation.
             const confirmed = await new Promise((resolve) => {
-
-                // Handle cancel button
-                const cancelBtn = document.getElementById('cancelPIIChange');
-                const confirmBtn = document.getElementById('confirmPIIChange');
+                // Handle cancel button.
+                const cancelBtn = document.getElementById("cancelPIIChange");
+                const confirmBtn = document.getElementById("confirmPIIChange");
 
                 if (!cancelBtn || !confirmBtn) {
-                    console.error('[PII Status Change] Modal buttons not found!');
+                    console.error("[PII Status Change] Modal buttons not found!");
                     resolve(false);
                     return;
                 }
 
-
                 cancelBtn.onclick = () => {
-                    document.getElementById('piiTypeModal').remove();
-                    resolve(false); // User cancelled
+                    document.getElementById("piiTypeModal").remove();
+                    resolve(false); // User cancelled.
                 };
 
                 confirmBtn.onclick = () => {
-                    piiType = document.getElementById('piiTypeSelect').value;
-                    rationale = document.getElementById('piiRationale').value.trim();
-                    document.getElementById('piiTypeModal').remove();
-                    resolve(true); // User confirmed
+                    piiType = document.getElementById("piiTypeSelect").value;
+                    rationale = document.getElementById("piiRationale").value.trim();
+                    document.getElementById("piiTypeModal").remove();
+                    resolve(true); // User confirmed.
                 };
-
             });
 
-
-            // If user cancelled, exit
+            // If user cancelled, exit.
             if (!confirmed) {
                 return;
             }
         } else {
-            // Changing to Non-PII - no confirmation needed, just set default rationale
-            rationale = 'User manually changed to Non-PII';
+            // Changing to Non-PII - no confirmation needed, just set default rationale.
+            rationale = "User manually changed to Non-PII";
         }
 
-        // Show loading indicator on the card
-        const card = document.querySelector(`.column-card[data-table="${tableName}"][data-column="${columnName}"]`);
+        // Show loading indicator on the card.
+        const card = document.querySelector(
+            `.column-card[data-table="${tableName}"][data-column="${columnName}"]`
+        );
         if (card) {
-            const methodsContainer = card.querySelector('.methods-container');
+            const methodsContainer = card.querySelector(".methods-container");
             if (methodsContainer) {
                 const loadingHtml = `
                     <div class="loading-indicator" style="text-align: center; padding: 20px;">
@@ -1684,66 +1720,66 @@ class PseuDRAGONApp {
             }
         }
 
-        this.log(`[Update] Changing ${columnName} status from ${currentStatus} to ${newStatus}...`, 'info');
-
+        this.log(
+            `[Update] Changing ${columnName} status from ${currentStatus} to ${newStatus}...`,
+            "info"
+        );
 
         try {
-            // Call backend API
-            const response = await fetch('/change_pii_status', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+            // Call backend API.
+            const response = await fetch("/change_pii_status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     table: tableName,
                     column: columnName,
-                    old_status: currentStatus,  // Explicitly send old_status
+                    old_status: currentStatus, // Explicitly send old_status.
                     new_status: newStatus,
                     pii_type: piiType,
                     rationale: rationale,
-                    session_id: this.state.sessionId  // Include session ID for multi-client support
-                })
+                    session_id: this.state.sessionId, // Include session ID for multi-client support.
+                }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to change PII status');
+                throw new Error(errorData.error || "Failed to change PII status");
             }
 
             const result = await response.json();
 
+            if (result.status === "success") {
+                this.log(`[OK] ${result.message}`, "success");
 
-            if (result.status === 'success') {
-                this.log(`[OK] ${result.message}`, 'success');
-
-                // Update the UI with new methods
+                // Update the UI with new methods.
                 const updateData = {
-                    is_pii: newStatus === 'PII',
-                    pii_type: result.pii_type || 'Non-PII',
+                    is_pii: newStatus === "PII",
+                    pii_type: result.pii_type || "Non-PII",
                     methods: result.methods || [],
-                    column_comment: result.column_comment || ''
+                    column_comment: result.column_comment || "",
                 };
-
 
                 this.updateColumnCard(tableName, columnName, updateData);
 
-                // Update state.tableData
+                // Update state.tableData.
                 if (this.state.tableData && this.state.tableData[tableName]) {
-                    this.state.tableData[tableName][columnName].is_pii = newStatus === 'PII';
-                    this.state.tableData[tableName][columnName].pii_type = result.pii_type || 'Non-PII';
+                    this.state.tableData[tableName][columnName].is_pii = newStatus === "PII";
+                    this.state.tableData[tableName][columnName].pii_type =
+                        result.pii_type || "Non-PII";
                     this.state.tableData[tableName][columnName].methods = result.methods || [];
                 }
 
-                // Success - no alert needed
+                // Success - no alert needed.
             } else {
-                throw new Error('Unexpected response from server');
+                throw new Error("Unexpected response from server");
             }
-
         } catch (error) {
-            console.error('Error changing PII status:', error);
-            this.log(`[ERROR] Error: ${error.message}`, 'error');
+            console.error("Error changing PII status:", error);
+            this.log(`[ERROR] Error: ${error.message}`, "error");
 
-            // Restore original UI on error
+            // Restore original UI on error.
             if (card) {
-                const methodsContainer = card.querySelector('.methods-container');
+                const methodsContainer = card.querySelector(".methods-container");
                 if (methodsContainer) {
                     methodsContainer.innerHTML = `
                         <div class="error-message" style="text-align: center; padding: 20px; color: #d32f2f;">
@@ -1760,97 +1796,94 @@ class PseuDRAGONApp {
     updateColumnCard(tableName, columnName, newData) {
         /**
          * Update a column card with new data
-         * 새 데이터로 컬럼 카드 업데이트
          */
-        const card = document.querySelector(`.column-card[data-table="${tableName}"][data-column="${columnName}"]`);
+        const card = document.querySelector(
+            `.column-card[data-table="${tableName}"][data-column="${columnName}"]`
+        );
         if (!card) {
             console.error(`Column card not found for ${tableName}.${columnName}`);
             return;
         }
 
-
-        // Update PII badge
-        const badge = card.querySelector('.pii-badge');
-        const statusText = card.querySelector('.pii-status-text');
-
+        // Update PII badge.
+        const badge = card.querySelector(".pii-badge");
+        const statusText = card.querySelector(".pii-status-text");
 
         if (badge && statusText) {
-            // Clear previous state
-            badge.classList.remove('non-pii-badge');
+            // Clear previous state.
+            badge.classList.remove("non-pii-badge");
 
             if (newData.is_pii) {
-                // PII: Red background
-                badge.dataset.status = 'PII';
-                statusText.textContent = newData.pii_type || 'PII';
+                // PII: Red background.
+                badge.dataset.status = "PII";
+                statusText.textContent = newData.pii_type || "PII";
             } else {
-                // Non-PII: Green background
-                badge.classList.add('non-pii-badge');
-                badge.dataset.status = 'Non-PII';
-                statusText.textContent = 'Non-PII';
+                // Non-PII: Green background.
+                badge.classList.add("non-pii-badge");
+                badge.dataset.status = "Non-PII";
+                statusText.textContent = "Non-PII";
             }
         } else {
             console.error(`[updateColumnCard] Badge or statusText not found in card`);
         }
 
-        // Update Change Status button
-        const changeBtn = card.querySelector('.btn-change-pii-status');
+        // Update Change Status button.
+        const changeBtn = card.querySelector(".btn-change-pii-status");
         if (changeBtn) {
-            const currentStatusForButton = newData.is_pii ? 'PII' : 'Non-PII';
+            const currentStatusForButton = newData.is_pii ? "PII" : "Non-PII";
 
-            // Update data attribute instead of onclick
+            // Update data attribute instead of onclick.
             changeBtn.dataset.currentStatus = currentStatusForButton;
 
-            // Remove old onclick attribute if it exists
-            changeBtn.removeAttribute('onclick');
+            // Remove old onclick attribute if it exists.
+            changeBtn.removeAttribute("onclick");
 
-            // Clone button to remove all event listeners
+            // Clone button to remove all event listeners.
             const newBtn = changeBtn.cloneNode(true);
             changeBtn.parentNode.replaceChild(newBtn, changeBtn);
 
-            // Add new event listener
-            newBtn.addEventListener('click', (event) => {
-                event.stopPropagation();  // Prevent event bubbling
-                event.preventDefault();   // Prevent default button behavior
+            // Add new event listener.
+            newBtn.addEventListener("click", (event) => {
+                event.stopPropagation(); // Prevent event bubbling.
+                event.preventDefault(); // Prevent default button behavior.
                 const table = newBtn.dataset.table;
                 const column = newBtn.dataset.column;
                 const status = newBtn.dataset.currentStatus;
                 this.changePIIStatus(table, column, status);
             });
-
         } else {
             console.error(`[updateColumnCard] Change Status button not found in card`);
         }
 
-        // Update methods container
-        const methodsContainer = card.querySelector('.methods-container');
+        // Update methods container.
+        const methodsContainer = card.querySelector(".methods-container");
         if (methodsContainer) {
             // Clear existing content (including loading indicator)
-            methodsContainer.innerHTML = '';
+            methodsContainer.innerHTML = "";
 
-            // Add title
-            const newTitle = document.createElement('div');
-            newTitle.className = 'methods-title';
-            newTitle.innerHTML = '<span>🛠️</span> <span>Select Pseudonymization Method:</span>';
+            // Add title.
+            const newTitle = document.createElement("div");
+            newTitle.className = "methods-title";
+            newTitle.innerHTML = "<span>🛠️</span> <span>Select Pseudonymization Method:</span>";
             methodsContainer.appendChild(newTitle);
 
-            // Check if methods exist
+            // Check if methods exist.
             if (newData.methods && newData.methods.length > 0) {
-                // Add new methods
+                // Add new methods.
                 const uniqueKey = `method_${tableName}_${columnName}`;
-                this.state.selectedChoices[uniqueKey] = 0; // Reset to first method
+                this.state.selectedChoices[uniqueKey] = 0; // Reset to first method.
 
                 newData.methods.forEach((method, index) => {
                     const option = this.createMethodOption(uniqueKey, method, index);
                     methodsContainer.appendChild(option);
                 });
-
             } else {
-                // No methods available
-                const noMethodsMsg = document.createElement('div');
-                noMethodsMsg.style.padding = '20px';
-                noMethodsMsg.style.textAlign = 'center';
-                noMethodsMsg.style.color = '#666';
-                noMethodsMsg.textContent = 'No methods available';
+                // No methods available.
+                const noMethodsMsg = document.createElement("div");
+                noMethodsMsg.style.padding = "20px";
+                noMethodsMsg.style.textAlign = "center";
+                noMethodsMsg.style.color = "#666";
+                noMethodsMsg.textContent = "No methods available";
                 methodsContainer.appendChild(noMethodsMsg);
             }
         }
@@ -1859,29 +1892,31 @@ class PseuDRAGONApp {
     async validatePolicies() {
         /**
          * Validate current policies using backend validator
-         * 백엔드 검증기를 사용하여 현재 정책 검증
          *
          * Implements real-time validation
          */
-        const resultsContainer = document.getElementById('validationResults');
+        const resultsContainer = document.getElementById("validationResults");
         if (!resultsContainer) {
-            console.error('Validation results container not found');
+            console.error("Validation results container not found");
             return;
         }
 
-        resultsContainer.innerHTML = '<div class="validation-loading">🔍 Validating policies...</div>';
+        resultsContainer.innerHTML =
+            '<div class="validation-loading">🔍 Validating policies...</div>';
 
         try {
             const policies = this.collectUserPolicies();
 
-            const response = await fetch('/validate_policy', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+            const response = await fetch("/validate_policy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    table: this.state.currentTable || Object.keys(this.state.selectedChoices)[0]?.split('_')[1],
+                    table:
+                        this.state.currentTable ||
+                        Object.keys(this.state.selectedChoices)[0]?.split("_")[1],
                     policies: policies,
-                    session_id: this.state.sessionId  // Include session ID for multi-client support
-                })
+                    session_id: this.state.sessionId, // Include session ID for multi-client support.
+                }),
             });
 
             if (!response.ok) {
@@ -1890,9 +1925,8 @@ class PseuDRAGONApp {
 
             const result = await response.json();
             this.displayValidationResults(result);
-
         } catch (error) {
-            console.error('Validation error:', error);
+            console.error("Validation error:", error);
             resultsContainer.innerHTML = `
                 <div class="alert alert-danger">
                     ❌ Validation failed: ${error.message}
@@ -1904,26 +1938,25 @@ class PseuDRAGONApp {
     collectUserPolicies() {
         /**
          * Collect user-selected policies from UI
-         * UI에서 사용자가 선택한 정책 수집
          */
         const policies = {};
 
         for (const [key, index] of Object.entries(this.state.selectedChoices)) {
-            const parts = key.split('_');
+            const parts = key.split("_");
             if (parts.length >= 3) {
-                const columnName = parts.slice(2).join('_');
+                const columnName = parts.slice(2).join("_");
 
                 const radioGroup = document.querySelectorAll(`input[name="${key}"]`);
-                const selectedRadio = Array.from(radioGroup).find(r => r.checked);
+                const selectedRadio = Array.from(radioGroup).find((r) => r.checked);
 
                 if (selectedRadio) {
-                    const methodOption = selectedRadio.closest('.method-option');
-                    const methodElement = methodOption.querySelector('.method-name');
-                    const descElement = methodOption.querySelector('.method-description');
+                    const methodOption = selectedRadio.closest(".method-option");
+                    const methodElement = methodOption.querySelector(".method-name");
+                    const descElement = methodOption.querySelector(".method-description");
 
                     policies[columnName] = {
-                        action: methodElement ? methodElement.textContent.trim() : 'KEEP',
-                        rationale: descElement ? descElement.textContent.trim() : ''
+                        action: methodElement ? methodElement.textContent.trim() : "KEEP",
+                        rationale: descElement ? descElement.textContent.trim() : "",
                     };
                 }
             }
@@ -1935,12 +1968,11 @@ class PseuDRAGONApp {
     displayValidationResults(result) {
         /**
          * Display validation results in UI
-         * UI에 검증 결과 표시
          */
-        const container = document.getElementById('validationResults');
+        const container = document.getElementById("validationResults");
         if (!container) return;
 
-        container.innerHTML = '';
+        container.innerHTML = "";
 
         if (!result.violations || result.violations.length === 0) {
             container.innerHTML = `
@@ -1952,8 +1984,8 @@ class PseuDRAGONApp {
         }
 
         const summary = result.summary || {};
-        const summaryDiv = document.createElement('div');
-        summaryDiv.className = 'validation-summary';
+        const summaryDiv = document.createElement("div");
+        summaryDiv.className = "validation-summary";
         summaryDiv.innerHTML = `
             <h4>Validation Summary</h4>
             <div class="summary-stats">
@@ -1962,26 +1994,26 @@ class PseuDRAGONApp {
                 <span class="stat stat-medium">Medium: ${summary.by_severity?.MEDIUM || 0}</span>
                 <span class="stat stat-low">Low: ${summary.by_severity?.LOW || 0}</span>
             </div>
-            <div class="compliance-status ${summary.is_compliant ? 'compliant' : 'non-compliant'}">
-                ${summary.is_compliant ? '✅ Compliant' : '⚠️ Non-Compliant'}
+            <div class="compliance-status ${summary.is_compliant ? "compliant" : "non-compliant"}">
+                ${summary.is_compliant ? "✅ Compliant" : "⚠️ Non-Compliant"}
             </div>
         `;
         container.appendChild(summaryDiv);
 
-        const violationsDiv = document.createElement('div');
-        violationsDiv.className = 'violations-list';
+        const violationsDiv = document.createElement("div");
+        violationsDiv.className = "violations-list";
 
-        result.violations.forEach(v => {
+        result.violations.forEach((v) => {
             const severity = v.severity.toLowerCase();
-            const severityIcon = severity === 'high' ? '🚨' : severity === 'medium' ? '⚠️' : 'ℹ️';
+            const severityIcon = severity === "high" ? "🚨" : severity === "medium" ? "⚠️" : "ℹ️";
 
-            const violationCard = document.createElement('div');
+            const violationCard = document.createElement("div");
             violationCard.className = `violation-card violation-${severity}`;
             violationCard.innerHTML = `
                 <div class="violation-header">
                     <span class="violation-icon">${severityIcon}</span>
                     <span class="violation-severity">${v.severity}</span>
-                    <span class="violation-check-type">${v.check_type.replace(/_/g, ' ')}</span>
+                    <span class="violation-check-type">${v.check_type.replace(/_/g, " ")}</span>
                 </div>
                 <div class="violation-body">
                     <div class="violation-column">
@@ -2004,9 +2036,8 @@ class PseuDRAGONApp {
     escapeHtml(text) {
         /**
          * Escape HTML special characters
-         * HTML 특수 문자 이스케이프
          */
-        const div = document.createElement('div');
+        const div = document.createElement("div");
         div.textContent = text;
         return div.innerHTML;
     }
@@ -2014,52 +2045,52 @@ class PseuDRAGONApp {
     formatLegalEvidence(evidence) {
         /**
          * Format legal evidence to extract and display document names
-         * 법적 근거를 포맷하여 문서 이름 추출 및 표시
          */
-        if (!evidence) return 'Unknown';
+        if (!evidence) return "Unknown";
 
-        const parts = evidence.split(',').map(part => part.trim());
-        const formatted = parts.map(part => {
-            const match = part.match(/^([^:]+):\s*(.+)$/);
-            if (match) {
-                const docName = match[1];
-                const content = match[2];
-                return `<div class="legal-evidence-item">
+        const parts = evidence.split(",").map((part) => part.trim());
+        const formatted = parts
+            .map((part) => {
+                const match = part.match(/^([^:]+):\s*(.+)$/);
+                if (match) {
+                    const docName = match[1];
+                    const content = match[2];
+                    return `<div class="legal-evidence-item">
                     <span class="legal-doc-name">📘 ${this.escapeHtml(docName)}</span>
                     <span class="legal-doc-content">${this.escapeHtml(content)}</span>
                 </div>`;
-            }
-            return `<div class="legal-evidence-item">${this.escapeHtml(part)}</div>`;
-        }).join('');
+                }
+                return `<div class="legal-evidence-item">${this.escapeHtml(part)}</div>`;
+            })
+            .join("");
 
         return formatted || this.escapeHtml(evidence);
     }
 
     // ============================================================================
-    // Heuristics Management Methods
-    // 휴리스틱 관리 메서드
+    // Heuristics Management Methods.
+    // Heuristic management.
     // ============================================================================
 
     async loadHeuristics() {
         /**
          * Load and display heuristics
-         * 휴리스틱 로드 및 표시
          */
         try {
-            // Load heuristics and statistics in parallel
+            // Load heuristics and statistics in parallel.
             const [heuristicsResponse, statsResponse] = await Promise.all([
-                fetch('/api/heuristics'),
-                fetch('/api/heuristics/statistics')
+                fetch("/api/heuristics"),
+                fetch("/api/heuristics/statistics"),
             ]);
 
             const data = await heuristicsResponse.json();
             const statsData = await statsResponse.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 this.displayHeuristics(data.heuristics);
             } else {
-                console.error('Failed to load heuristics:', data.message);
-                document.getElementById('heuristicsListContainer').innerHTML = `
+                console.error("Failed to load heuristics:", data.message);
+                document.getElementById("heuristicsListContainer").innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">❌</div>
                         <h3 class="empty-title">Failed to Load Heuristics</h3>
@@ -2068,13 +2099,13 @@ class PseuDRAGONApp {
                 `;
             }
 
-            // Update statistics display
-            if (statsData.status === 'success') {
+            // Update statistics display.
+            if (statsData.status === "success") {
                 this.updateHeuristicsStats(statsData.statistics);
             }
         } catch (error) {
-            console.error('Error loading heuristics:', error);
-            document.getElementById('heuristicsListContainer').innerHTML = `
+            console.error("Error loading heuristics:", error);
+            document.getElementById("heuristicsListContainer").innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">❌</div>
                     <h3 class="empty-title">Error Loading Heuristics</h3>
@@ -2087,26 +2118,24 @@ class PseuDRAGONApp {
     updateHeuristicsStats(stats) {
         /**
          * Update heuristics statistics display
-         * 휴리스틱 통계 표시 업데이트
          */
-        document.getElementById('heurTotalPatterns').textContent = stats.total_patterns || 0;
-        document.getElementById('heurManualPatterns').textContent = stats.manual_patterns || 0;
-        document.getElementById('heurAutoPatterns').textContent = stats.auto_learned_patterns || 0;
+        document.getElementById("heurTotalPatterns").textContent = stats.total_patterns || 0;
+        document.getElementById("heurManualPatterns").textContent = stats.manual_patterns || 0;
+        document.getElementById("heurAutoPatterns").textContent = stats.auto_learned_patterns || 0;
 
         if (stats.last_updated) {
             const date = new Date(stats.last_updated);
-            document.getElementById('heurLastUpdated').textContent = date.toLocaleString();
+            document.getElementById("heurLastUpdated").textContent = date.toLocaleString();
         } else {
-            document.getElementById('heurLastUpdated').textContent = '-';
+            document.getElementById("heurLastUpdated").textContent = "-";
         }
     }
 
     displayHeuristics(heuristics) {
         /**
          * Display heuristics in the UI
-         * UI에 휴리스틱 표시
          */
-        const container = document.getElementById('heuristicsListContainer');
+        const container = document.getElementById("heuristicsListContainer");
 
         if (!heuristics || heuristics.length === 0) {
             container.innerHTML = `
@@ -2119,7 +2148,8 @@ class PseuDRAGONApp {
             return;
         }
 
-        let html = '<div style="padding: 20px; overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; min-width: 900px;">';
+        let html =
+            '<div style="padding: 20px; overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; min-width: 900px;">';
         html += '<thead><tr style="border-bottom: 2px solid #e0e0e0;">';
         html += '<th style="padding: 10px; text-align: left;">Source</th>';
         html += '<th style="padding: 10px; text-align: left;">Name</th>';
@@ -2129,32 +2159,34 @@ class PseuDRAGONApp {
         html += '<th style="padding: 10px; text-align: center;">Priority</th>';
         html += '<th style="padding: 10px; text-align: center;">Status</th>';
         html += '<th style="padding: 10px; text-align: center;">Actions</th>';
-        html += '</tr></thead><tbody>';
+        html += "</tr></thead><tbody>";
 
-        heuristics.forEach(h => {
+        heuristics.forEach((h) => {
             const statusBadge = h.enabled
                 ? '<span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Enabled</span>'
                 : '<span style="background: #9E9E9E; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Disabled</span>';
 
-            // Source badge
-            const sourceBadge = h.source === 'auto_learned'
-                ? '<span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;" title="Automatically learned from expert feedback">🤖 Auto</span>'
-                : '<span style="background: #2196F3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;" title="Manually created by expert">👤 Manual</span>';
+            // Source badge.
+            const sourceBadge =
+                h.source === "auto_learned"
+                    ? '<span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;" title="Automatically learned from expert feedback">🤖 Auto</span>'
+                    : '<span style="background: #2196F3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;" title="Manually created by expert">👤 Manual</span>';
 
-            // Pattern type badge
-            const patternType = h.pattern_type || 'custom';
+            // Pattern type badge.
+            const patternType = h.pattern_type || "custom";
             const patternTypeBadge = `<span style="background: #f0f0f0; color: #666; padding: 3px 6px; border-radius: 3px; font-size: 11px;">${this.escapeHtml(patternType)}</span>`;
 
-            // PII type badge with color
-            const piiTypeBadge = h.pii_type === 'PII'
-                ? '<span style="background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">PII</span>'
-                : '<span style="background: #607D8B; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Non-PII</span>';
+            // PII type badge with color.
+            const piiTypeBadge =
+                h.pii_type === "PII"
+                    ? '<span style="background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">PII</span>'
+                    : '<span style="background: #607D8B; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Non-PII</span>';
 
             // Sample columns tooltip (for auto-learned)
             let patternCell = `<code style="font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">${this.escapeHtml(h.regex)}</code>`;
             if (h.sample_columns && h.sample_columns.length > 0) {
-                const samples = h.sample_columns.slice(0, 5).join(', ');
-                patternCell += `<br><small style="color: #888; font-size: 11px;" title="${this.escapeHtml(h.sample_columns.join(', '))}">Samples: ${this.escapeHtml(samples)}</small>`;
+                const samples = h.sample_columns.slice(0, 5).join(", ");
+                patternCell += `<br><small style="color: #888; font-size: 11px;" title="${this.escapeHtml(h.sample_columns.join(", "))}">Samples: ${this.escapeHtml(samples)}</small>`;
             }
 
             html += '<tr style="border-bottom: 1px solid #e0e0e0;">';
@@ -2171,205 +2203,203 @@ class PseuDRAGONApp {
                     <button class="btn btn-secondary" onclick="app.deleteHeuristic('${h.id}')" style="padding: 5px 12px; width: 70px; background: #ef4444; color: #ffffff;">Delete</button>
                 </div>
             </td>`;
-            html += '</tr>';
+            html += "</tr>";
         });
 
-        html += '</tbody></table></div>';
+        html += "</tbody></table></div>";
         container.innerHTML = html;
     }
 
     async editHeuristic(heuristicId) {
         /**
          * Open edit modal for heuristic
-         * 휴리스틱 편집 모달 열기
          */
         try {
             const response = await fetch(`/api/heuristics/${heuristicId}`);
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 const h = data.heuristic;
 
-                // Populate form
-                document.getElementById('heuristicId').value = h.id;
-                document.getElementById('heuristicName').value = h.name;
-                document.getElementById('heuristicRegex').value = h.regex;
-                document.getElementById('heuristicPiiType').value = h.pii_type;
-                document.getElementById('heuristicRationale').value = h.rationale;
-                document.getElementById('heuristicPriority').value = h.priority;
-                document.getElementById('heuristicEnabled').checked = h.enabled;
-                document.getElementById('heuristicSource').value = h.source || 'manual';
-                document.getElementById('heuristicPatternType').value = h.pattern_type || '';
+                // Populate form.
+                document.getElementById("heuristicId").value = h.id;
+                document.getElementById("heuristicName").value = h.name;
+                document.getElementById("heuristicRegex").value = h.regex;
+                document.getElementById("heuristicPiiType").value = h.pii_type;
+                document.getElementById("heuristicRationale").value = h.rationale;
+                document.getElementById("heuristicPriority").value = h.priority;
+                document.getElementById("heuristicEnabled").checked = h.enabled;
+                document.getElementById("heuristicSource").value = h.source || "manual";
+                document.getElementById("heuristicPatternType").value = h.pattern_type || "";
 
-                // Show source badge for auto-learned patterns
-                const sourceDisplay = document.getElementById('heuristicSourceDisplay');
-                const sourceBadge = document.getElementById('heuristicSourceBadge');
-                if (h.source === 'auto_learned') {
-                    sourceBadge.innerHTML = '<span style="background: #4CAF50; color: white; padding: 6px 12px; border-radius: 4px; font-size: 13px;">🤖 Auto-Learned from Expert Feedback</span>';
-                    sourceDisplay.style.display = 'block';
+                // Show source badge for auto-learned patterns.
+                const sourceDisplay = document.getElementById("heuristicSourceDisplay");
+                const sourceBadge = document.getElementById("heuristicSourceBadge");
+                if (h.source === "auto_learned") {
+                    sourceBadge.innerHTML =
+                        '<span style="background: #4CAF50; color: white; padding: 6px 12px; border-radius: 4px; font-size: 13px;">🤖 Auto-Learned from Expert Feedback</span>';
+                    sourceDisplay.style.display = "block";
                 } else {
-                    sourceBadge.innerHTML = '<span style="background: #2196F3; color: white; padding: 6px 12px; border-radius: 4px; font-size: 13px;">👤 Manually Created</span>';
-                    sourceDisplay.style.display = 'block';
+                    sourceBadge.innerHTML =
+                        '<span style="background: #2196F3; color: white; padding: 6px 12px; border-radius: 4px; font-size: 13px;">👤 Manually Created</span>';
+                    sourceDisplay.style.display = "block";
                 }
 
-                // Show sample columns for auto-learned patterns
-                const sampleColumnsGroup = document.getElementById('heuristicSampleColumnsGroup');
-                const sampleColumnsDiv = document.getElementById('heuristicSampleColumns');
+                // Show sample columns for auto-learned patterns.
+                const sampleColumnsGroup = document.getElementById("heuristicSampleColumnsGroup");
+                const sampleColumnsDiv = document.getElementById("heuristicSampleColumns");
                 if (h.sample_columns && h.sample_columns.length > 0) {
-                    sampleColumnsDiv.textContent = h.sample_columns.join(', ');
-                    sampleColumnsGroup.style.display = 'block';
+                    sampleColumnsDiv.textContent = h.sample_columns.join(", ");
+                    sampleColumnsGroup.style.display = "block";
                 } else {
-                    sampleColumnsGroup.style.display = 'none';
+                    sampleColumnsGroup.style.display = "none";
                 }
 
-                // Update modal title
-                document.getElementById('heuristicModalTitle').textContent = 'Edit Deterministic Regex Rule';
+                // Update modal title.
+                document.getElementById("heuristicModalTitle").textContent =
+                    "Edit Deterministic Regex Rule";
 
-                // Show modal
-                document.getElementById('heuristicModal').classList.add('active');
+                // Show modal.
+                document.getElementById("heuristicModal").classList.add("active");
             }
         } catch (error) {
-            alert('Failed to load heuristic: ' + error.message);
+            alert("Failed to load heuristic: " + error.message);
         }
     }
 
     async deleteHeuristic(heuristicId) {
         /**
          * Delete heuristic after confirmation
-         * 확인 후 휴리스틱 삭제
          */
-        if (!confirm('Are you sure you want to delete this heuristic?')) {
+        if (!confirm("Are you sure you want to delete this heuristic?")) {
             return;
         }
 
         try {
             const response = await fetch(`/api/heuristics/${heuristicId}`, {
-                method: 'DELETE'
+                method: "DELETE",
             });
             const data = await response.json();
 
-            if (data.status === 'success') {
-                alert('Heuristic deleted successfully');
+            if (data.status === "success") {
+                alert("Heuristic deleted successfully");
                 this.loadHeuristics();
             } else {
-                alert('Failed to delete heuristic: ' + data.message);
+                alert("Failed to delete heuristic: " + data.message);
             }
         } catch (error) {
-            alert('Error deleting heuristic: ' + error.message);
+            alert("Error deleting heuristic: " + error.message);
         }
     }
 
     async saveHeuristic() {
         /**
          * Save (add or update) heuristic
-         * 휴리스틱 저장 (추가 또는 업데이트)
          */
-        const id = document.getElementById('heuristicId').value;
-        const patternType = document.getElementById('heuristicPatternType').value;
+        const id = document.getElementById("heuristicId").value;
+        const patternType = document.getElementById("heuristicPatternType").value;
 
         const data = {
-            name: document.getElementById('heuristicName').value,
-            regex: document.getElementById('heuristicRegex').value,
-            pii_type: document.getElementById('heuristicPiiType').value,
-            rationale: document.getElementById('heuristicRationale').value,
-            priority: parseInt(document.getElementById('heuristicPriority').value),
-            enabled: document.getElementById('heuristicEnabled').checked
+            name: document.getElementById("heuristicName").value,
+            regex: document.getElementById("heuristicRegex").value,
+            pii_type: document.getElementById("heuristicPiiType").value,
+            rationale: document.getElementById("heuristicRationale").value,
+            priority: parseInt(document.getElementById("heuristicPriority").value),
+            enabled: document.getElementById("heuristicEnabled").checked,
         };
 
-        // Add pattern_type if selected
+        // Add pattern_type if selected.
         if (patternType) {
             data.pattern_type = patternType;
         }
 
-        // Validate
+        // Validate.
         if (!data.name || !data.regex || !data.pii_type || !data.rationale) {
-            alert('Please fill in all required fields');
+            alert("Please fill in all required fields");
             return;
         }
 
         try {
             let response;
             if (id) {
-                // Update
+                // Update.
                 response = await fetch(`/api/heuristics/${id}`, {
-                    method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
                 });
             } else {
                 // Add new (source defaults to 'manual' on server)
-                response = await fetch('/api/heuristics', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
+                response = await fetch("/api/heuristics", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
                 });
             }
 
             const result = await response.json();
 
-            if (result.status === 'success') {
-                alert(id ? 'Heuristic updated successfully' : 'Heuristic added successfully');
-                document.getElementById('heuristicModal').classList.remove('active');
+            if (result.status === "success") {
+                alert(id ? "Heuristic updated successfully" : "Heuristic added successfully");
+                document.getElementById("heuristicModal").classList.remove("active");
                 this.loadHeuristics();
             } else {
-                alert('Failed to save heuristic: ' + result.message);
+                alert("Failed to save heuristic: " + result.message);
             }
         } catch (error) {
-            alert('Error saving heuristic: ' + error.message);
+            alert("Error saving heuristic: " + error.message);
         }
     }
 
     async testRegexPattern() {
         /**
          * Test regex pattern against sample strings
-         * 샘플 문자열에 대해 정규식 패턴 테스트
          */
-        const regex = document.getElementById('heuristicRegex').value;
-        const testStringsText = document.getElementById('regexTestStrings').value;
-        const testStrings = testStringsText.split('\n').filter(s => s.trim());
+        const regex = document.getElementById("heuristicRegex").value;
+        const testStringsText = document.getElementById("regexTestStrings").value;
+        const testStrings = testStringsText.split("\n").filter((s) => s.trim());
 
         if (!regex) {
-            alert('Please enter a regex pattern');
+            alert("Please enter a regex pattern");
             return;
         }
 
         if (testStrings.length === 0) {
-            alert('Please enter at least one test string');
+            alert("Please enter at least one test string");
             return;
         }
 
         try {
-            const response = await fetch('/api/heuristics/test', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({regex, test_strings: testStrings})
+            const response = await fetch("/api/heuristics/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ regex, test_strings: testStrings }),
             });
 
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 this.displayRegexTestResults(data.result);
             } else {
-                alert('Test failed: ' + data.message);
+                alert("Test failed: " + data.message);
             }
         } catch (error) {
-            alert('Error testing regex: ' + error.message);
+            alert("Error testing regex: " + error.message);
         }
     }
 
     displayRegexTestResults(result) {
         /**
          * Display regex test results
-         * 정규식 테스트 결과 표시
          */
-        const container = document.getElementById('regexTestResultsContent');
-        const resultsDiv = document.getElementById('regexTestResults');
+        const container = document.getElementById("regexTestResultsContent");
+        const resultsDiv = document.getElementById("regexTestResults");
 
         if (!result.valid) {
             container.innerHTML = `<div style="color: #f44336; padding: 10px; background: #ffebee; border-radius: 4px;">
                 ❌ Invalid regex: ${this.escapeHtml(result.error)}
             </div>`;
-            resultsDiv.style.display = 'block';
+            resultsDiv.style.display = "block";
             return;
         }
 
@@ -2377,62 +2407,61 @@ class PseuDRAGONApp {
         html += '<thead><tr style="border-bottom: 2px solid #e0e0e0;">';
         html += '<th style="padding: 10px; text-align: left;">Test String</th>';
         html += '<th style="padding: 10px; text-align: center;">Result</th>';
-        html += '</tr></thead><tbody>';
+        html += "</tr></thead><tbody>";
 
-        result.matches.forEach(match => {
-            const icon = match.matched ? '✅' : '❌';
-            const color = match.matched ? '#4CAF50' : '#9E9E9E';
+        result.matches.forEach((match) => {
+            const icon = match.matched ? "✅" : "❌";
+            const color = match.matched ? "#4CAF50" : "#9E9E9E";
             html += '<tr style="border-bottom: 1px solid #e0e0e0;">';
             html += `<td style="padding: 10px; font-family: monospace;">${this.escapeHtml(match.string)}</td>`;
-            html += `<td style="padding: 10px; text-align: center; color: ${color};">${icon} ${match.matched ? 'Match' : 'No Match'}</td>`;
-            html += '</tr>';
+            html += `<td style="padding: 10px; text-align: center; color: ${color};">${icon} ${match.matched ? "Match" : "No Match"}</td>`;
+            html += "</tr>";
         });
 
-        html += '</tbody></table>';
+        html += "</tbody></table>";
         container.innerHTML = html;
-        resultsDiv.style.display = 'block';
+        resultsDiv.style.display = "block";
     }
 
     // ============================================================================
-    // Expert Feedback Methods
-    // 전문가 피드백 메서드
+    // Expert Feedback Methods.
+    // Expert feedback.
     // ============================================================================
 
     async loadExpertFeedback() {
         /**
          * Load and display expert feedback
-         * 전문가 피드백 로드 및 표시
          */
         try {
-            const response = await fetch('/api/expert_feedback');
+            const response = await fetch("/api/expert_feedback");
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 this.displayExpertFeedback(data);
             } else {
-                console.error('Failed to load expert feedback:', data.message);
+                console.error("Failed to load expert feedback:", data.message);
             }
         } catch (error) {
-            console.error('Error loading expert feedback:', error);
+            console.error("Error loading expert feedback:", error);
         }
     }
 
     displayExpertFeedback(data) {
         /**
          * Display expert feedback data
-         * 전문가 피드백 데이터 표시
          */
-            // Update statistics
+        // Update statistics.
         const stats = data.statistics || {};
-        document.getElementById('efTotalSelections').textContent = stats.total_selections || 0;
-        document.getElementById('efUniqueColumns').textContent = stats.unique_columns || 0;
-        document.getElementById('efPiiClassifications').textContent = stats.pii_classifications || 0;
-        document.getElementById('efLastUpdated').textContent = stats.last_updated
+        document.getElementById("efTotalSelections").textContent = stats.total_selections || 0;
+        document.getElementById("efUniqueColumns").textContent = stats.unique_columns || 0;
+        document.getElementById("efPiiClassifications").textContent =
+            stats.pii_classifications || 0;
+        document.getElementById("efLastUpdated").textContent = stats.last_updated
             ? new Date(stats.last_updated).toLocaleString()
-            : '-';
+            : "-";
 
-        // Display method preferences
-        const techContainer = document.getElementById('methodPreferencesContainer');
+        // Display method preferences.
+        const techContainer = document.getElementById("methodPreferencesContainer");
         const techPrefs = data.method_preferences || [];
 
         if (techPrefs.length === 0) {
@@ -2458,30 +2487,30 @@ class PseuDRAGONApp {
                 </thead>
                 <tbody>`;
 
-            techPrefs.forEach(pref => {
+            techPrefs.forEach((pref) => {
                 const methodCountsStr = Object.entries(pref.method_counts || {})
                     .map(([method, count]) => `${method}: ${count}`)
-                    .join(', ');
+                    .join(", ");
 
                 techHtml += `
                     <tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 12px; font-weight: 500;">${this.escapeHtml(pref.column_name)}</td>
                         <td style="padding: 12px;">
-                            <span class="badge ${pref.pii_type === 'PII' ? 'badge-danger' : 'badge-success'}">${pref.pii_type}</span>
+                            <span class="badge ${pref.pii_type === "PII" ? "badge-danger" : "badge-success"}">${pref.pii_type}</span>
                         </td>
-                        <td style="padding: 12px; font-family: monospace; color: var(--accent-color);">${pref.preferred_method || '-'}</td>
+                        <td style="padding: 12px; font-family: monospace; color: var(--accent-color);">${pref.preferred_method || "-"}</td>
                         <td style="padding: 12px; text-align: center;">${pref.total_selections}</td>
-                        <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">${methodCountsStr || '-'}</td>
+                        <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">${methodCountsStr || "-"}</td>
                     </tr>
                 `;
             });
 
-            techHtml += '</tbody></table>';
+            techHtml += "</tbody></table>";
             techContainer.innerHTML = techHtml;
         }
 
-        // Display PII classification changes
-        const piiContainer = document.getElementById('piiClassificationContainer');
+        // Display PII classification changes.
+        const piiContainer = document.getElementById("piiClassificationContainer");
         const piiChanges = data.pii_classifications || [];
 
         if (piiChanges.length === 0) {
@@ -2506,38 +2535,37 @@ class PseuDRAGONApp {
                 </thead>
                 <tbody>`;
 
-            piiChanges.forEach(change => {
+            piiChanges.forEach((change) => {
                 piiHtml += `
                     <tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 12px; font-weight: 500;">${this.escapeHtml(change.column_name)}</td>
                         <td style="padding: 12px;">
-                            <span class="badge ${change.classification === 'PII' ? 'badge-danger' : 'badge-success'}">${change.classification}</span>
+                            <span class="badge ${change.classification === "PII" ? "badge-danger" : "badge-success"}">${change.classification}</span>
                         </td>
                         <td style="padding: 12px; text-align: center;">${change.change_count}</td>
-                        <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">${this.escapeHtml(change.rationale) || '-'}</td>
+                        <td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">${this.escapeHtml(change.rationale) || "-"}</td>
                     </tr>
                 `;
             });
 
-            piiHtml += '</tbody></table>';
+            piiHtml += "</tbody></table>";
             piiContainer.innerHTML = piiHtml;
         }
     }
 
     // ============================================================================
-    // Audit Log Methods
-    // 감사 로그 메서드
+    // Audit Log Methods.
+    // Audit logs.
     // ============================================================================
 
     async loadAuditLog(filters = {}) {
         /**
          * Load and display audit log
-         * 감사 로그 로드 및 표시
          */
         try {
-            let url = '/api/audit_log?';
-            // Include session ID in request
-            // 요청에 세션 ID 포함
+            let url = "/api/audit_log?";
+            // Include session ID in request.
+            // Scope the request to this session.
             if (this.state.sessionId) url += `session_id=${this.state.sessionId}&`;
             if (filters.event_type) url += `event_type=${filters.event_type}&`;
             if (filters.start_date) url += `start_date=${filters.start_date}&`;
@@ -2546,14 +2574,14 @@ class PseuDRAGONApp {
             const response = await fetch(url);
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 this.displayAuditLog(data.events);
             } else {
-                console.error('Failed to load audit log:', data.message);
+                console.error("Failed to load audit log:", data.message);
             }
         } catch (error) {
-            console.error('Error loading audit log:', error);
-            document.getElementById('auditLogContainer').innerHTML = `
+            console.error("Error loading audit log:", error);
+            document.getElementById("auditLogContainer").innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">❌</div>
                     <h3 class="empty-title">Error Loading Audit Log</h3>
@@ -2566,9 +2594,8 @@ class PseuDRAGONApp {
     displayAuditLog(events) {
         /**
          * Display audit log events
-         * 감사 로그 이벤트 표시
          */
-        const container = document.getElementById('auditLogContainer');
+        const container = document.getElementById("auditLogContainer");
 
         if (!events || events.length === 0) {
             container.innerHTML = `
@@ -2583,7 +2610,7 @@ class PseuDRAGONApp {
 
         let html = '<div style="padding: 20px;">';
 
-        events.forEach(event => {
+        events.forEach((event) => {
             const timestamp = new Date(event.timestamp).toLocaleString();
             const eventType = event.event_type;
             const data = event.data;
@@ -2597,34 +2624,32 @@ class PseuDRAGONApp {
             html += `</div>`;
         });
 
-        html += '</div>';
+        html += "</div>";
         container.innerHTML = html;
     }
-
 
     async showTableSchema(tableName) {
         /**
          * Show table schema in a modal window
-         * 모달 창에 테이블 스키마 표시
          *
          * @param {string} tableName - Name of the table to display
          */
-        const modal = document.getElementById('tableSchemaModal');
-        const loadingState = document.getElementById('schemaLoadingState');
-        const contentState = document.getElementById('schemaContent');
-        const errorState = document.getElementById('schemaErrorState');
-        const schemaTableName = document.getElementById('schemaTableName');
-        const schemaTableBody = document.getElementById('schemaTableBody');
-        const modalTitle = document.getElementById('schemaModalTitle');
-        const modalSubtitle = document.getElementById('schemaModalSubtitle');
+        const modal = document.getElementById("tableSchemaModal");
+        const loadingState = document.getElementById("schemaLoadingState");
+        const contentState = document.getElementById("schemaContent");
+        const errorState = document.getElementById("schemaErrorState");
+        const schemaTableName = document.getElementById("schemaTableName");
+        const schemaTableBody = document.getElementById("schemaTableBody");
+        const modalTitle = document.getElementById("schemaModalTitle");
+        const modalSubtitle = document.getElementById("schemaModalSubtitle");
 
-        // Show modal with loading state
-        modal.classList.add('active');
-        loadingState.style.display = 'block';
-        contentState.style.display = 'none';
-        errorState.style.display = 'none';
+        // Show modal with loading state.
+        modal.classList.add("active");
+        loadingState.style.display = "block";
+        contentState.style.display = "none";
+        errorState.style.display = "none";
 
-        // Update modal title
+        // Update modal title.
         modalTitle.textContent = `📊 Table Schema: ${tableName}`;
         modalSubtitle.textContent = `View detailed schema information for ${tableName}`;
 
@@ -2633,60 +2658,60 @@ class PseuDRAGONApp {
             const data = await response.json();
 
             if (!response.ok || data.error) {
-                throw new Error(data.error || 'Failed to load schema');
+                throw new Error(data.error || "Failed to load schema");
             }
 
-            // Hide loading, show content
-            loadingState.style.display = 'none';
-            contentState.style.display = 'block';
+            // Hide loading, show content.
+            loadingState.style.display = "none";
+            contentState.style.display = "block";
 
-            // Populate table name
+            // Populate table name.
             schemaTableName.textContent = data.table_name;
 
-            // Populate schema table
-            schemaTableBody.innerHTML = '';
+            // Populate schema table.
+            schemaTableBody.innerHTML = "";
             if (data.schema && data.schema.length > 0) {
                 data.schema.forEach((column, index) => {
-                    const row = document.createElement('tr');
-                    row.style.borderBottom = '1px solid #dee2e6';
+                    const row = document.createElement("tr");
+                    row.style.borderBottom = "1px solid #dee2e6";
 
-                    // Column number
-                    const cellNum = document.createElement('td');
-                    cellNum.style.padding = '12px';
+                    // Column number.
+                    const cellNum = document.createElement("td");
+                    cellNum.style.padding = "12px";
                     cellNum.textContent = index + 1;
                     row.appendChild(cellNum);
 
-                    // Column name
-                    const cellName = document.createElement('td');
-                    cellName.style.padding = '12px';
-                    cellName.style.fontWeight = '500';
-                    cellName.textContent = column.column_name || column.name || '-';
+                    // Column name.
+                    const cellName = document.createElement("td");
+                    cellName.style.padding = "12px";
+                    cellName.style.fontWeight = "500";
+                    cellName.textContent = column.column_name || column.name || "-";
                     row.appendChild(cellName);
 
-                    // Data type
-                    const cellType = document.createElement('td');
-                    cellType.style.padding = '12px';
+                    // Data type.
+                    const cellType = document.createElement("td");
+                    cellType.style.padding = "12px";
                     cellType.style.fontFamily = "'Fira Code', monospace";
-                    cellType.style.color = '#0066cc';
-                    cellType.textContent = column.data_type || column.type || '-';
+                    cellType.style.color = "#0066cc";
+                    cellType.textContent = column.data_type || column.type || "-";
                     row.appendChild(cellType);
 
-                    // Nullable
-                    const cellNullable = document.createElement('td');
-                    cellNullable.style.padding = '12px';
+                    // Nullable.
+                    const cellNullable = document.createElement("td");
+                    cellNullable.style.padding = "12px";
                     const isNullable = column.is_nullable || column.nullable;
-                    if (isNullable === true || isNullable === 'YES' || isNullable === 1) {
+                    if (isNullable === true || isNullable === "YES" || isNullable === 1) {
                         cellNullable.innerHTML = '<span style="color: #28a745;">✓ Yes</span>';
                     } else {
                         cellNullable.innerHTML = '<span style="color: #dc3545;">✗ No</span>';
                     }
                     row.appendChild(cellNullable);
 
-                    // Primary key
-                    const cellPK = document.createElement('td');
-                    cellPK.style.padding = '12px';
+                    // Primary key.
+                    const cellPK = document.createElement("td");
+                    cellPK.style.padding = "12px";
                     const isPK = column.is_primary_key || column.primary_key || column.pk;
-                    if (isPK === true || isPK === 'YES' || isPK === 1) {
+                    if (isPK === true || isPK === "YES" || isPK === 1) {
                         cellPK.innerHTML = '<span style="color: #ffc107;">🔑 Yes</span>';
                     } else {
                         cellPK.innerHTML = '<span style="color: #6c757d;">-</span>';
@@ -2694,112 +2719,110 @@ class PseuDRAGONApp {
                     row.appendChild(cellPK);
 
                     // Description (Comment)
-                    const cellDesc = document.createElement('td');
-                    cellDesc.style.padding = '12px';
-                    cellDesc.style.color = '#495057';
-                    cellDesc.style.fontSize = '14px';
-                    const description = column.comment || column.description || '-';
+                    const cellDesc = document.createElement("td");
+                    cellDesc.style.padding = "12px";
+                    cellDesc.style.color = "#495057";
+                    cellDesc.style.fontSize = "14px";
+                    const description = column.comment || column.description || "-";
                     cellDesc.textContent = description;
                     row.appendChild(cellDesc);
 
                     schemaTableBody.appendChild(row);
                 });
             } else {
-                const row = document.createElement('tr');
-                const cell = document.createElement('td');
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
                 cell.colSpan = 6;
-                cell.style.padding = '20px';
-                cell.style.textAlign = 'center';
-                cell.style.color = '#6c757d';
-                cell.textContent = 'No schema information available';
+                cell.style.padding = "20px";
+                cell.style.textAlign = "center";
+                cell.style.color = "#6c757d";
+                cell.textContent = "No schema information available";
                 row.appendChild(cell);
                 schemaTableBody.appendChild(row);
             }
-
         } catch (error) {
-            // Hide loading, show error
-            loadingState.style.display = 'none';
-            errorState.style.display = 'block';
-            document.getElementById('schemaErrorMessage').textContent = error.message;
+            // Hide loading, show error.
+            loadingState.style.display = "none";
+            errorState.style.display = "block";
+            document.getElementById("schemaErrorMessage").textContent = error.message;
 
-            this.log(`[ERROR] Error loading schema for ${tableName}: ${error.message}`, 'error');
+            this.log(`[ERROR] Error loading schema for ${tableName}: ${error.message}`, "error");
         }
     }
 
     // ============================================================================
-    // Session Monitoring Methods
-    // 세션 모니터링 메서드
+    // Session Monitoring Methods.
+    // Session monitoring.
     // ============================================================================
 
     async loadSessions() {
         /**
          * Load and display all active sessions for monitoring
-         * 모니터링을 위한 모든 활성 세션 로드 및 표시
          */
         try {
-            const response = await fetch('/api/sessions');
+            const response = await fetch("/api/sessions");
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 this.state.monitoredSessions = data.sessions;
                 this.displaySessionsList(data.sessions);
                 this.updateSessionCount(data.count);
             } else {
-                console.error('Failed to load sessions:', data.message);
+                console.error("Failed to load sessions:", data.message);
             }
         } catch (error) {
-            console.error('Error loading sessions:', error);
+            console.error("Error loading sessions:", error);
         }
     }
 
     updateSessionCount(count) {
         /**
          * Update the session count badge in the tab
-         * 탭의 세션 카운트 배지 업데이트
          */
-        const badge = document.getElementById('sessionCount');
+        const badge = document.getElementById("sessionCount");
         if (badge) {
             badge.textContent = count;
-            badge.style.display = count > 0 ? 'inline-block' : 'none';
+            badge.style.display = count > 0 ? "inline-block" : "none";
         }
     }
 
     displaySessionsList(sessions) {
         /**
          * Display the list of sessions as tabs
-         * 세션 목록을 탭으로 표시
          */
-        const noSessionsState = document.getElementById('noSessionsState');
-        const tabsContainer = document.getElementById('sessionTabsContainer');
-        const tabsList = document.getElementById('sessionTabsList');
-        const detailsViewer = document.getElementById('sessionDetailsViewer');
+        const noSessionsState = document.getElementById("noSessionsState");
+        const tabsContainer = document.getElementById("sessionTabsContainer");
+        const tabsList = document.getElementById("sessionTabsList");
+        const detailsViewer = document.getElementById("sessionDetailsViewer");
 
-        // Filter out current session from monitoring list
-        // 현재 세션은 모니터링 목록에서 제외
-        const otherSessions = sessions.filter(s => s.session_id !== this.state.sessionId);
+        // Filter out current session from monitoring list.
+        // Exclude this client from the monitored sessions.
+        const otherSessions = sessions.filter((s) => s.session_id !== this.state.sessionId);
 
         if (otherSessions.length === 0) {
-            noSessionsState.style.display = 'flex';
-            tabsContainer.style.display = 'none';
-            detailsViewer.style.display = 'none';
+            noSessionsState.style.display = "flex";
+            tabsContainer.style.display = "none";
+            detailsViewer.style.display = "none";
             return;
         }
 
-        noSessionsState.style.display = 'none';
-        tabsContainer.style.display = 'block';
+        noSessionsState.style.display = "none";
+        tabsContainer.style.display = "block";
 
-        // Generate session tabs
-        // 세션 탭 생성
-        tabsList.innerHTML = '';
+        // Generate session tabs.
+        // Create the session tab.
+        tabsList.innerHTML = "";
         otherSessions.forEach((session, index) => {
-            const tab = document.createElement('button');
-            tab.className = `session-tab ${index === 0 ? 'active' : ''}`;
+            const tab = document.createElement("button");
+            tab.className = `session-tab ${index === 0 ? "active" : ""}`;
             tab.dataset.sessionId = session.session_id;
 
-            const statusIcon = session.is_running ? '🟢' : '⚪';
-            const tablesText = session.tables.length > 0
-                ? session.tables.slice(0, 2).join(', ') + (session.tables.length > 2 ? '...' : '')
-                : 'No tables';
+            const statusIcon = session.is_running ? "🟢" : "⚪";
+            const tablesText =
+                session.tables.length > 0
+                    ? session.tables.slice(0, 2).join(", ") +
+                      (session.tables.length > 2 ? "..." : "")
+                    : "No tables";
 
             tab.innerHTML = `
                 <span class="session-tab-status">${statusIcon}</span>
@@ -2811,13 +2834,13 @@ class PseuDRAGONApp {
             tabsList.appendChild(tab);
         });
 
-        // Auto-select first session if none selected
-        // 선택된 세션이 없으면 첫 번째 세션 자동 선택
+        // Auto-select first session if none selected.
+        // Select the first session when none is active.
         if (!this.state.selectedMonitorSession && otherSessions.length > 0) {
             this.selectMonitorSession(otherSessions[0].session_id);
         } else if (this.state.selectedMonitorSession) {
-            // Refresh current session details
-            // 현재 세션 상세 정보 새로고침
+            // Refresh current session details.
+            // Refresh the active session details.
             this.loadSessionLogs(this.state.selectedMonitorSession);
         }
     }
@@ -2825,88 +2848,88 @@ class PseuDRAGONApp {
     async selectMonitorSession(sessionId) {
         /**
          * Select a session for monitoring
-         * 모니터링할 세션 선택
          */
         this.state.selectedMonitorSession = sessionId;
         this.state.sessionLogOffset = 0;
 
-        // Update tab active state
-        // 탭 활성 상태 업데이트
-        document.querySelectorAll('.session-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.sessionId === sessionId);
+        // Update tab active state.
+        // Update the active tab.
+        document.querySelectorAll(".session-tab").forEach((tab) => {
+            tab.classList.toggle("active", tab.dataset.sessionId === sessionId);
         });
 
-        // Show details viewer
-        // 상세 뷰어 표시
-        const detailsViewer = document.getElementById('sessionDetailsViewer');
-        detailsViewer.style = '';
+        // Show details viewer.
+        // Show the detail viewer.
+        const detailsViewer = document.getElementById("sessionDetailsViewer");
+        detailsViewer.style = "";
 
-        // Load session logs
-        // 세션 로그 로드
+        // Load session logs.
+        // Load the session log.
         await this.loadSessionLogs(sessionId);
     }
 
     async loadSessionLogs(sessionId, append = false) {
         /**
          * Load logs from a specific session
-         * 특정 세션의 로그 로드
          */
         try {
             const limit = 200;
             const offset = append ? this.state.sessionLogOffset : 0;
 
-            const response = await fetch(`/api/sessions/${sessionId}/logs?offset=${offset}&limit=${limit}`);
+            const response = await fetch(
+                `/api/sessions/${sessionId}/logs?offset=${offset}&limit=${limit}`
+            );
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.status === "success") {
                 this.displaySessionDetails(data, append);
 
                 if (data.has_more) {
                     this.state.sessionLogOffset = offset + limit;
                 }
             } else {
-                console.error('Failed to load session logs:', data.message);
+                console.error("Failed to load session logs:", data.message);
             }
         } catch (error) {
-            console.error('Error loading session logs:', error);
+            console.error("Error loading session logs:", error);
         }
     }
 
     displaySessionDetails(data, append = false) {
         /**
          * Display session details and logs
-         * 세션 상세 정보 및 로그 표시
          */
-        // Update header info
-        // 헤더 정보 업데이트
-        document.getElementById('selectedSessionTitle').textContent = `Session: ${data.session_id_short}`;
+        // Update header info.
+        // Update the session header.
+        document.getElementById("selectedSessionTitle").textContent =
+            `Session: ${data.session_id_short}`;
 
-        const statusBadge = document.getElementById('selectedSessionStatus');
-        statusBadge.textContent = data.is_running ? '🟢 Running' : '⚪ Idle';
-        statusBadge.className = `session-status-badge ${data.is_running ? 'running' : 'idle'}`;
+        const statusBadge = document.getElementById("selectedSessionStatus");
+        statusBadge.textContent = data.is_running ? "🟢 Running" : "⚪ Idle";
+        statusBadge.className = `session-status-badge ${data.is_running ? "running" : "idle"}`;
 
-        document.getElementById('selectedSessionStep').textContent = data.current_step || '-';
-        document.getElementById('selectedSessionTables').textContent =
-            data.tables.length > 0 ? `📊 ${data.tables.join(', ')}` : 'No tables';
+        document.getElementById("selectedSessionStep").textContent = data.current_step || "-";
+        document.getElementById("selectedSessionTables").textContent =
+            data.tables.length > 0 ? `📊 ${data.tables.join(", ")}` : "No tables";
 
-        // Display logs
-        // 로그 표시
-        const logsViewer = document.getElementById('sessionLogsViewer');
+        // Display logs.
+        // Render the log.
+        const logsViewer = document.getElementById("sessionLogsViewer");
 
         if (!append) {
-            logsViewer.innerHTML = '';
+            logsViewer.innerHTML = "";
         }
 
         if (data.logs && data.logs.length > 0) {
-            data.logs.forEach(log => {
-                const logEntry = document.createElement('div');
-                logEntry.className = 'log-entry';
+            data.logs.forEach((log) => {
+                const logEntry = document.createElement("div");
+                logEntry.className = "log-entry";
                 logEntry.innerHTML = this.formatLogMessage(log);
                 logsViewer.appendChild(logEntry);
             });
 
-            // Auto-scroll to bottom
-            // 자동 스크롤
+            // Auto-scroll to bottom.
+            // Scroll to the latest log entry.
             logsViewer.scrollTop = logsViewer.scrollHeight;
         } else if (!append) {
             logsViewer.innerHTML = `
@@ -2922,19 +2945,22 @@ class PseuDRAGONApp {
     formatLogMessage(message) {
         /**
          * Format log message with proper styling
-         * 적절한 스타일링으로 로그 메시지 포맷
          */
         let formatted = this.escapeHtml(message);
 
-        // Highlight different log levels
-        // 다른 로그 레벨 강조
-        if (formatted.includes('✓') || formatted.includes('✅')) {
+        // Highlight different log levels.
+        // Highlight each log level.
+        if (formatted.includes("✓") || formatted.includes("✅")) {
             formatted = `<span style="color: #28a745;">${formatted}</span>`;
-        } else if (formatted.includes('✗') || formatted.includes('❌') || formatted.includes('Error')) {
+        } else if (
+            formatted.includes("✗") ||
+            formatted.includes("❌") ||
+            formatted.includes("Error")
+        ) {
             formatted = `<span style="color: #dc3545;">${formatted}</span>`;
-        } else if (formatted.includes('⚠️') || formatted.includes('Warning')) {
+        } else if (formatted.includes("⚠️") || formatted.includes("Warning")) {
             formatted = `<span style="color: #ffc107;">${formatted}</span>`;
-        } else if (formatted.includes('→') || formatted.includes('🔍')) {
+        } else if (formatted.includes("→") || formatted.includes("🔍")) {
             formatted = `<span style="color: #17a2b8;">${formatted}</span>`;
         }
 
@@ -2944,17 +2970,16 @@ class PseuDRAGONApp {
     toggleSessionAutoRefresh() {
         /**
          * Toggle auto-refresh for session monitoring
-         * 세션 모니터링 자동 새로고침 토글
          */
         this.state.sessionAutoRefresh = !this.state.sessionAutoRefresh;
 
-        const btn = document.getElementById('autoRefreshToggle');
+        const btn = document.getElementById("autoRefreshToggle");
         if (this.state.sessionAutoRefresh) {
             btn.innerHTML = '<span class="btn-icon">⏱️</span><span>Auto-refresh: ON</span>';
-            btn.classList.add('active');
+            btn.classList.add("active");
 
             // Start auto-refresh interval (every 2 seconds)
-            // 자동 새로고침 시작 (2초마다)
+            // Refresh every two seconds.
             this.state.sessionAutoRefreshInterval = setInterval(() => {
                 if (this.state.selectedMonitorSession) {
                     this.loadSessionLogs(this.state.selectedMonitorSession);
@@ -2963,10 +2988,10 @@ class PseuDRAGONApp {
             }, 2000);
         } else {
             btn.innerHTML = '<span class="btn-icon">⏱️</span><span>Auto-refresh: OFF</span>';
-            btn.classList.remove('active');
+            btn.classList.remove("active");
 
-            // Stop auto-refresh
-            // 자동 새로고침 중지
+            // Stop auto-refresh.
+            // Stop automatic refresh.
             if (this.state.sessionAutoRefreshInterval) {
                 clearInterval(this.state.sessionAutoRefreshInterval);
                 this.state.sessionAutoRefreshInterval = null;
@@ -2975,22 +3000,21 @@ class PseuDRAGONApp {
     }
 
     // ============================================================================
-    // Logo Click Handler
-    // 로고 클릭 핸들러
+    // Logo Click Handler.
+    // Logo navigation.
     // ============================================================================
 
     handleLogoClick() {
         /**
          * Handle logo click - warn if pipeline is running
-         * 로고 클릭 처리 - 파이프라인 실행 중이면 경고
          */
         if (this.state.isRunning) {
             const confirmed = confirm(
-                '⚠️ Pipeline is currently running!\n\n' +
-                'Refreshing the page will disconnect from the current session, ' +
-                'but the pipeline will continue running in the background.\n\n' +
-                'You can monitor it from the "Sessions" tab after refresh.\n\n' +
-                'Do you want to refresh the page?'
+                "⚠️ Pipeline is currently running!\n\n" +
+                    "Refreshing the page will disconnect from the current session, " +
+                    "but the pipeline will continue running in the background.\n\n" +
+                    'You can monitor it from the "Sessions" tab after refresh.\n\n' +
+                    "Do you want to refresh the page?"
             );
 
             if (!confirmed) {
@@ -2998,103 +3022,101 @@ class PseuDRAGONApp {
             }
         }
 
-        // Reload the page
-        // 페이지 새로고침
+        // Reload the page.
+        // Reload the page.
         location.reload();
     }
 
     // ============================================================================
-    // Add Table Modal Methods
-    // Add Table 모달 메서드
+    // Add Table Modal Methods.
+    // Table creation dialog.
     // ============================================================================
 
     openAddTableModal() {
         /**
          * Open the Add Table DDL modal
-         * Add Table DDL 모달 열기
          */
-        const modal = document.getElementById('addTableModal');
-        const ddlInput = document.getElementById('ddlInput');
-        const errorMessage = document.getElementById('ddlErrorMessage');
+        const modal = document.getElementById("addTableModal");
+        const ddlInput = document.getElementById("ddlInput");
+        const errorMessage = document.getElementById("ddlErrorMessage");
 
-        // Clear previous input and error
-        // 이전 입력 및 오류 지우기
-        ddlInput.value = '';
-        errorMessage.style.display = 'none';
-        errorMessage.textContent = '';
+        // Clear previous input and error.
+        // Reset the input and validation errors.
+        ddlInput.value = "";
+        errorMessage.style.display = "none";
+        errorMessage.textContent = "";
 
-        modal.classList.add('active');
+        modal.classList.add("active");
     }
 
     closeAddTableModal() {
         /**
          * Close the Add Table DDL modal
-         * Add Table DDL 모달 닫기
          */
-        const modal = document.getElementById('addTableModal');
-        modal.classList.remove('active');
+        const modal = document.getElementById("addTableModal");
+        modal.classList.remove("active");
     }
 
     async executeAddTable() {
         /**
          * Execute the DDL and create the table
-         * DDL을 실행하고 테이블 생성
          */
-        const ddlInput = document.getElementById('ddlInput');
-        const errorMessage = document.getElementById('ddlErrorMessage');
-        const executeBtn = document.getElementById('executeAddTableBtn');
+        const ddlInput = document.getElementById("ddlInput");
+        const errorMessage = document.getElementById("ddlErrorMessage");
+        const executeBtn = document.getElementById("executeAddTableBtn");
 
         const ddl = ddlInput.value.trim();
 
         if (!ddl) {
-            errorMessage.textContent = '❌ Please enter a CREATE TABLE statement';
-            errorMessage.style.display = 'block';
+            errorMessage.textContent = "❌ Please enter a CREATE TABLE statement";
+            errorMessage.style.display = "block";
             return;
         }
 
-        // Disable button during execution
-        // 실행 중 버튼 비활성화
+        // Disable button during execution.
+        // Disable the button while the request is pending.
         executeBtn.disabled = true;
         executeBtn.innerHTML = '<span class="btn-icon">⏳</span><span>Creating...</span>';
 
         try {
-            const response = await fetch('/execute_ddl', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ddl: ddl})
+            const response = await fetch("/execute_ddl", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ddl: ddl }),
             });
 
             const data = await response.json();
 
             if (data.error) {
                 errorMessage.textContent = `❌ ${data.error}`;
-                errorMessage.style.display = 'block';
+                errorMessage.style.display = "block";
                 return;
             }
 
-            // Success - close modal and reload tables
-            // 성공 - 모달 닫기 및 테이블 다시 로드
+            // Success - close modal and reload tables.
+            // Close the dialog and refresh tables after success.
             this.closeAddTableModal();
-            this.log(`[OK] ${data.message}`, 'success');
+            this.log(`[OK] ${data.message}`, "success");
 
-            // Reload tables and select the new table
-            // 테이블 다시 로드하고 새 테이블 선택
+            // Reload tables and select the new table.
+            // Refresh the list and select the created table.
             await this.loadTables();
 
-            // Select the newly created table
-            // 새로 생성된 테이블 선택
+            // Select the newly created table.
+            // Select the created table.
             const tableSelect = this.elements.tableSelect;
-            const newOption = Array.from(tableSelect.options).find(opt => opt.value === data.table_name);
+            const newOption = Array.from(tableSelect.options).find(
+                (opt) => opt.value === data.table_name
+            );
             if (newOption) {
                 newOption.selected = true;
             }
-
         } catch (error) {
             errorMessage.textContent = `❌ Error: ${error.message}`;
-            errorMessage.style.display = 'block';
+            errorMessage.style.display = "block";
         } finally {
-            // Re-enable button
-            // 버튼 다시 활성화
+            // Re-enable button.
+            // Enable the button.
             executeBtn.disabled = false;
             executeBtn.innerHTML = '<span class="btn-icon">💾</span><span>Execute</span>';
         }
@@ -3103,48 +3125,50 @@ class PseuDRAGONApp {
     updateDropTableButtonState() {
         /**
          * Update the Drop Table button state based on table selection
-         * 테이블 선택에 따라 Drop Table 버튼 상태 업데이트
          */
-        const dropTableBtn = document.getElementById('dropTableBtn');
+        const dropTableBtn = document.getElementById("dropTableBtn");
         if (!dropTableBtn) return;
 
-        const selectedTables = Array.from(this.elements.tableSelect.selectedOptions).map(opt => opt.value);
+        const selectedTables = Array.from(this.elements.tableSelect.selectedOptions).map(
+            (opt) => opt.value
+        );
 
         if (selectedTables.length === 1) {
             dropTableBtn.disabled = false;
             dropTableBtn.title = `Drop table: ${selectedTables[0]}`;
         } else if (selectedTables.length > 1) {
             dropTableBtn.disabled = true;
-            dropTableBtn.title = 'Select only one table to drop';
+            dropTableBtn.title = "Select only one table to drop";
         } else {
             dropTableBtn.disabled = true;
-            dropTableBtn.title = 'Select a table to drop';
+            dropTableBtn.title = "Select a table to drop";
         }
     }
 
     confirmDropTable() {
         /**
          * Show confirmation dialog before dropping a table
-         * 테이블 삭제 전 확인 대화상자 표시
          */
-        const selectedTables = Array.from(this.elements.tableSelect.selectedOptions).map(opt => opt.value);
+        const selectedTables = Array.from(this.elements.tableSelect.selectedOptions).map(
+            (opt) => opt.value
+        );
 
         if (selectedTables.length !== 1) {
-            alert('⚠️ Please select exactly one table to drop.\n테이블 하나만 선택해주세요.');
+            alert("⚠️ Please select exactly one table to drop.\n테이블 하나만 선택해주세요.");
             return;
         }
 
         const tableName = selectedTables[0];
 
-        // Show confirmation dialog
-        // 확인 대화상자 표시
+        // Show confirmation dialog.
+        // Request confirmation before deleting the table.
         const confirmed = confirm(
             `⚠️ WARNING: This action cannot be undone!\n` +
-            `경고: 이 작업은 되돌릴 수 없습니다!\n\n` +
-            `Are you sure you want to drop the table "${tableName}"?\n` +
-            `정말로 "${tableName}" 테이블을 삭제하시겠습니까?\n\n` +
-            `All data in this table will be permanently deleted.\n` +
-            `이 테이블의 모든 데이터가 영구적으로 삭제됩니다.`
+                `경고: 이 작업은 되돌릴 수 없습니다!\n\n` +
+                `Are you sure you want to drop the table "${tableName}"?\n` +
+                `정말로 "${tableName}" 테이블을 삭제하시겠습니까?\n\n` +
+                `All data in this table will be permanently deleted.\n` +
+                `이 테이블의 모든 데이터가 영구적으로 삭제됩니다.`
         );
 
         if (confirmed) {
@@ -3155,43 +3179,41 @@ class PseuDRAGONApp {
     async dropTable(tableName) {
         /**
          * Drop the specified table from the database
-         * 데이터베이스에서 지정된 테이블 삭제
          */
-        const dropTableBtn = document.getElementById('dropTableBtn');
+        const dropTableBtn = document.getElementById("dropTableBtn");
 
-        // Disable button during execution
-        // 실행 중 버튼 비활성화
+        // Disable button during execution.
+        // Disable the button while the request is pending.
         if (dropTableBtn) {
             dropTableBtn.disabled = true;
             dropTableBtn.innerHTML = '<span class="btn-icon">⏳</span><span>Dropping...</span>';
         }
 
         try {
-            const response = await fetch('/drop_table', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({table_name: tableName})
+            const response = await fetch("/drop_table", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ table_name: tableName }),
             });
 
             const data = await response.json();
 
             if (data.error) {
                 alert(`❌ Error: ${data.error}`);
-                this.log(`[ERROR] Failed to drop table: ${data.error}`, 'error');
+                this.log(`[ERROR] Failed to drop table: ${data.error}`, "error");
                 return;
             }
 
-            // Success - reload tables
-            // 성공 - 테이블 다시 로드
-            this.log(`[OK] ${data.message}`, 'success');
+            // Success - reload tables.
+            // Refresh the table list after success.
+            this.log(`[OK] ${data.message}`, "success");
             await this.loadTables();
-
         } catch (error) {
             alert(`❌ Error: ${error.message}`);
-            this.log(`[ERROR] Error dropping table: ${error.message}`, 'error');
+            this.log(`[ERROR] Error dropping table: ${error.message}`, "error");
         } finally {
-            // Re-enable button and update state
-            // 버튼 다시 활성화 및 상태 업데이트
+            // Re-enable button and update state.
+            // Enable the button and update its state.
             if (dropTableBtn) {
                 dropTableBtn.innerHTML = '<span class="btn-icon">-</span><span>Drop Table</span>';
             }
@@ -3201,6 +3223,6 @@ class PseuDRAGONApp {
 }
 
 let app;
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener("DOMContentLoaded", () => {
     app = new PseuDRAGONApp();
 });

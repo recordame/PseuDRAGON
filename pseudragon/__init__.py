@@ -1,4 +1,4 @@
-"""PseuDRAGON: Schema-Centric Compliance NLP for Closed-Network
+"""PseuDRAGON: Schema-Centric Compliance NLP for Closed-Network.
 Financial-Data Pseudonymization.
 
 An authority-constrained, auditable pipeline for schema-level PII detection,

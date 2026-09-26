@@ -1,4 +1,4 @@
-"""Universal Session Manager with Provider Detection
+"""Universal Session Manager with Provider Detection.
 
 Automatically detects LLM provider (OpenAI, Ollama, etc.) and applies
 appropriate caching strategy.
@@ -23,7 +23,16 @@ class UniversalLLMSession:
     - Other providers: Manual conversation history
     """
 
-    def __init__(self, client, system_prompt: str, session_id: str, ttl_minutes: int = 60, provider: str = "auto", base_url: Optional[str] = None, max_history: int = 10):
+    def __init__(
+        self,
+        client,
+        system_prompt: str,
+        session_id: str,
+        ttl_minutes: int = 60,
+        provider: str = "auto",
+        base_url: Optional[str] = None,
+        max_history: int = 10,
+    ):
         """Initialize universal LLM session.
 
         Args:
@@ -34,9 +43,7 @@ class UniversalLLMSession:
             provider: LLM provider ("auto", "openai", "ollama", "other")
             base_url: Base URL for API (used for provider detection)
             max_history: Maximum number of conversation turns to keep (0 = no history, -1 = unlimited)
-
                         Stage 1 should use 0 or 1 (each column is independent)
-
                         Stage 2 can use higher values if context is needed
         """
         self.client = client
@@ -124,7 +131,7 @@ class UniversalLLMSession:
                 # Keep system prompt + last N conversation turns
 
                 system_prompt = self.messages[0]
-                recent_messages = self.messages[-(self.max_history * 2):]
+                recent_messages = self.messages[-(self.max_history * 2) :]
                 self.messages = [system_prompt] + recent_messages
 
     def supports_streaming(self) -> bool:
@@ -136,14 +143,15 @@ class UniversalLLMSession:
         return self.provider == "openai"
 
     def chat(
-            self,
-            user_prompt: str,
-            model: str,
-            temperature: float = 0.0,
-            response_format: Optional[Dict[str, str]] = None,
-            stream: bool = False,
-            stream_callback: Optional[Any] = None,
-            **kwargs, ) -> Any:
+        self,
+        user_prompt: str,
+        model: str,
+        temperature: float = 0.0,
+        response_format: Optional[Dict[str, str]] = None,
+        stream: bool = False,
+        stream_callback: Optional[Any] = None,
+        **kwargs,
+    ) -> Any:
         """Send a message and get response with provider-specific optimizations.
 
         Args:
@@ -233,13 +241,13 @@ class UniversalLLMSession:
         return response
 
     def _persist_audit_record(
-            self,
-            user_prompt: str,
-            model: str,
-            temperature: float,
-            response_format: Optional[Dict[str, str]],
-            stream: bool,
-            response_content: str,
+        self,
+        user_prompt: str,
+        model: str,
+        temperature: float,
+        response_format: Optional[Dict[str, str]],
+        stream: bool,
+        response_content: str,
     ) -> None:
         """Persist one complete prompt/response exchange for local auditing.
 
@@ -275,9 +283,7 @@ class UniversalLLMSession:
                 "response": response_content,
             }
 
-            filename = (
-                f"{created_at.strftime('%Y%m%dT%H%M%S%f')}_{record_id}.json"
-            )
+            filename = f"{created_at.strftime('%Y%m%dT%H%M%S%f')}_{record_id}.json"
             final_path = audit_dir / filename
             temporary_path = audit_dir / f".{filename}.tmp"
 
@@ -296,7 +302,9 @@ class UniversalLLMSession:
             # a failed pipeline run. Surface the failure in local logs.
             print(f"[WARN] Failed to persist LLM audit record: {exc}")
 
-    def _handle_streaming_response(self, api_kwargs: Dict[str, Any], stream_callback: Optional[Any]) -> Any:
+    def _handle_streaming_response(
+        self, api_kwargs: Dict[str, Any], stream_callback: Optional[Any]
+    ) -> Any:
         """Handle streaming response from OpenAI API.
 
         Args:
@@ -316,7 +324,7 @@ class UniversalLLMSession:
         for chunk in stream:
             if chunk.choices and len(chunk.choices) > 0:
                 delta = chunk.choices[0].delta
-                if hasattr(delta, 'content') and delta.content:
+                if hasattr(delta, "content") and delta.content:
                     content_chunk = delta.content
                     accumulated_content += content_chunk
 
@@ -428,7 +436,9 @@ class UniversalSessionManager:
         self.base_url = base_url
         self.sessions: Dict[str, UniversalLLMSession] = {}
 
-    def get_or_create_session(self, session_id: str, system_prompt: str, ttl_minutes: int = 60, max_history: int = 10) -> UniversalLLMSession:
+    def get_or_create_session(
+        self, session_id: str, system_prompt: str, ttl_minutes: int = 60, max_history: int = 10
+    ) -> UniversalLLMSession:
         """Get existing session or create new one with provider detection.
 
         Args:
@@ -445,10 +455,26 @@ class UniversalSessionManager:
 
         # Get or create session
         if session_id not in self.sessions:
-            self.sessions[session_id] = UniversalLLMSession(self.client, system_prompt, session_id, ttl_minutes, provider=self.provider, base_url=self.base_url, max_history=max_history)
+            self.sessions[session_id] = UniversalLLMSession(
+                self.client,
+                system_prompt,
+                session_id,
+                ttl_minutes,
+                provider=self.provider,
+                base_url=self.base_url,
+                max_history=max_history,
+            )
         elif self.sessions[session_id].is_expired():
             # Recreate expired session
-            self.sessions[session_id] = UniversalLLMSession(self.client, system_prompt, session_id, ttl_minutes, provider=self.provider, base_url=self.base_url, max_history=max_history)
+            self.sessions[session_id] = UniversalLLMSession(
+                self.client,
+                system_prompt,
+                session_id,
+                ttl_minutes,
+                provider=self.provider,
+                base_url=self.base_url,
+                max_history=max_history,
+            )
 
         return self.sessions[session_id]
 
@@ -465,4 +491,8 @@ class UniversalSessionManager:
 
     def get_all_stats(self) -> Dict[str, Any]:
         """Get statistics for all sessions."""
-        return {"active_sessions": len(self.sessions), "provider": self.provider, "sessions": {sid: session.get_stats() for sid, session in self.sessions.items()}, }
+        return {
+            "active_sessions": len(self.sessions),
+            "provider": self.provider,
+            "sessions": {sid: session.get_stats() for sid, session in self.sessions.items()},
+        }

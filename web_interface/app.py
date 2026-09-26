@@ -1,4 +1,4 @@
-"""PseuDRAGON Web Application
+"""PseuDRAGON Web Application.
 
 Flask-based web interface for the PseuDRAGON pseudonymization pipeline.
 
@@ -11,7 +11,6 @@ This application provides:
 """
 
 
-# 표준 라이브러리 import
 import json
 import logging
 import copy
@@ -32,23 +31,21 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-# Fix Windows console encoding for emoji support
+# Use UTF-8 for Unicode output on Windows.
 
 if sys.platform == "win32":
     try:
         # Reconfigure stdout and stderr to use UTF-8 encoding
 
-        sys.stdout.reconfigure(encoding='utf-8')
-        sys.stderr.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     except Exception as e:
         print(f"Warning: Could not set UTF-8 encoding: {e}")
 
 
-# 서드파티 라이브러리 import
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
 
-# 프로젝트 관련 import
 from config.config import (
     DEFAULT_LLM_CLIENT,
     DatabaseConfig,
@@ -78,7 +75,7 @@ sys.path.insert(0, BASE_DIR)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    """Custom JSON encoder for handling Decimal and datetime objects"""
+    """Custom JSON encoder for handling Decimal and datetime objects."""
 
     def default(self, obj):
         if isinstance(obj, Decimal):
@@ -91,7 +88,7 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 class AppConfig:
-    """Application configuration constants
+    """Application configuration constants.
 
     Centralizes all application-level configuration values.
     """
@@ -111,7 +108,7 @@ class AppConfig:
 
 
 class PipelineStep:
-    """Pipeline execution step constants
+    """Pipeline execution step constants.
 
     Defines all possible states of the pipeline execution.
     """
@@ -125,7 +122,7 @@ class PipelineStep:
 
 
 class PipelineState:
-    """Global state manager for pipeline execution
+    """Global state manager for pipeline execution.
 
     Maintains all runtime state including:
 
@@ -137,7 +134,7 @@ class PipelineState:
     """
 
     def __init__(self) -> None:
-        """Initialize pipeline state with default values / 기본값으로 파이프라인 상태 초기화"""
+        """Initialize pipeline state with default values."""
         self.engine: Optional[PseuDRAGONPipeline] = None
         self.rag: Optional[RAGSystem] = None
         self.expert_preference_manager: Optional[ExpertPreferenceManager] = None
@@ -167,7 +164,7 @@ class PipelineState:
         self.hitl_window_opened_at: Optional[str] = None
 
     def reset(self) -> None:
-        """Reset pipeline state to initial values
+        """Reset pipeline state to initial values.
 
         Thread-safe reset of all state variables.
         """
@@ -193,7 +190,7 @@ class PipelineState:
 
 
 class SessionManager:
-    """Session manager for multi-client support
+    """Session manager for multi-client support.
 
     Each client gets an independent session with its own PipelineState.
     """
@@ -203,7 +200,7 @@ class SessionManager:
     SESSION_EXPIRY = 1800
 
     def __init__(self) -> None:
-        """Initialize session manager / 세션 관리자 초기화"""
+        """Initialize session manager."""
         self._sessions: Dict[str, PipelineState] = {}
         self._session_timestamps: Dict[str, float] = {}
         self._lock: Lock = Lock()
@@ -217,7 +214,7 @@ class SessionManager:
         self._backend_lock: Lock = Lock()
 
     def create_session(self) -> str:
-        """Create a new session and return its ID
+        """Create a new session and return its ID.
 
         Returns:
             Unique session ID
@@ -229,7 +226,7 @@ class SessionManager:
         return session_id
 
     def get_session(self, session_id: str) -> Optional[PipelineState]:
-        """Get session state by ID
+        """Get session state by ID.
 
         Args:
             session_id: Session ID to look up
@@ -245,7 +242,7 @@ class SessionManager:
         return None
 
     def remove_session(self, session_id: str) -> bool:
-        """Remove a session
+        """Remove a session.
 
         Args:
             session_id: Session ID to remove
@@ -261,7 +258,7 @@ class SessionManager:
         return False
 
     def cleanup_expired_sessions(self) -> int:
-        """Remove expired sessions
+        """Remove expired sessions.
 
         Returns:
             Number of sessions removed
@@ -283,7 +280,7 @@ class SessionManager:
         return len(expired)
 
     def get_active_session_count(self) -> int:
-        """Get count of active sessions
+        """Get count of active sessions.
 
         Returns:
             Number of active sessions
@@ -292,7 +289,7 @@ class SessionManager:
             return len(self._sessions)
 
     def get_all_sessions_info(self) -> List[Dict[str, Any]]:
-        """Get information about all active sessions for monitoring
+        """Get information about all active sessions for monitoring.
 
         Returns:
             List of session info dictionaries
@@ -316,7 +313,9 @@ class SessionManager:
                     "current_step": session_state.current_step,
                     "tables": tables,
                     "table_count": len(tables),
-                    "purpose_goal": session_state.purpose_goal[:50] + "..." if len(session_state.purpose_goal) > 50 else session_state.purpose_goal,
+                    "purpose_goal": session_state.purpose_goal[:50] + "..."
+                    if len(session_state.purpose_goal) > 50
+                    else session_state.purpose_goal,
                     "log_count": len(session_state.logs),
                     "duration_seconds": duration_seconds,
                     "has_pii_data": bool(session_state.pii_data),
@@ -331,8 +330,10 @@ class SessionManager:
 
         return sessions_info
 
-    def get_session_logs(self, session_id: str, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
-        """Get logs from a specific session for monitoring
+    def get_session_logs(
+        self, session_id: str, offset: int = 0, limit: int = 100
+    ) -> Dict[str, Any]:
+        """Get logs from a specific session for monitoring.
 
         Args:
             session_id: Session ID
@@ -348,7 +349,7 @@ class SessionManager:
 
             session_state = self._sessions[session_id]
             total_logs = len(session_state.logs)
-            logs = session_state.logs[offset:offset + limit]
+            logs = session_state.logs[offset : offset + limit]
 
             return {
                 "session_id": session_id,
@@ -362,8 +363,15 @@ class SessionManager:
                 "has_more": offset + limit < total_logs,
             }
 
-    def get_shared_backend(self) -> Tuple[Optional[RAGSystem], Optional[PseuDRAGONPipeline], Optional[ExpertPreferenceManager], Optional[ComplianceValidator]]:
-        """Get shared backend components
+    def get_shared_backend(
+        self,
+    ) -> Tuple[
+        Optional[RAGSystem],
+        Optional[PseuDRAGONPipeline],
+        Optional[ExpertPreferenceManager],
+        Optional[ComplianceValidator],
+    ]:
+        """Get shared backend components.
 
         Returns:
             Tuple of (RAG, engine, expert_preference_manager, validator)
@@ -371,11 +379,13 @@ class SessionManager:
         return self._rag, self._engine, self._expert_preference_manager, self._validator
 
     def set_shared_backend(
-            self, rag: RAGSystem, engine: PseuDRAGONPipeline,
-            expert_preference_manager: ExpertPreferenceManager,
-            validator: ComplianceValidator
+        self,
+        rag: RAGSystem,
+        engine: PseuDRAGONPipeline,
+        expert_preference_manager: ExpertPreferenceManager,
+        validator: ComplianceValidator,
     ) -> None:
-        """Set shared backend components
+        """Set shared backend components.
 
         Args:
             rag: RAG system instance
@@ -391,7 +401,7 @@ class SessionManager:
             self._backend_initialized = True
 
     def is_backend_initialized(self) -> bool:
-        """Check if backend is initialized
+        """Check if backend is initialized.
 
         Returns:
             True if initialized
@@ -399,12 +409,13 @@ class SessionManager:
         return self._backend_initialized
 
     def get_all_audit_events(
-            self, event_type: Optional[str] = None,
-            start_date: Optional[str] = None,
-            end_date: Optional[str] = None,
-            user_id: Optional[str] = None
+        self,
+        event_type: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Get audit events from all sessions
+        """Get audit events from all sessions.
 
         Args:
             event_type: Filter by event type
@@ -424,7 +435,7 @@ class SessionManager:
                             event_type=event_type,
                             start_date=start_date,
                             end_date=end_date,
-                            user_id=user_id
+                            user_id=user_id,
                         )
                         # Add session ID to each event for tracking
                         for event in events:
@@ -438,7 +449,7 @@ class SessionManager:
         return all_events
 
     def get_all_audit_summary(self) -> Dict[str, Any]:
-        """Get combined audit summary from all sessions
+        """Get combined audit summary from all sessions.
 
         Returns:
             Combined summary statistics
@@ -447,7 +458,7 @@ class SessionManager:
             "total_events": 0,
             "events_by_type": {},
             "session_count": 0,
-            "sessions": []
+            "sessions": [],
         }
 
         with self._lock:
@@ -469,7 +480,7 @@ class SessionManager:
                             {
                                 "session_id": session_id[:8],
                                 "total_events": summary.get("total_events", 0),
-                                "start_time": summary.get("start_time", "")
+                                "start_time": summary.get("start_time", ""),
                             }
                         )
                     except Exception:
@@ -485,7 +496,7 @@ app.json_encoder = CustomJSONEncoder
 
 session_manager = SessionManager()
 
-# Legacy global state for backward compatibility (will be deprecated)
+# Shared state for callers without a session identifier.
 
 state = PipelineState()
 
@@ -497,8 +508,10 @@ global_audit_logger = AuditLogger(log_dir=AppConfig.REPORTS_DIR, session_id="glo
 heuristic_manager = HeuristicManager()
 
 
-def init_backend(session_state: Optional[PipelineState] = None, log_callback: Optional[Any] = None) -> Tuple[RAGSystem, PseuDRAGONPipeline, ExpertPreferenceManager, ComplianceValidator]:
-    """Initialize backend components (RAG system and PseuDRAGON engine)
+def init_backend(
+    session_state: Optional[PipelineState] = None, log_callback: Optional[Any] = None
+) -> Tuple[RAGSystem, PseuDRAGONPipeline, ExpertPreferenceManager, ComplianceValidator]:
+    """Initialize backend components (RAG system and PseuDRAGON engine).
 
     This function:
 
@@ -593,9 +606,13 @@ def init_backend(session_state: Optional[PipelineState] = None, log_callback: Op
     _log("\n[Stats] Initializing Approved Expert Feedback Manager...")
     expert_preference_manager = ExpertPreferenceManager()
     stats = expert_preference_manager.get_statistics()
-    _log(f"   [OK] Approved Expert Feedback Manager initialized! ({stats['unique_columns']} method preferences)")
-    if stats.get('pii_classifications', 0) > 0:
-        _log(f"   [OK] Learned {stats['pii_classifications']} PII classification(s) from previous sessions ")
+    _log(
+        f"   [OK] Approved Expert Feedback Manager initialized! ({stats['unique_columns']} method preferences)"
+    )
+    if stats.get("pii_classifications", 0) > 0:
+        _log(
+            f"   [OK] Learned {stats['pii_classifications']} PII classification(s) from previous sessions "
+        )
 
     _log("\nPseuDRAGON Initializing PseuDRAGON Engine...")
     engine = PseuDRAGONPipeline(
@@ -603,7 +620,7 @@ def init_backend(session_state: Optional[PipelineState] = None, log_callback: Op
         DEFAULT_LLM_CLIENT,
         LLM_CLIENT_STAGE_1,
         LLM_CLIENT_STAGE_2,
-        expert_preference_manager=expert_preference_manager
+        expert_preference_manager=expert_preference_manager,
     )
     _log("   [OK] PseuDRAGON Engine initialized!")
 
@@ -618,7 +635,7 @@ def init_backend(session_state: Optional[PipelineState] = None, log_callback: Op
     # Store in session manager for sharing across sessions
     session_manager.set_shared_backend(rag, engine, expert_preference_manager, validator)
 
-    # Also update legacy global state for backward compatibility
+    # Keep the shared state synchronized with the session state.
     state.rag = rag
     state.engine = engine
     state.expert_preference_manager = expert_preference_manager
@@ -628,7 +645,7 @@ def init_backend(session_state: Optional[PipelineState] = None, log_callback: Op
 
 
 def log_producer(message: str, session_state: Optional[PipelineState] = None) -> None:
-    """Thread-safe logging function with timestamps
+    """Thread-safe logging function with timestamps.
 
     Adds timestamped messages to the session-specific or global log buffer for streaming to clients.
     Also writes to the file logger for persistent logging.
@@ -654,8 +671,10 @@ def log_producer(message: str, session_state: Optional[PipelineState] = None) ->
         target_state.logs.append(formatted_msg)
 
 
-def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_method: str, client_session_id: str) -> None:
-    """Execute Stages 1 and 2 of the pipeline in a background thread
+def run_pipeline_task(
+    target_tables: List[str], purpose_goal: str, preferred_method: str, client_session_id: str
+) -> None:
+    """Execute Stages 1 and 2 of the pipeline in a background thread.
 
     This function runs asynchronously and:
 
@@ -681,7 +700,9 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
     def session_log(msg: str) -> None:
         log_producer(msg, session_state)
 
-    logging.getLogger(__name__).debug(f"DEBUG: run_pipeline_task started for {target_tables} (session: {client_session_id})")
+    logging.getLogger(__name__).debug(
+        f"DEBUG: run_pipeline_task started for {target_tables} (session: {client_session_id})"
+    )
     session_state.is_running = True
 
     # Store purpose_goal in state for use in policy synthesis
@@ -711,7 +732,9 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
         session_state.file_logger.info(f"Preferred Method: {preferred_method}")
 
     # Re-initialize AuditLogger for this specific run
-    session_state.audit_logger = AuditLogger(log_dir=AppConfig.OUTPUT_DIR, session_id=session_state.session_id)
+    session_state.audit_logger = AuditLogger(
+        log_dir=AppConfig.OUTPUT_DIR, session_id=session_state.session_id
+    )
 
     with session_state.progress_lock:
         session_state.logs = []
@@ -767,7 +790,9 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                 session_state.file_logger.stage_start(stage1_name)
 
             if session_state.audit_logger:
-                session_state.audit_logger.log_stage_start("Stage 1: PII Identification", table_name)
+                session_state.audit_logger.log_stage_start(
+                    "Stage 1: PII Identification", table_name
+                )
 
             try:
                 pii_res = engine.identify_pii(schema, table_name, log_callback=session_log)
@@ -779,14 +804,18 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                     session_state.file_logger.stage_end(stage1_name)
 
             if session_state.audit_logger:
-                session_state.audit_logger.log_stage_complete("Stage 1: PII Identification", table_name)
+                session_state.audit_logger.log_stage_complete(
+                    "Stage 1: PII Identification", table_name
+                )
 
             # Log table statistics after PII identification
 
             total_columns = len(pii_res)
             pii_columns = sum(1 for col_data in pii_res.values() if col_data.get("is_pii", False))
             session_state.file_logger.log_table_stats(table_name, total_columns, pii_columns)
-            session_log(f"[Stats] Table Stats: {total_columns} columns, {pii_columns} PII columns identified")
+            session_log(
+                f"[Stats] Table Stats: {total_columns} columns, {pii_columns} PII columns identified"
+            )
 
             # Check if stop was requested before Stage 2
             if session_state.should_stop:
@@ -807,7 +836,14 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                 session_state.audit_logger.log_stage_start("Stage 2: Policy Synthesis", table_name)
 
             try:
-                policy_res = engine.synthesize_policy(pii_res, table_name, preferred_method, purpose_goal=purpose_goal, log_callback=session_log, output_dir=table_dir)
+                policy_res = engine.synthesize_policy(
+                    pii_res,
+                    table_name,
+                    preferred_method,
+                    purpose_goal=purpose_goal,
+                    log_callback=session_log,
+                    output_dir=table_dir,
+                )
                 session_state.policy_data[table_name] = policy_res
             finally:
                 # Ensure stage_end is always called even if exception occurs
@@ -816,7 +852,9 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                     session_state.file_logger.stage_end(stage2_name)
 
             if session_state.audit_logger:
-                session_state.audit_logger.log_stage_complete("Stage 2: Policy Synthesis", table_name)
+                session_state.audit_logger.log_stage_complete(
+                    "Stage 2: Policy Synthesis", table_name
+                )
 
             # Apply user preferences to reorder methods
 
@@ -836,10 +874,18 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                         # Apply user's custom code snippet if available (exact match or RAG similar)
 
                         # Get column metadata for RAG search
-                        col_comment = session_state.pii_data.get(table_name, {}).get(col_name, {}).get("column_comment", "")
+                        col_comment = (
+                            session_state.pii_data.get(table_name, {})
+                            .get(col_name, {})
+                            .get("column_comment", "")
+                        )
                         col_data_type = ""
-                        if isinstance(session_state.schemas.get(table_name, {}).get(col_name), dict):
-                            col_data_type = session_state.schemas[table_name][col_name].get("type", "")
+                        if isinstance(
+                            session_state.schemas.get(table_name, {}).get(col_name), dict
+                        ):
+                            col_data_type = session_state.schemas[table_name][col_name].get(
+                                "type", ""
+                            )
 
                         # Try RAG-based preference lookup (includes exact match first, then similar)
 
@@ -864,21 +910,37 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
 
                                 if custom_snippet or custom_description:
                                     if match_type == "rag_similar":
-                                        print(f"[RAG] Applied custom snippet/description from similar column {similar_col} -> {col_name}")
-                                        session_log(f"[RAG] RAG: Applied {preferred_method} from {similar_col}")
+                                        print(
+                                            f"[RAG] Applied custom snippet/description from similar column {similar_col} -> {col_name}"
+                                        )
+                                        session_log(
+                                            f"[RAG] RAG: Applied {preferred_method} from {similar_col}"
+                                        )
                                     else:
-                                        print(f"[INFO] Applied custom code/description for PII column {col_name} ({preferred_method})")
+                                        print(
+                                            f"[INFO] Applied custom code/description for PII column {col_name} ({preferred_method})"
+                                        )
 
                         # Update policy data with reordered methods
-                        session_state.policy_data[table_name][col_name]["recommended_methods"] = reordered_methods
+                        session_state.policy_data[table_name][col_name][
+                            "recommended_methods"
+                        ] = reordered_methods
                     else:
                         # Non-PII column - reorder methods based on user preference
                         # But preserve ALL LLM-generated methods (don't replace them!)
                         # Get column metadata for RAG search
-                        col_comment = session_state.pii_data.get(table_name, {}).get(col_name, {}).get("column_comment", "")
+                        col_comment = (
+                            session_state.pii_data.get(table_name, {})
+                            .get(col_name, {})
+                            .get("column_comment", "")
+                        )
                         col_data_type = ""
-                        if isinstance(session_state.schemas.get(table_name, {}).get(col_name), dict):
-                            col_data_type = session_state.schemas[table_name][col_name].get("type", "")
+                        if isinstance(
+                            session_state.schemas.get(table_name, {}).get(col_name), dict
+                        ):
+                            col_data_type = session_state.schemas[table_name][col_name].get(
+                                "type", ""
+                            )
 
                         # Try RAG-based preference lookup (includes exact match first, then similar)
 
@@ -894,7 +956,9 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                             similar_col = rag_preference.get("similar_column", "")
 
                             # Get existing methods from policy_data
-                            existing_methods = session_state.policy_data[table_name][col_name].get("recommended_methods", [])
+                            existing_methods = session_state.policy_data[table_name][col_name].get(
+                                "recommended_methods", []
+                            )
 
                             if len(existing_methods) > 2:
                                 # LLM generated rich methods - reorder them with user's preferred method first
@@ -913,17 +977,29 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
 
                                     if custom_snippet or custom_description:
                                         if match_type == "rag_similar":
-                                            print(f"[RAG] Applied custom snippet/description from similar column {similar_col} -> {col_name}")
-                                            session_log(f"[RAG] RAG: Applied {preferred_method} from {similar_col}")
+                                            print(
+                                                f"[RAG] Applied custom snippet/description from similar column {similar_col} -> {col_name}"
+                                            )
+                                            session_log(
+                                                f"[RAG] RAG: Applied {preferred_method} from {similar_col}"
+                                            )
                                         else:
-                                            print(f"[INFO] Applied custom code/description for Non-PII column {col_name} ({preferred_method})")
+                                            print(
+                                                f"[INFO] Applied custom code/description for Non-PII column {col_name} ({preferred_method})"
+                                            )
 
                                 # Update with reordered methods
-                                session_state.policy_data[table_name][col_name]["recommended_methods"] = reordered
-                                print(f"[INFO] Reordered Non-PII methods for {col_name}: {preferred_method} prioritized (kept all {len(reordered)} methods)")
+                                session_state.policy_data[table_name][col_name][
+                                    "recommended_methods"
+                                ] = reordered
+                                print(
+                                    f"[INFO] Reordered Non-PII methods for {col_name}: {preferred_method} prioritized (kept all {len(reordered)} methods)"
+                                )
                             else:
-                                # Only KEEP/DELETE exist - this is an old policy, don't touch it
-                                print(f"[INFO] Non-PII column {col_name} has only basic methods, skipping reorder")
+                                # Leave KEEP/DELETE-only policies unchanged.
+                                print(
+                                    f"[INFO] Non-PII column {col_name} has only basic methods, skipping reorder"
+                                )
 
             # Store integrated report filename (relative to OUTPUT_DIR)
 
@@ -947,7 +1023,9 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                 datetime.fromisoformat(session_state.model_completed_at)
                 - datetime.fromisoformat(session_state.pipeline_started_at)
             ).total_seconds()
-        initial_output_path = os.path.join(session_state.session_dir, "model_initial_predictions.json")
+        initial_output_path = os.path.join(
+            session_state.session_dir, "model_initial_predictions.json"
+        )
         with open(initial_output_path, "w", encoding="utf-8") as initial_file:
             json.dump(
                 {
@@ -964,7 +1042,9 @@ def run_pipeline_task(target_tables: List[str], purpose_goal: str, preferred_met
                 indent=2,
                 cls=CustomJSONEncoder,
             )
-        with open(os.path.join(session_state.session_dir, "timing.json"), "w", encoding="utf-8") as timing_file:
+        with open(
+            os.path.join(session_state.session_dir, "timing.json"), "w", encoding="utf-8"
+        ) as timing_file:
             json.dump(
                 {
                     "pipeline_started_at": session_state.pipeline_started_at,
@@ -1018,8 +1098,7 @@ def _count_evidence_pdfs(source_family: str) -> int:
     return sum(
         1
         for filename in os.listdir(source_dir)
-        if filename.lower().endswith(".pdf")
-        and os.path.isfile(os.path.join(source_dir, filename))
+        if filename.lower().endswith(".pdf") and os.path.isfile(os.path.join(source_dir, filename))
     )
 
 
@@ -1058,8 +1137,12 @@ def _get_runtime_retrieval_profile() -> dict:
     config = RAGConfig.get_retrieval_config()
     mode = config["retrieval_mode"]
     families = [
-        {"priority_level": level, "key": key, "label": label,
-         "document_count": _count_evidence_pdfs(key)}
+        {
+            "priority_level": level,
+            "key": key,
+            "label": label,
+            "document_count": _count_evidence_pdfs(key),
+        }
         for level, key, label in [
             (1, "institutional_policy", "Institutional policy"),
             (2, "national_law", "National law/guidance"),
@@ -1101,9 +1184,16 @@ def _get_runtime_retrieval_profile() -> dict:
 
     for family in families:
         family["weight"] = weights[family["priority_level"]]
-    families.insert(0, {"priority_level": 0, "key": "approved_expert_feedback",
-                        "label": "Approved expert feedback", "weight": weights[0],
-                        "document_count": None})
+    families.insert(
+        0,
+        {
+            "priority_level": 0,
+            "key": "approved_expert_feedback",
+            "label": "Approved expert feedback",
+            "weight": weights[0],
+            "document_count": None,
+        },
+    )
     profile.update(
         label="Weighted retrieval (legacy)",
         summary=f"Similarity {alpha:g}; source preference {config['authority_mixing_weight']:g}.",
@@ -1116,7 +1206,7 @@ def _get_runtime_retrieval_profile() -> dict:
 
 @app.route("/")
 def index() -> str:
-    """Serve the main web interface
+    """Serve the main web interface.
 
     Returns:
         Rendered HTML template
@@ -1133,9 +1223,7 @@ def get_runtime_config() -> Tuple:
     """
     try:
         retrieval_profile = _get_runtime_retrieval_profile()
-        endpoint_scope = _classify_endpoint_scope(
-            Settings.STAGE_1_OPENAI_BASE_URL
-        )
+        endpoint_scope = _classify_endpoint_scope(Settings.STAGE_1_OPENAI_BASE_URL)
 
         return jsonify(
             {
@@ -1181,7 +1269,7 @@ def get_runtime_config() -> Tuple:
 
 @app.route("/get_tables")
 def get_tables_route() -> Tuple:
-    """API endpoint to retrieve available database tables
+    """API endpoint to retrieve available database tables.
 
     Returns:
         JSON response with table names or error
@@ -1201,7 +1289,7 @@ def get_tables_route() -> Tuple:
 
 @app.route("/get_table_schema/<table_name>")
 def get_table_schema_route(table_name: str) -> Tuple:
-    """API endpoint to retrieve schema for a specific table
+    """API endpoint to retrieve schema for a specific table.
 
     Args:
         table_name: Name of the table
@@ -1220,19 +1308,14 @@ def get_table_schema_route(table_name: str) -> Tuple:
         if not schema:
             return jsonify({"error": f"Table '{table_name}' not found"}), 404
 
-        return jsonify(
-            {
-                "table_name": table_name,
-                "schema": schema
-            }
-        )
+        return jsonify({"table_name": table_name, "schema": schema})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @app.route("/execute_ddl", methods=["POST"])
 def execute_ddl() -> Tuple:
-    """Execute SQL statements directly (CREATE, INSERT, etc.)
+    """Execute SQL statements directly (CREATE, INSERT, etc.).
 
     Request body:
         ddl: SQL statements
@@ -1253,17 +1336,17 @@ def execute_ddl() -> Tuple:
 
         blocked_patterns = [
             # Dangerous commands
-            (r'\bDROP\s+DATABASE\b', "DROP DATABASE is not allowed"),
-            (r'\bDELETE\s+FROM\b', "DELETE is not allowed"),
-            (r'\bTRUNCATE\b', "TRUNCATE is not allowed"),
-            (r'\bALTER\s+DATABASE\b', "ALTER DATABASE is not allowed"),
-            (r'\bDROP\s+SCHEMA\b', "DROP SCHEMA is not allowed"),
+            (r"\bDROP\s+DATABASE\b", "DROP DATABASE is not allowed"),
+            (r"\bDELETE\s+FROM\b", "DELETE is not allowed"),
+            (r"\bTRUNCATE\b", "TRUNCATE is not allowed"),
+            (r"\bALTER\s+DATABASE\b", "ALTER DATABASE is not allowed"),
+            (r"\bDROP\s+SCHEMA\b", "DROP SCHEMA is not allowed"),
             # Query commands (require output)
-            (r'\bSELECT\b', "SELECT is not allowed (use for data modification only)"),
-            (r'\bSHOW\b', "SHOW is not allowed"),
-            (r'\bDESCRIBE\b', "DESCRIBE is not allowed"),
-            (r'\bEXPLAIN\b', "EXPLAIN is not allowed"),
-            (r'\bPRAGMA\b', "PRAGMA is not allowed"),
+            (r"\bSELECT\b", "SELECT is not allowed (use for data modification only)"),
+            (r"\bSHOW\b", "SHOW is not allowed"),
+            (r"\bDESCRIBE\b", "DESCRIBE is not allowed"),
+            (r"\bEXPLAIN\b", "EXPLAIN is not allowed"),
+            (r"\bPRAGMA\b", "PRAGMA is not allowed"),
         ]
 
         sql_upper = sql_input.upper()
@@ -1276,9 +1359,10 @@ def execute_ddl() -> Tuple:
         db_path = AppConfig.DB_PATH
 
         try:
-            if db_path.endswith('.duckdb'):
+            if db_path.endswith(".duckdb"):
                 # Use DuckDB - execute the entire SQL script
                 import duckdb
+
                 conn = duckdb.connect(db_path)
                 # DuckDB can execute multiple statements separated by semicolons
 
@@ -1287,6 +1371,7 @@ def execute_ddl() -> Tuple:
             else:
                 # Use SQLite - executescript for multiple statements
                 import sqlite3
+
                 conn = sqlite3.connect(db_path)
                 conn.executescript(sql_input)
                 conn.commit()
@@ -1300,7 +1385,7 @@ def execute_ddl() -> Tuple:
                 "message": "SQL executed successfully",
                 "table_name": None,
                 "tables": [],
-                "statement_count": sql_input.count(';')
+                "statement_count": sql_input.count(";"),
             }
         )
 
@@ -1310,7 +1395,7 @@ def execute_ddl() -> Tuple:
 
 @app.route("/drop_table", methods=["POST"])
 def drop_table() -> Tuple:
-    """Drop a table from the database
+    """Drop a table from the database.
 
     Request body:
         table_name: Name of the table to drop
@@ -1328,21 +1413,24 @@ def drop_table() -> Tuple:
         # Validate table name (prevent SQL injection)
 
         import re
-        if not re.match(r'^[\w가-힣]+$', table_name):
+
+        if not re.match(r"^[\w가-힣]+$", table_name):
             return jsonify({"error": "Invalid table name"}), 400
 
         db_path = AppConfig.DB_PATH
 
         try:
-            if db_path.endswith('.duckdb'):
+            if db_path.endswith(".duckdb"):
                 # Use DuckDB
                 import duckdb
+
                 conn = duckdb.connect(db_path)
                 conn.execute(f'DROP TABLE IF EXISTS "{table_name}"')
                 conn.close()
             else:
                 # Use SQLite
                 import sqlite3
+
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
                 cursor.execute(f'DROP TABLE IF EXISTS "{table_name}"')
@@ -1355,7 +1443,7 @@ def drop_table() -> Tuple:
             {
                 "status": "success",
                 "message": f"Table '{table_name}' has been dropped successfully",
-                "table_name": table_name
+                "table_name": table_name,
             }
         )
 
@@ -1365,7 +1453,7 @@ def drop_table() -> Tuple:
 
 @app.route("/stream")
 def stream() -> Response:
-    """Server-Sent Events (SSE) endpoint for real-time log streaming
+    """Server-Sent Events (SSE) endpoint for real-time log streaming.
 
     Streams pipeline logs and status updates to the client in real-time.
 
@@ -1378,7 +1466,9 @@ def stream() -> Response:
     # Get session ID from query parameter
 
     client_session_id = request.args.get("session_id", "")
-    logging.getLogger(__name__).debug(f"DEBUG: /stream endpoint called (session: {client_session_id})")
+    logging.getLogger(__name__).debug(
+        f"DEBUG: /stream endpoint called (session: {client_session_id})"
+    )
 
     # Get session-specific state or fall back to global state
 
@@ -1386,7 +1476,7 @@ def stream() -> Response:
     target_state = session_state if session_state else state
 
     def generate() -> Any:
-        """Generator function for SSE stream
+        """Generator function for SSE stream.
 
         Yields log messages and stage completion events.
         """
@@ -1412,7 +1502,7 @@ def stream() -> Response:
 
 @app.route("/start", methods=["POST"])
 def start_pipeline() -> Tuple:
-    """API endpoint to start pipeline execution (Stages 1 & 2)
+    """API endpoint to start pipeline execution (Stages 1 & 2).
 
     Accepts:
 
@@ -1442,7 +1532,9 @@ def start_pipeline() -> Tuple:
             # Session expired or invalid, create new one
 
             client_session_id = session_manager.create_session()
-            logging.getLogger(__name__).debug(f"DEBUG: Session not found, created new session: {client_session_id}")
+            logging.getLogger(__name__).debug(
+                f"DEBUG: Session not found, created new session: {client_session_id}"
+            )
 
     # Get session state
     session_state = session_manager.get_session(client_session_id)
@@ -1464,7 +1556,9 @@ def start_pipeline() -> Tuple:
     if cleaned > 0:
         logging.getLogger(__name__).debug(f"DEBUG: Cleaned up {cleaned} expired sessions")
 
-    thread = Thread(target=run_pipeline_task, args=(tables, purpose_goal, preferred_method, client_session_id))
+    thread = Thread(
+        target=run_pipeline_task, args=(tables, purpose_goal, preferred_method, client_session_id)
+    )
     thread.start()
 
     return jsonify({"status": "started", "session_id": client_session_id})
@@ -1472,7 +1566,7 @@ def start_pipeline() -> Tuple:
 
 @app.route("/stop", methods=["POST"])
 def stop_pipeline() -> Tuple:
-    """API endpoint to stop pipeline execution
+    """API endpoint to stop pipeline execution.
 
     Sets the stop flag to gracefully terminate the running pipeline.
 
@@ -1505,7 +1599,7 @@ def stop_pipeline() -> Tuple:
 
 @app.route("/get_stage3_data")
 def get_stage3_data() -> Tuple:
-    """API endpoint to retrieve Stage 3 data for human review
+    """API endpoint to retrieve Stage 3 data for human review.
 
     Query Parameters:
         session_id: Client session ID
@@ -1552,10 +1646,12 @@ def get_stage3_data() -> Tuple:
 
     # Use target_tables if available, otherwise fall back to all schemas
 
-    tables_to_process = getattr(target_state, 'target_tables', None)
+    tables_to_process = getattr(target_state, "target_tables", None)
     if not tables_to_process:
         tables_to_process = list(target_state.schemas.keys())
-    logging.getLogger(__name__).debug(f"[DEBUG /get_stage3_data] Processing tables: {tables_to_process}")
+    logging.getLogger(__name__).debug(
+        f"[DEBUG /get_stage3_data] Processing tables: {tables_to_process}"
+    )
 
     for table in tables_to_process:
         if table not in target_state.schemas:
@@ -1580,7 +1676,9 @@ def get_stage3_data() -> Tuple:
                     # Fix it by defaulting to "PII"
                     pii_type = pii_info.get("pii_type", "Unknown")
                     if pii_type == "Non-PII":
-                        print(f"[WARNING] Data inconsistency detected for {col}: is_pii=True but pii_type='Non-PII'")
+                        print(
+                            f"[WARNING] Data inconsistency detected for {col}: is_pii=True but pii_type='Non-PII'"
+                        )
                         print(f"[FIX] Correcting pii_type to 'PII' for {col}")
                         pii_type = "PII"
                         # Also update the stored data
@@ -1598,8 +1696,8 @@ def get_stage3_data() -> Tuple:
                 else:
                     # Non-PII column with existing policy data
 
-                    cached_methods = policy.get('recommended_methods', [])
-                    cached_method_names = {m.get('method', '').upper() for m in cached_methods}
+                    cached_methods = policy.get("recommended_methods", [])
+                    cached_method_names = {m.get("method", "").upper() for m in cached_methods}
 
                     pii_info = target_state.pii_data[table].get(col, {})
                     column_comment = pii_info.get("column_comment", "")
@@ -1610,12 +1708,18 @@ def get_stage3_data() -> Tuple:
 
                     # Check if cached methods are incomplete (only KEEP, missing DELETE)
 
-                    needs_regeneration = len(cached_methods) == 1 and 'KEEP' in cached_method_names and 'DELETE' not in cached_method_names
+                    needs_regeneration = (
+                        len(cached_methods) == 1
+                        and "KEEP" in cached_method_names
+                        and "DELETE" not in cached_method_names
+                    )
 
                     if needs_regeneration:
                         # Regenerate methods for Non-PII column
 
-                        print(f"[INFO] Regenerating Non-PII methods for {col} (cached methods incomplete: {[m.get('method') for m in cached_methods]})")
+                        print(
+                            f"[INFO] Regenerating Non-PII methods for {col} (cached methods incomplete: {[m.get('method') for m in cached_methods]})"
+                        )
 
                         # Get data type for better method recommendations
                         data_type = ""
@@ -1623,10 +1727,14 @@ def get_stage3_data() -> Tuple:
                             data_type = target_state.schemas[table][col].get("type", "")
 
                         non_pii_methods = _generate_non_pii_methods(col, column_comment, data_type)
-                        logging.getLogger(__name__).debug(f"[DEBUG] Regenerated {len(non_pii_methods)} methods for {col}: {[t['method'] for t in non_pii_methods]}")
+                        logging.getLogger(__name__).debug(
+                            f"[DEBUG] Regenerated {len(non_pii_methods)} methods for {col}: {[t['method'] for t in non_pii_methods]}"
+                        )
 
                         # Update policy_data with regenerated methods
-                        target_state.policy_data[table][col]["recommended_methods"] = non_pii_methods
+                        target_state.policy_data[table][col][
+                            "recommended_methods"
+                        ] = non_pii_methods
 
                         display_data[table][col] = {
                             "pii_type": "Non-PII",
@@ -1638,14 +1746,18 @@ def get_stage3_data() -> Tuple:
                         }
                     else:
                         # Use cached methods
-                        print(f"[INFO] Using cached Non-PII policy for {col} ({len(cached_methods)} methods)")
+                        print(
+                            f"[INFO] Using cached Non-PII policy for {col} ({len(cached_methods)} methods)"
+                        )
 
                         display_data[table][col] = {
                             "pii_type": "Non-PII",
                             "is_pii": False,
                             "id_evidence": "Not identified as PII",
                             "methods": cached_methods,
-                            "tech_evidence": policy.get("evidence_source", "Data Minimization Principle"),
+                            "tech_evidence": policy.get(
+                                "evidence_source", "Data Minimization Principle"
+                            ),
                             "column_comment": column_comment,
                         }
             else:
@@ -1663,13 +1775,19 @@ def get_stage3_data() -> Tuple:
                     data_type = target_state.schemas[table][col].get("type", "")
 
                 # Generate Non-PII methods using LLM
-                logging.getLogger(__name__).debug(f"[DEBUG /get_stage3_data] Generating Non-PII methods for {col}")
+                logging.getLogger(__name__).debug(
+                    f"[DEBUG /get_stage3_data] Generating Non-PII methods for {col}"
+                )
                 logging.getLogger(__name__).debug(f"  - Column: {col}")
                 logging.getLogger(__name__).debug(f"  - Data Type: {data_type}")
                 logging.getLogger(__name__).debug(f"  - Comment: {column_comment}")
                 non_pii_methods = _generate_non_pii_methods(col, column_comment, data_type)
-                logging.getLogger(__name__).debug(f"[DEBUG /get_stage3_data] Generated {len(non_pii_methods)} methods for {col}")
-                logging.getLogger(__name__).debug(f"  - Methods: {[t['method'] for t in non_pii_methods]}")
+                logging.getLogger(__name__).debug(
+                    f"[DEBUG /get_stage3_data] Generated {len(non_pii_methods)} methods for {col}"
+                )
+                logging.getLogger(__name__).debug(
+                    f"  - Methods: {[t['method'] for t in non_pii_methods]}"
+                )
 
                 # Store Non-PII methods in policy_data for later retrieval in submit_stage3
 
@@ -1700,7 +1818,7 @@ def get_stage3_data() -> Tuple:
 
 @app.route("/submit_stage3", methods=["POST"])
 def submit_stage3() -> Tuple:
-    """API endpoint to submit Stage 3 user selections and execute Stage 4
+    """API endpoint to submit Stage 3 user selections and execute Stage 4.
 
     Processes user-selected methods and generates final pseudonymization code.
 
@@ -1733,13 +1851,25 @@ def submit_stage3() -> Tuple:
             for table_name in sorted(target_state.schemas, key=len, reverse=True):
                 if not remainder.startswith(f"{table_name}_"):
                     continue
-                column_name = remainder[len(table_name) + 1:]
-                methods = target_state.policy_data.get(table_name, {}).get(column_name, {}).get("recommended_methods", [])
-                index = int(selection_data.get("index", 0) if isinstance(selection_data, dict) else selection_data)
+                column_name = remainder[len(table_name) + 1 :]
+                methods = (
+                    target_state.policy_data.get(table_name, {})
+                    .get(column_name, {})
+                    .get("recommended_methods", [])
+                )
+                index = int(
+                    selection_data.get("index", 0)
+                    if isinstance(selection_data, dict)
+                    else selection_data
+                )
                 if methods and not 0 <= index < len(methods):
-                    raise MethodContractError(f"Invalid selected method for {table_name}.{column_name}.")
+                    raise MethodContractError(
+                        f"Invalid selected method for {table_name}.{column_name}."
+                    )
                 if methods:
-                    normalized_selections[key] = prepare_method_selection(methods[index], column_name, selection_data)
+                    normalized_selections[key] = prepare_method_selection(
+                        methods[index], column_name, selection_data
+                    )
                 break
     except (MethodContractError, TypeError, ValueError) as exc:
         return jsonify({"status": "validation_error", "error": str(exc)}), 400
@@ -1751,7 +1881,9 @@ def submit_stage3() -> Tuple:
 
     # Process user selections for ALL columns (PII and non-PII)
     logging.getLogger(__name__).debug(f"[DEBUG submit_stage3] Processing {len(choices)} selections")
-    logging.getLogger(__name__).debug(f"[DEBUG submit_stage3] Keys received: {list(choices.keys())}")
+    logging.getLogger(__name__).debug(
+        f"[DEBUG submit_stage3] Keys received: {list(choices.keys())}"
+    )
 
     for key, selection_data in choices.items():
         # Key format: "method_TABLENAME_COLUMNNAME"
@@ -1772,7 +1904,7 @@ def submit_stage3() -> Tuple:
         for table_name in sorted(target_state.schemas, key=len, reverse=True):
             if remainder.startswith(f"{table_name}_"):
                 table = table_name
-                col = remainder[len(table_name) + 1:]  # +1 for the underscore
+                col = remainder[len(table_name) + 1 :]  # +1 for the underscore
                 break
 
         if not table or not col:
@@ -1780,7 +1912,7 @@ def submit_stage3() -> Tuple:
             print(f"[WARNING] Known tables: {list(target_state.schemas.keys())}")
             continue
 
-        # Handle both old format (int) and new format (dict)
+        # Accept either a selection index or an explicit selection payload.
         if isinstance(selection_data, dict):
             idx = int(selection_data.get("index", 0))
             edited_code = selection_data.get("code_snippet", "")
@@ -1794,7 +1926,9 @@ def submit_stage3() -> Tuple:
             edited_description = None
             description_modified = False
 
-        logging.getLogger(__name__).debug(f"[DEBUG] Parsed: key={key} -> table={table}, col={col}, idx={idx}, code_modified={code_modified}, desc_modified={description_modified}")
+        logging.getLogger(__name__).debug(
+            f"[DEBUG] Parsed: key={key} -> table={table}, col={col}, idx={idx}, code_modified={code_modified}, desc_modified={description_modified}"
+        )
 
         # A non-default method index or explicit code/description edit is a
         # human correction to the model's proposal. Keep this separate from
@@ -1814,10 +1948,16 @@ def submit_stage3() -> Tuple:
 
         # Check if column is in policy_data AND is still PII
         # User may have changed PII status, so check is_pii flag
-        in_policy_data = table in target_state.policy_data and col in target_state.policy_data[table]
-        is_pii_flag = target_state.policy_data[table][col].get("is_pii", True) if in_policy_data else False
+        in_policy_data = (
+            table in target_state.policy_data and col in target_state.policy_data[table]
+        )
+        is_pii_flag = (
+            target_state.policy_data[table][col].get("is_pii", True) if in_policy_data else False
+        )
 
-        logging.getLogger(__name__).debug(f"[DEBUG] Column {col}: in_policy_data={in_policy_data}, is_pii_flag={is_pii_flag}")
+        logging.getLogger(__name__).debug(
+            f"[DEBUG] Column {col}: in_policy_data={in_policy_data}, is_pii_flag={is_pii_flag}"
+        )
 
         is_current_pii = in_policy_data and is_pii_flag
 
@@ -1838,14 +1978,18 @@ def submit_stage3() -> Tuple:
                 if code_modified and edited_code:
                     old_code = selected.get("code_snippet", "")
                     selected["code_snippet"] = edited_code
-                    logging.getLogger(__name__).debug(f"[DEBUG] Code modified for {col}: User edited code snippet")
+                    logging.getLogger(__name__).debug(
+                        f"[DEBUG] Code modified for {col}: User edited code snippet"
+                    )
                     log_producer(f"✏️ User edited code for {col}", target_state)
 
                 # Update description if user edited it
                 if description_modified and edited_description:
                     old_desc = selected.get("description", "")
                     selected["description"] = edited_description
-                    logging.getLogger(__name__).debug(f"[DEBUG] Description modified for {col}: User edited description")
+                    logging.getLogger(__name__).debug(
+                        f"[DEBUG] Description modified for {col}: User edited description"
+                    )
                     log_producer(f"✏️ User edited description for {col}", target_state)
 
                 if code_modified and edited_code:
@@ -1867,8 +2011,12 @@ def submit_stage3() -> Tuple:
                 techs.insert(0, selected)
                 target_state.policy_data[table][col]["action"] = new_action
 
-                logging.getLogger(__name__).debug(f"[DEBUG] PII Column {col}: User selected idx={idx}, Method changed from '{old_action}' to '{new_action}'")
-                log_producer(f"✏️ User selection for {col}: {new_action} (was: {old_action})", target_state)
+                logging.getLogger(__name__).debug(
+                    f"[DEBUG] PII Column {col}: User selected idx={idx}, Method changed from '{old_action}' to '{new_action}'"
+                )
+                log_producer(
+                    f"✏️ User selection for {col}: {new_action} (was: {old_action})", target_state
+                )
 
                 # Record user preference for future sessions (including default selection idx=0)
 
@@ -1878,7 +2026,9 @@ def submit_stage3() -> Tuple:
                     # Pass code snippet and description if user edited them
 
                     final_code_snippet = selected.get("code_snippet", "") if code_modified else None
-                    final_description = selected.get("description", "") if description_modified else None
+                    final_description = (
+                        selected.get("description", "") if description_modified else None
+                    )
 
                     # Get column_comment from schema or pii_data for RAG-based similarity search
 
@@ -1887,7 +2037,11 @@ def submit_stage3() -> Tuple:
                         schema_col = target_state.schemas[table][col]
                         if isinstance(schema_col, dict):
                             col_comment = schema_col.get("comment", "")
-                    if not col_comment and table in target_state.pii_data and col in target_state.pii_data[table]:
+                    if (
+                        not col_comment
+                        and table in target_state.pii_data
+                        and col in target_state.pii_data[table]
+                    ):
                         col_comment = target_state.pii_data[table][col].get("column_comment", "")
 
                     target_state.expert_preference_manager.record_selection(
@@ -1901,7 +2055,7 @@ def submit_stage3() -> Tuple:
                         code_modified=code_modified,
                         description=final_description,
                         description_modified=description_modified,
-                        column_comment=col_comment
+                        column_comment=col_comment,
                     )
 
                 if target_state.audit_logger and not code_modified:
@@ -1943,9 +2097,13 @@ def submit_stage3() -> Tuple:
                     if code_modified and edited_code:
                         old_code = code_snippet
                         code_snippet = edited_code
-                        logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: User edited code snippet")
+                        logging.getLogger(__name__).debug(
+                            f"[DEBUG] Non-PII Column {col}: User edited code snippet"
+                        )
                         logging.getLogger(__name__).debug(f"[DEBUG]   Original: {old_code[:50]}...")
-                        logging.getLogger(__name__).debug(f"[DEBUG]   Edited: {edited_code[:50]}...")
+                        logging.getLogger(__name__).debug(
+                            f"[DEBUG]   Edited: {edited_code[:50]}..."
+                        )
                         log_producer(f"✏️ User edited code for Non-PII column {col}", target_state)
 
                     # Apply user-edited description if modified
@@ -1953,20 +2111,32 @@ def submit_stage3() -> Tuple:
                     if description_modified and edited_description:
                         old_desc = description
                         description = edited_description
-                        logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: User edited description")
-                        log_producer(f"✏️ User edited description for Non-PII column {col}", target_state)
+                        logging.getLogger(__name__).debug(
+                            f"[DEBUG] Non-PII Column {col}: User edited description"
+                        )
+                        log_producer(
+                            f"✏️ User edited description for Non-PII column {col}", target_state
+                        )
 
-                    logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: User selected idx={idx}, Method='{method}' from {len(techs)} methods")
-                    logging.getLogger(__name__).debug(f"[DEBUG]   Available methods: {[t.get('method') for t in techs]}")
+                    logging.getLogger(__name__).debug(
+                        f"[DEBUG] Non-PII Column {col}: User selected idx={idx}, Method='{method}' from {len(techs)} methods"
+                    )
+                    logging.getLogger(__name__).debug(
+                        f"[DEBUG]   Available methods: {[t.get('method') for t in techs]}"
+                    )
                 else:
                     # Invalid index - fallback to Keep
-                    print(f"[WARNING] Non-PII Column {col}: Invalid idx={idx} (only {len(techs)} methods available)")
+                    print(
+                        f"[WARNING] Non-PII Column {col}: Invalid idx={idx} (only {len(techs)} methods available)"
+                    )
                     method = "Keep"
                     description = "Keep the column unchanged"
                     code_snippet = "# No transformation needed"
             else:
                 # No policy data - use simple fallback for Keep/Delete only
-                print(f"[WARNING] Non-PII Column {col}: No policy data found, using fallback for idx={idx}")
+                print(
+                    f"[WARNING] Non-PII Column {col}: No policy data found, using fallback for idx={idx}"
+                )
                 if idx == 1:
                     method = "Delete"
                     description = "Remove the column if not needed for analysis"
@@ -1977,7 +2147,9 @@ def submit_stage3() -> Tuple:
                     code_snippet = "# No transformation needed"
 
             # Record the selected non-PII operation at debug level.
-            logging.getLogger(__name__).debug(f"[DEBUG] Non-PII Column {col}: Final selection - Method='{method}'")
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] Non-PII Column {col}: Final selection - Method='{method}'"
+            )
             log_producer(f"✏️ Non-PII selection for {col}: {method}", target_state)
 
             # Record user preference for Non-PII columns (if user changed from default)
@@ -1985,7 +2157,10 @@ def submit_stage3() -> Tuple:
             if target_state.expert_preference_manager:
                 # Get all available methods from the method list
                 if table in target_state.policy_data and col in target_state.policy_data[table]:
-                    available_methods = [t.get("method") for t in target_state.policy_data[table][col].get("recommended_methods", [])]
+                    available_methods = [
+                        t.get("method")
+                        for t in target_state.policy_data[table][col].get("recommended_methods", [])
+                    ]
                 else:
                     # Fallback to Keep/Delete only
                     available_methods = ["Keep", "Delete"]
@@ -2002,7 +2177,11 @@ def submit_stage3() -> Tuple:
                     schema_col = target_state.schemas[table][col]
                     if isinstance(schema_col, dict):
                         col_comment = schema_col.get("comment", "")
-                if not col_comment and table in target_state.pii_data and col in target_state.pii_data[table]:
+                if (
+                    not col_comment
+                    and table in target_state.pii_data
+                    and col in target_state.pii_data[table]
+                ):
                     col_comment = target_state.pii_data[table][col].get("column_comment", "")
 
                 target_state.expert_preference_manager.record_selection(
@@ -2016,7 +2195,7 @@ def submit_stage3() -> Tuple:
                     code_modified=code_modified,
                     description=final_description,
                     description_modified=description_modified,
-                    column_comment=col_comment
+                    column_comment=col_comment,
                 )
 
             # Create or update policy for non-PII column with the actual selected method
@@ -2036,7 +2215,9 @@ def submit_stage3() -> Tuple:
                         "parameters": copy.deepcopy(selected.get("parameters", {})),
                     }
                 ],
-                "evidence_source": target_state.policy_data[table].get(col, {}).get("evidence_source", "User Selection (Non-PII)"),
+                "evidence_source": target_state.policy_data[table]
+                .get(col, {})
+                .get("evidence_source", "User Selection (Non-PII)"),
             }
 
             # Log user selection for non-PII column
@@ -2058,7 +2239,9 @@ def submit_stage3() -> Tuple:
 
     # This ensures that the report reflects all user changes (PII reclassification, method selection, code edits)
 
-    log_producer("\n[Stats] Regenerating integrated reports with user modifications...", target_state)
+    log_producer(
+        "\n[Stats] Regenerating integrated reports with user modifications...", target_state
+    )
 
     # Extract selected tables from choices to only process those tables
 
@@ -2076,7 +2259,10 @@ def submit_stage3() -> Tuple:
     target_state.generated_code = {}
     target_state.report_files = {}
 
-    log_producer(f"[Info] Processing {len(selected_tables)} selected table(s): {list(selected_tables)}", target_state)
+    log_producer(
+        f"[Info] Processing {len(selected_tables)} selected table(s): {list(selected_tables)}",
+        target_state,
+    )
 
     for table in selected_tables:
         if table not in target_state.policy_data:
@@ -2122,21 +2308,20 @@ def submit_stage3() -> Tuple:
 
                     # Use user rationale if available, otherwise use method description
 
-                    final_rationale = user_rationale if user_rationale else selected_tech.get("description", "")
+                    final_rationale = (
+                        user_rationale if user_rationale else selected_tech.get("description", "")
+                    )
 
                     action = PolicyAction(
                         action=action_type,
                         rationale=final_rationale,
                         code_snippet=selected_tech.get("code_snippet", ""),
                         legal_evidence=legal_evidence,
-                        parameters=selected_tech.get("parameters", {})
+                        parameters=selected_tech.get("parameters", {}),
                     )
 
                     col_policy = ColumnPolicy(
-                        column_name=col_name,
-                        pii_type=pii_type,
-                        is_pii=is_pii,
-                        action=action
+                        column_name=col_name, pii_type=pii_type, is_pii=is_pii, action=action
                     )
 
                     policy_obj.columns[col_name] = col_policy
@@ -2148,14 +2333,11 @@ def submit_stage3() -> Tuple:
                         rationale="No transformation applied",
                         code_snippet="",
                         legal_evidence="",
-                        parameters={}
+                        parameters={},
                     )
 
                     col_policy = ColumnPolicy(
-                        column_name=col_name,
-                        pii_type=pii_type,
-                        is_pii=is_pii,
-                        action=action
+                        column_name=col_name, pii_type=pii_type, is_pii=is_pii, action=action
                     )
 
                     policy_obj.columns[col_name] = col_policy
@@ -2172,12 +2354,14 @@ def submit_stage3() -> Tuple:
                         "is_pii": col_data.get("is_pii", False),
                         "pii_type": col_data.get("pii_type", "Non-PII"),
                         "reasoning": "User modified",
-                        "column_comment": col_data.get("column_comment", "")
+                        "column_comment": col_data.get("column_comment", ""),
                     }
                 else:
                     # Update existing entry with current PII status
                     target_state.pii_data[table][col_name]["is_pii"] = col_data.get("is_pii", False)
-                    target_state.pii_data[table][col_name]["pii_type"] = col_data.get("pii_type", "Non-PII")
+                    target_state.pii_data[table][col_name]["pii_type"] = col_data.get(
+                        "pii_type", "Non-PII"
+                    )
 
             # Regenerate integrated report with user-modified policy
 
@@ -2189,7 +2373,7 @@ def submit_stage3() -> Tuple:
                 table_name=table,
                 pii_analysis=target_state.pii_data.get(table, {}),
                 policy=policy_obj,
-                output_dir=table_dir
+                output_dir=table_dir,
             )
 
             # Update target_state.report_files so the frontend shows the updated report
@@ -2205,6 +2389,7 @@ def submit_stage3() -> Tuple:
             log_producer(f"[WARN]️ Failed to regenerate report for {table}: {e}", target_state)
             print(f"[ERROR] Report regeneration failed for {table}: {e}")
             import traceback
+
             traceback.print_exc()
 
     log_producer("[OK] All integrated reports updated with user modifications\n", target_state)
@@ -2243,9 +2428,17 @@ def submit_stage3() -> Tuple:
         pattern_stats = target_state.expert_preference_manager.trigger_pattern_learning()
         if pattern_stats:
             heuristic_learning_stats = pattern_stats
-            log_producer(f"[OK] Learned {pattern_stats['total_patterns']} heuristic patterns", target_state)
-            log_producer(f"  - PII patterns: {pattern_stats['pii_patterns']['suffixes']} suffixes, {pattern_stats['pii_patterns']['prefixes']} prefixes, {pattern_stats['pii_patterns']['keywords']} keywords", target_state)
-            log_producer(f"  - Non-PII patterns: {pattern_stats['non_pii_patterns']['suffixes']} suffixes, {pattern_stats['non_pii_patterns']['prefixes']} prefixes, {pattern_stats['non_pii_patterns']['keywords']} keywords", target_state)
+            log_producer(
+                f"[OK] Learned {pattern_stats['total_patterns']} heuristic patterns", target_state
+            )
+            log_producer(
+                f"  - PII patterns: {pattern_stats['pii_patterns']['suffixes']} suffixes, {pattern_stats['pii_patterns']['prefixes']} prefixes, {pattern_stats['pii_patterns']['keywords']} keywords",
+                target_state,
+            )
+            log_producer(
+                f"  - Non-PII patterns: {pattern_stats['non_pii_patterns']['suffixes']} suffixes, {pattern_stats['non_pii_patterns']['prefixes']} prefixes, {pattern_stats['non_pii_patterns']['keywords']} keywords",
+                target_state,
+            )
 
     if not os.path.exists(AppConfig.OUTPUT_DIR):
         os.makedirs(AppConfig.OUTPUT_DIR)
@@ -2280,8 +2473,13 @@ def submit_stage3() -> Tuple:
 
         try:
             code = target_state.engine.generate_python_code(
-                schema, target_state.policy_data[table], target_state.pii_data[table], table_name=table, db_config=AppConfig.DB_PATH,  # Can be string path or dict config
-                log_callback=session_log_callback, )
+                schema,
+                target_state.policy_data[table],
+                target_state.pii_data[table],
+                table_name=table,
+                db_config=AppConfig.DB_PATH,  # Can be string path or dict config
+                log_callback=session_log_callback,
+            )
 
             output_file = os.path.join(table_dir, f"pseudonymize_{table}.py")
             with open(output_file, "w", encoding="utf-8") as f:
@@ -2308,9 +2506,15 @@ def submit_stage3() -> Tuple:
         log_producer(f"[Time] {stage4_name}: {duration_str}", target_state)
 
         if target_state.audit_logger:
-            target_state.audit_logger.log_code_generation(table=table, code_length=len(code), validation_passed=True)
+            target_state.audit_logger.log_code_generation(
+                table=table, code_length=len(code), validation_passed=True
+            )
 
-            report_path = target_state.audit_logger.generate_compliance_report(policy_dict=target_state.policy_data[table], table_name=table, output_dir=table_dir, )
+            report_path = target_state.audit_logger.generate_compliance_report(
+                policy_dict=target_state.policy_data[table],
+                table_name=table,
+                output_dir=table_dir,
+            )
 
             # Store relative path for web interface
             rel_report_path = os.path.relpath(report_path, AppConfig.OUTPUT_DIR)
@@ -2342,7 +2546,9 @@ def submit_stage3() -> Tuple:
 
     if target_state.file_logger:
         target_state.file_logger.log_summary()
-        log_producer(f"[Dir] Log file saved: {target_state.file_logger.get_log_file_path()}", target_state)
+        log_producer(
+            f"[Dir] Log file saved: {target_state.file_logger.get_log_file_path()}", target_state
+        )
 
     # Return updated report files so frontend can show the regenerated integrated reports
 
@@ -2351,14 +2557,14 @@ def submit_stage3() -> Tuple:
             "status": "completed",
             "codes": target_state.generated_code,
             "reports": target_state.report_files,  # Include updated report files
-            "heuristic_learning": heuristic_learning_stats  # Include heuristic learning stats for notification
+            "heuristic_learning": heuristic_learning_stats,  # Include heuristic learning stats for notification
         }
     )
 
 
 @app.route("/validate_policy", methods=["POST"])
 def validate_policy() -> Tuple:
-    """API endpoint for real-time policy validation
+    """API endpoint for real-time policy validation.
 
     Implements real-time validation
 
@@ -2378,7 +2584,9 @@ def validate_policy() -> Tuple:
 
         # Get session-specific state or fall back to global state
 
-        session_state = session_manager.get_session(client_session_id) if client_session_id else None
+        session_state = (
+            session_manager.get_session(client_session_id) if client_session_id else None
+        )
         target_state = session_state if session_state else state
 
         if not table or table not in target_state.policy_data:
@@ -2410,7 +2618,11 @@ def validate_policy() -> Tuple:
                 if evidence_source.startswith("User-defined PII"):
                     legal_evidence = "User-defined PII"
 
-                action = PolicyAction(action=action_type, rationale=rationale, legal_evidence=legal_evidence, )
+                action = PolicyAction(
+                    action=action_type,
+                    rationale=rationale,
+                    legal_evidence=legal_evidence,
+                )
             else:
                 techs = col_data.get("recommended_methods", [])
                 if techs:
@@ -2438,26 +2650,51 @@ def validate_policy() -> Tuple:
 
                     # Use user rationale if available, otherwise use method description
 
-                    final_rationale = user_rationale if user_rationale else first_tech.get("description", "")
+                    final_rationale = (
+                        user_rationale if user_rationale else first_tech.get("description", "")
+                    )
 
-                    action = PolicyAction(action=ActionType[first_tech.get("method", "KEEP")], rationale=final_rationale, legal_evidence=legal_evidence, )
+                    action = PolicyAction(
+                        action=ActionType[first_tech.get("method", "KEEP")],
+                        rationale=final_rationale,
+                        legal_evidence=legal_evidence,
+                    )
                 else:
                     action = PolicyAction(action=ActionType.KEEP)
 
-            col_policy = ColumnPolicy(column_name=col_name, pii_type=pii_type, is_pii=is_pii, action=action)
+            col_policy = ColumnPolicy(
+                column_name=col_name, pii_type=pii_type, is_pii=is_pii, action=action
+            )
             temp_policy.add_column_policy(col_policy)
 
-        violations = target_state.validator.validate_policy(temp_policy, target_state.schemas[table])
+        violations = target_state.validator.validate_policy(
+            temp_policy, target_state.schemas[table]
+        )
 
         if target_state.audit_logger:
-            target_state.audit_logger.log_validation_result(table, [{"severity": v.severity, "column": v.column, "message": v.message} for v in violations], )
+            target_state.audit_logger.log_validation_result(
+                table,
+                [
+                    {"severity": v.severity, "column": v.column, "message": v.message}
+                    for v in violations
+                ],
+            )
 
         summary = target_state.validator.get_validation_summary(violations)
 
         return jsonify(
             {
                 "status": "validated",
-                "violations": [{"severity": v.severity, "column": v.column, "message": v.message, "suggestion": v.suggestion, "check_type": v.check_type, } for v in violations],
+                "violations": [
+                    {
+                        "severity": v.severity,
+                        "column": v.column,
+                        "message": v.message,
+                        "suggestion": v.suggestion,
+                        "check_type": v.check_type,
+                    }
+                    for v in violations
+                ],
                 "summary": summary,
             }
         )
@@ -2472,7 +2709,7 @@ def validate_policy() -> Tuple:
 
 @app.route("/get_report/<path:filename>")
 def get_report(filename: str) -> Tuple:
-    """API endpoint to retrieve markdown report content
+    """API endpoint to retrieve markdown report content.
 
     Args:
         filename: Report filename or path
@@ -2495,7 +2732,7 @@ def get_report(filename: str) -> Tuple:
 
 @app.route("/download_report/<path:filename>")
 def download_report(filename: str) -> Tuple:
-    """API endpoint to download markdown report
+    """API endpoint to download markdown report.
 
     Args:
         filename: Report filename
@@ -2518,7 +2755,7 @@ def download_report(filename: str) -> Tuple:
 
 @app.route("/api/heuristics", methods=["GET"])
 def get_heuristics() -> Tuple:
-    """Get all heuristics
+    """Get all heuristics.
 
     Query params:
         enabled_only: "true" to get only enabled heuristics
@@ -2548,7 +2785,7 @@ def get_heuristics() -> Tuple:
 
 @app.route("/api/heuristics/statistics", methods=["GET"])
 def get_heuristics_statistics() -> Tuple:
-    """Get heuristics statistics
+    """Get heuristics statistics.
 
     Returns:
         JSON with heuristics statistics (total, manual, auto-learned counts)
@@ -2566,7 +2803,7 @@ def get_heuristics_statistics() -> Tuple:
 
 @app.route("/api/heuristics/<heuristic_id>", methods=["GET"])
 def get_heuristic(heuristic_id: str) -> Tuple:
-    """Get specific heuristic by ID
+    """Get specific heuristic by ID.
 
     Args:
         heuristic_id: Heuristic ID
@@ -2586,7 +2823,7 @@ def get_heuristic(heuristic_id: str) -> Tuple:
 
 @app.route("/api/heuristics", methods=["POST"])
 def add_heuristic() -> Tuple:
-    """Add new heuristic
+    """Add new heuristic.
 
     Accepts:
         - name: Heuristic name
@@ -2607,7 +2844,10 @@ def add_heuristic() -> Tuple:
         required_fields = ["name", "regex", "pii_type", "rationale"]
         for field in required_fields:
             if field not in data:
-                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
+                return (
+                    jsonify({"status": "error", "message": f"Missing required field: {field}"}),
+                    400,
+                )
 
         # Add heuristic
         heuristic = heuristic_manager.add(
@@ -2617,7 +2857,7 @@ def add_heuristic() -> Tuple:
             rationale=data["rationale"],
             priority=data.get("priority", 50),
             enabled=data.get("enabled", True),
-            pattern_type=data.get("pattern_type", "")
+            pattern_type=data.get("pattern_type", ""),
         )
 
         # Log heuristic change
@@ -2626,7 +2866,7 @@ def add_heuristic() -> Tuple:
                 action="ADD",
                 heuristic_id=heuristic["id"],
                 new_data=heuristic,
-                user_id=request.remote_addr or "unknown"
+                user_id=request.remote_addr or "unknown",
             )
 
         return jsonify({"status": "success", "heuristic": heuristic})
@@ -2638,7 +2878,7 @@ def add_heuristic() -> Tuple:
 
 @app.route("/api/heuristics/<heuristic_id>", methods=["PUT"])
 def update_heuristic(heuristic_id: str) -> Tuple:
-    """Update existing heuristic
+    """Update existing heuristic.
 
     Args:
         heuristic_id: Heuristic ID to update
@@ -2666,7 +2906,7 @@ def update_heuristic(heuristic_id: str) -> Tuple:
                 heuristic_id=heuristic_id,
                 old_data=old_heuristic,
                 new_data=heuristic,
-                user_id=request.remote_addr or "unknown"
+                user_id=request.remote_addr or "unknown",
             )
 
         return jsonify({"status": "success", "heuristic": heuristic})
@@ -2678,7 +2918,7 @@ def update_heuristic(heuristic_id: str) -> Tuple:
 
 @app.route("/api/heuristics/<heuristic_id>", methods=["DELETE"])
 def delete_heuristic(heuristic_id: str) -> Tuple:
-    """Delete heuristic
+    """Delete heuristic.
 
     Args:
         heuristic_id: Heuristic ID to delete
@@ -2701,7 +2941,7 @@ def delete_heuristic(heuristic_id: str) -> Tuple:
                 action="DELETE",
                 heuristic_id=heuristic_id,
                 old_data=old_heuristic,
-                user_id=request.remote_addr or "unknown"
+                user_id=request.remote_addr or "unknown",
             )
 
         return jsonify({"status": "success", "message": "Heuristic deleted"})
@@ -2711,7 +2951,7 @@ def delete_heuristic(heuristic_id: str) -> Tuple:
 
 @app.route("/api/heuristics/test", methods=["POST"])
 def test_heuristic() -> Tuple:
-    """Test regex pattern against sample strings
+    """Test regex pattern against sample strings.
 
     Accepts:
         - regex: Regular expression pattern
@@ -2727,8 +2967,7 @@ def test_heuristic() -> Tuple:
             return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
         result = heuristic_manager.test_pattern(
-            regex=data["regex"],
-            test_strings=data["test_strings"]
+            regex=data["regex"], test_strings=data["test_strings"]
         )
 
         return jsonify({"status": "success", "result": result})
@@ -2742,7 +2981,7 @@ def test_heuristic() -> Tuple:
 @app.route("/change_pii_status", methods=["POST"])
 @app.route("/api/stage3/change_pii_status", methods=["POST"])
 def change_pii_status() -> Tuple:
-    """Handle PII status change and query LLM for anonymization methods
+    """Handle PII status change and query LLM for anonymization methods.
 
     Accepts:
         - session_id: Client session ID
@@ -2768,7 +3007,9 @@ def change_pii_status() -> Tuple:
 
         # Get session-specific state or fall back to global state
 
-        session_state = session_manager.get_session(client_session_id) if client_session_id else None
+        session_state = (
+            session_manager.get_session(client_session_id) if client_session_id else None
+        )
         target_state = session_state if session_state else state
 
         logging.getLogger(__name__).debug(f"[DEBUG /change_pii_status] Received request:")
@@ -2811,7 +3052,7 @@ def change_pii_status() -> Tuple:
                 old_status=old_status,
                 new_status=new_status,
                 rationale=rationale,
-                user_id=request.remote_addr or "user"
+                user_id=request.remote_addr or "user",
             )
 
         # Record PII classification change in user preference manager for future learning
@@ -2824,7 +3065,11 @@ def change_pii_status() -> Tuple:
                 schema_col = target_state.schemas[table][column]
                 if isinstance(schema_col, dict):
                     col_comment = schema_col.get("comment", "")
-            if not col_comment and table in target_state.pii_data and column in target_state.pii_data[table]:
+            if (
+                not col_comment
+                and table in target_state.pii_data
+                and column in target_state.pii_data[table]
+            ):
                 col_comment = target_state.pii_data[table][column].get("column_comment", "")
 
             target_state.expert_preference_manager.record_pii_classification_change(
@@ -2832,9 +3077,12 @@ def change_pii_status() -> Tuple:
                 old_classification=old_status,
                 new_classification=new_status,
                 rationale=rationale,
-                column_comment=col_comment
+                column_comment=col_comment,
             )
-            log_producer(f"[RAG] Recorded PII classification learning: {column} ({old_status} -> {new_status})", target_state)
+            log_producer(
+                f"[RAG] Recorded PII classification learning: {column} ({old_status} -> {new_status})",
+                target_state,
+            )
 
         methods = []
 
@@ -2860,18 +3108,29 @@ def change_pii_status() -> Tuple:
                     data_type = schema_col.get("type", "")
 
             # If not in schemas, try pii_data
-            if not column_comment and table in target_state.pii_data and column in target_state.pii_data[table]:
+            if (
+                not column_comment
+                and table in target_state.pii_data
+                and column in target_state.pii_data[table]
+            ):
                 column_comment = target_state.pii_data[table][column].get("column_comment", "")
 
             # Generate Non-PII methods using LLM (includes ROUND, GENERALIZATION for applicable types)
             methods = _generate_non_pii_methods(column, column_comment, data_type)
 
-            print(f"[INFO] Generated {len(methods)} Non-PII methods for {column} (type: {data_type})")
-            log_producer(f"[Note] Generated Non-PII methods for {column}: {', '.join([m['method'] for m in methods])}", target_state)
+            print(
+                f"[INFO] Generated {len(methods)} Non-PII methods for {column} (type: {data_type})"
+            )
+            log_producer(
+                f"[Note] Generated Non-PII methods for {column}: {', '.join([m['method'] for m in methods])}",
+                target_state,
+            )
 
             # Update target_state.policy_data AND target_state.pii_data to reflect PII -> Non-PII change
             # This ensures that the old PII policy (e.g., MASK) is replaced with Non-PII methods
-            logging.getLogger(__name__).debug(f"[DEBUG] Updating state for {table}.{column}: PII -> Non-PII")
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] Updating state for {table}.{column}: PII -> Non-PII"
+            )
             log_producer(f"[Note] State updated for {column}: PII -> Non-PII", target_state)
 
             # Remove from policy_data (since it's no longer PII)
@@ -2886,15 +3145,25 @@ def change_pii_status() -> Tuple:
             target_state.pii_data[table][column] = {
                 "is_pii": False,
                 "pii_type": "Non-PII",
-                "evidence_source": f"User reclassified from PII. {rationale}" if rationale else "User reclassified from PII",
-                "column_comment": column_comment
+                "evidence_source": f"User reclassified from PII. {rationale}"
+                if rationale
+                else "User reclassified from PII",
+                "column_comment": column_comment,
             }
             logging.getLogger(__name__).debug(f"[DEBUG] Updated pii_data for {column} to Non-PII")
         elif old_status == "Non-PII" and new_status == "PII":
             logging.getLogger(__name__).debug(f"[DEBUG] Executing branch: Non-PII -> PII")
             # Non-PII -> PII: Query LLM for anonymization methods
             if not rationale:
-                return jsonify({"status": "error", "message": "Rationale is required for Non-PII to PII conversion"}), 400
+                return (
+                    jsonify(
+                        {
+                            "status": "error",
+                            "message": "Rationale is required for Non-PII to PII conversion",
+                        }
+                    ),
+                    400,
+                )
 
             # Get column metadata for better method generation
             column_comment = ""
@@ -2907,21 +3176,33 @@ def change_pii_status() -> Tuple:
                     data_type = schema_col.get("type", "")
 
             # If not in schemas, try pii_data
-            if not column_comment and table in target_state.pii_data and column in target_state.pii_data[table]:
+            if (
+                not column_comment
+                and table in target_state.pii_data
+                and column in target_state.pii_data[table]
+            ):
                 column_comment = target_state.pii_data[table][column].get("column_comment", "")
 
             # Get LLM-generated anonymization methods with column description
-            logging.getLogger(__name__).debug(f"[DEBUG] Calling _query_llm_for_anonymization_methods for {column}")
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] Calling _query_llm_for_anonymization_methods for {column}"
+            )
             logging.getLogger(__name__).debug(f"  - pii_type: {pii_type}")
             logging.getLogger(__name__).debug(f"  - rationale: {rationale}")
             logging.getLogger(__name__).debug(f"  - column_comment: {column_comment}")
             logging.getLogger(__name__).debug(f"  - data_type: {data_type}")
-            methods = _query_llm_for_anonymization_methods(column, pii_type, rationale, column_comment, data_type)
-            logging.getLogger(__name__).debug(f"[DEBUG] _query_llm_for_anonymization_methods returned {len(methods)} methods")
+            methods = _query_llm_for_anonymization_methods(
+                column, pii_type, rationale, column_comment, data_type
+            )
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] _query_llm_for_anonymization_methods returned {len(methods)} methods"
+            )
 
             # Update target_state.policy_data AND target_state.pii_data to reflect Non-PII -> PII change
             # This ensures that the new PII policy is stored for code generation
-            logging.getLogger(__name__).debug(f"[DEBUG] Updating state for {table}.{column}: Non-PII -> PII")
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] Updating state for {table}.{column}: Non-PII -> PII"
+            )
             log_producer(f"[Note] State updated for {column}: Non-PII -> PII", target_state)
 
             # Add to policy_data
@@ -2951,9 +3232,11 @@ def change_pii_status() -> Tuple:
                 "is_pii": True,
                 "pii_type": pii_type,
                 "evidence_source": f"User-defined PII. Rationale: {rationale}",
-                "column_comment": column_comment
+                "column_comment": column_comment,
             }
-            logging.getLogger(__name__).debug(f"[DEBUG] Updated pii_data for {column} to PII ({pii_type})")
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] Updated pii_data for {column} to PII ({pii_type})"
+            )
         else:
             return jsonify({"status": "error", "message": "Invalid status change"}), 400
 
@@ -2964,7 +3247,11 @@ def change_pii_status() -> Tuple:
             if isinstance(schema_col, dict):
                 column_comment = schema_col.get("comment", "")
         # Also try to get from pii_data if available
-        if not column_comment and table in target_state.pii_data and column in target_state.pii_data[table]:
+        if (
+            not column_comment
+            and table in target_state.pii_data
+            and column in target_state.pii_data[table]
+        ):
             column_comment = target_state.pii_data[table][column].get("column_comment", "")
 
         # Prepare response data
@@ -2987,18 +3274,21 @@ def change_pii_status() -> Tuple:
                 "column_comment": column_comment,
                 "column": column,
                 "old_status": old_status,
-                "new_status": new_status
+                "new_status": new_status,
             }
         )
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, rationale: str, column_comment: str = "", data_type: str = "") -> List[Dict[str, Any]]:
-    """Query LLM to generate anonymization methods for a column with RAG integration
+def _query_llm_for_anonymization_methods(
+    column_name: str, pii_type: str, rationale: str, column_comment: str = "", data_type: str = ""
+) -> List[Dict[str, Any]]:
+    """Query LLM to generate anonymization methods for a column with RAG integration.
 
     This function integrates with RAG to retrieve legal context and uses Stage 2
     prompts for consistent policy generation across the system.
@@ -3014,7 +3304,9 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
         List of anonymization methods with code snippets and legal evidence
     """
     try:
-        logging.getLogger(__name__).debug(f"[DEBUG _query_llm_for_anonymization_methods] Starting for column: {column_name}")
+        logging.getLogger(__name__).debug(
+            f"[DEBUG _query_llm_for_anonymization_methods] Starting for column: {column_name}"
+        )
         logging.getLogger(__name__).debug(f"  - pii_type: {pii_type}")
         logging.getLogger(__name__).debug(f"  - rationale: {rationale}")
         logging.getLogger(__name__).debug(f"  - column_comment: {column_comment}")
@@ -3028,12 +3320,16 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
 
         if not shared_engine or not shared_engine.llm_client_stage_2:
             # Fallback to default methods if LLM is not available
-            logging.getLogger(__name__).debug(f"[DEBUG] LLM client not available, using fallback methods")
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] LLM client not available, using fallback methods"
+            )
             return _get_default_anonymization_methods(column_name, column_comment, data_type)
 
         if not shared_rag:
             # Fallback if RAG is not initialized
-            logging.getLogger(__name__).debug(f"[DEBUG] RAG not initialized, using fallback methods")
+            logging.getLogger(__name__).debug(
+                f"[DEBUG] RAG not initialized, using fallback methods"
+            )
             return _get_default_anonymization_methods(column_name, column_comment, data_type)
 
         llm_client = shared_engine.llm_client_stage_2
@@ -3047,6 +3343,7 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
 
         # Step 2: Load Stage 2 prompts for consistency
         from pseudragon.stages.stage2_policy_synthesis import load_prompt
+
         system_prompt = load_prompt("stage2_policy_synthesis", "system")
         user_prompt_template = load_prompt("stage2_policy_synthesis", "user")
 
@@ -3061,7 +3358,7 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
             column_desc=f"{column_description_text}. User rationale: {rationale}",
             data_type=data_type_text,
             purpose_goal="Pseudonymization for privacy protection",
-            preferred_method="General Pseudonymization"
+            preferred_method="General Pseudonymization",
         )
 
         # Step 5: Query LLM with legal context
@@ -3070,13 +3367,13 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
             client=llm_client,
             system_prompt=system_prompt,
             session_id="temp_anonymization_query",
-            max_history=0
+            max_history=0,
         )
 
         response = session.chat(
             user_prompt=user_prompt,
             model=Settings.LLM_STAGE_2,
-            temperature=Settings.LLM_TEMPERATURE
+            temperature=Settings.LLM_TEMPERATURE,
         )
 
         # Step 6: Parse response
@@ -3088,16 +3385,21 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
         from pseudragon.llm.json_parser import safe_parse_json
 
         result = safe_parse_json(
-            content, default_response={
+            content,
+            default_response={
                 "recommended_methods": [],
-                "evidence_source": "Failed to parse LLM response"
-            }
+                "evidence_source": "Failed to parse LLM response",
+            },
         )
 
         methods_data = result.get("recommended_methods", [])
 
         # Build legal evidence from source documents
-        legal_evidence = ", ".join(source_docs) if source_docs else result.get("evidence_source", "User-defined PII")
+        legal_evidence = (
+            ", ".join(source_docs)
+            if source_docs
+            else result.get("evidence_source", "User-defined PII")
+        )
 
         # Convert to format expected by web interface
         methods = []
@@ -3114,14 +3416,16 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
                 "description": tech.get("description", ""),
                 "code_snippet": tech.get("code_snippet", ""),
                 "example_implementation": tech.get("code_snippet", ""),
-                "legal_evidence": tech.get("legal_source", legal_evidence)
+                "legal_evidence": tech.get("legal_source", legal_evidence),
             }
             methods.append(method_dict)
 
         # Ensure we have at least 2 methods - add fallback if needed
         MIN_METHODS = 2
         if len(methods) < MIN_METHODS:
-            fallback_methods = _get_default_anonymization_methods(column_name, column_comment, data_type)
+            fallback_methods = _get_default_anonymization_methods(
+                column_name, column_comment, data_type
+            )
             for fallback in fallback_methods:
                 if len(methods) >= MIN_METHODS:
                     break
@@ -3138,13 +3442,14 @@ def _query_llm_for_anonymization_methods(column_name: str, pii_type: str, ration
     except Exception as e:
         print(f"Error querying LLM for anonymization methods: {e}")
         import traceback
+
         traceback.print_exc()
         # Fallback to default methods
         return _get_default_anonymization_methods(column_name, column_comment, data_type)
 
 
 def _infer_pii_type_from_context(column_name: str, rationale: str) -> str:
-    """Infer PII type from column name and user rationale
+    """Infer PII type from column name and user rationale.
 
     Args:
         column_name: Column name
@@ -3158,8 +3463,10 @@ def _infer_pii_type_from_context(column_name: str, rationale: str) -> str:
     return "PII"
 
 
-def _analyze_column_semantics(column_name: str, column_comment: str = "", data_type: str = "") -> Dict[str, Any]:
-    """Analyze column semantics from description and name to determine data type
+def _analyze_column_semantics(
+    column_name: str, column_comment: str = "", data_type: str = ""
+) -> Dict[str, Any]:
+    """Analyze column semantics from description and name to determine data type.
 
     Args:
         column_name: Column name
@@ -3173,14 +3480,19 @@ def _analyze_column_semantics(column_name: str, column_comment: str = "", data_t
     col_comment_upper = (column_comment or "").upper()
 
     # Check if numeric type
-    is_numeric = any(t in (data_type or "").upper() for t in ["INT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "NUMBER"])
+    is_numeric = any(
+        t in (data_type or "").upper()
+        for t in ["INT", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "NUMBER"]
+    )
 
     # PRIORITY 1: Check column description/comment for semantic meaning (more reliable)
     # PRIORITY 2: Check column name as fallback
 
     # === PII-related keywords ===
     # Phone number
-    is_phone_by_comment = any(kw in col_comment_upper for kw in ["전화", "핸드폰", "휴대폰", "PHONE", "MOBILE", "TEL", "CONTACT"])
+    is_phone_by_comment = any(
+        kw in col_comment_upper for kw in ["전화", "핸드폰", "휴대폰", "PHONE", "MOBILE", "TEL", "CONTACT"]
+    )
     is_phone_by_name = any(kw in col_name_upper for kw in ["PHONE", "TEL", "MOBILE", "CONTACT"])
     is_phone = is_phone_by_comment or is_phone_by_name
 
@@ -3190,62 +3502,113 @@ def _analyze_column_semantics(column_name: str, column_comment: str = "", data_t
     is_email = is_email_by_comment or is_email_by_name
 
     # Name
-    is_name_by_comment = any(kw in col_comment_upper for kw in ["이름", "성명", "NAME", "고객명", "CUSTOMER NAME"])
+    is_name_by_comment = any(
+        kw in col_comment_upper for kw in ["이름", "성명", "NAME", "고객명", "CUSTOMER NAME"]
+    )
     is_name_by_name = any(kw in col_name_upper for kw in ["NAME", "NM"])
     is_name = is_name_by_comment or is_name_by_name
 
     # ID/identifier
-    is_id_by_comment = any(kw in col_comment_upper for kw in ["아이디", "식별자", "ID", "IDENTIFIER", "고유번호", "UNIQUE"])
+    is_id_by_comment = any(
+        kw in col_comment_upper for kw in ["아이디", "식별자", "ID", "IDENTIFIER", "고유번호", "UNIQUE"]
+    )
     is_id_by_name = any(kw in col_name_upper for kw in ["ID", "_ID", "IDENTIFIER", "UNIQUE_ID"])
     is_id = is_id_by_comment or is_id_by_name
 
     # === Non-PII related keywords ===
     # Date/time
     is_date_by_comment = any(
-        kw in col_comment_upper for kw in [
-            "날짜", "생년월일", "DATE", "BIRTH", "TRANSACTION DATE", "CREATED", "UPDATED",
-            "YYYY", "MM", "DD", "년", "월", "일",
-            "DATETIME", "TIME", "TIMESTAMP", "INQUIRY DATETIME", "HHMMSS",
-            "STANDARD DATE", "STD DATE", "일자", "기준일", "YYYYMMDD"
+        kw in col_comment_upper
+        for kw in [
+            "날짜",
+            "생년월일",
+            "DATE",
+            "BIRTH",
+            "TRANSACTION DATE",
+            "CREATED",
+            "UPDATED",
+            "YYYY",
+            "MM",
+            "DD",
+            "년",
+            "월",
+            "일",
+            "DATETIME",
+            "TIME",
+            "TIMESTAMP",
+            "INQUIRY DATETIME",
+            "HHMMSS",
+            "STANDARD DATE",
+            "STD DATE",
+            "일자",
+            "기준일",
+            "YYYYMMDD",
         ]
     )
     is_date_by_name = any(
-        kw in col_name_upper for kw in [
-            "DT", "DATE", "BIRTH", "TRAN_DT", "CREATE_DT", "UPDATE_DT",
-            "DTIME", "DATETIME", "TIME", "TIMESTAMP", "STD_DT", "STDT"
+        kw in col_name_upper
+        for kw in [
+            "DT",
+            "DATE",
+            "BIRTH",
+            "TRAN_DT",
+            "CREATE_DT",
+            "UPDATE_DT",
+            "DTIME",
+            "DATETIME",
+            "TIME",
+            "TIMESTAMP",
+            "STD_DT",
+            "STDT",
         ]
     )
     is_date_column = is_date_by_comment or is_date_by_name
 
     # Birth date (specific type of date)
-    is_birth_date = any(kw in col_comment_upper for kw in ["생년월일", "BIRTH"]) or "BIRTH" in col_name_upper
+    is_birth_date = (
+        any(kw in col_comment_upper for kw in ["생년월일", "BIRTH"]) or "BIRTH" in col_name_upper
+    )
 
     # Amount/balance
     is_amount_by_comment = any(
-        kw in col_comment_upper for kw in [
-            "금액", "잔액", "BALANCE", "AMOUNT", "PRICE", "COST", "FEE", "SALARY",
-            "RATE", "CHARGE", "PAYMENT", "원", "달러", "DOLLAR", "WON"
+        kw in col_comment_upper
+        for kw in [
+            "금액",
+            "잔액",
+            "BALANCE",
+            "AMOUNT",
+            "PRICE",
+            "COST",
+            "FEE",
+            "SALARY",
+            "RATE",
+            "CHARGE",
+            "PAYMENT",
+            "원",
+            "달러",
+            "DOLLAR",
+            "WON",
         ]
     )
-    is_amount_by_name = any(kw in col_name_upper for kw in ["AMT", "AMOUNT", "BLNC", "BALANCE", "PRICE", "COST", "FEE", "RATE"])
+    is_amount_by_name = any(
+        kw in col_name_upper
+        for kw in ["AMT", "AMOUNT", "BLNC", "BALANCE", "PRICE", "COST", "FEE", "RATE"]
+    )
 
     # Count/quantity
     is_count_by_comment = any(
-        kw in col_comment_upper for kw in [
-            "개수", "수량", "COUNT", "QUANTITY", "QTY", "NUMBER OF", "건수"
-        ]
+        kw in col_comment_upper
+        for kw in ["개수", "수량", "COUNT", "QUANTITY", "QTY", "NUMBER OF", "건수"]
     )
     is_count_by_name = any(kw in col_name_upper for kw in ["QTY", "QUANTITY", "CNT", "COUNT"])
 
     # Combine amount and count
-    is_amount_column = is_amount_by_comment or is_count_by_comment or is_amount_by_name or is_count_by_name
+    is_amount_column = (
+        is_amount_by_comment or is_count_by_comment or is_amount_by_name or is_count_by_name
+    )
 
     # Age
-    is_age_by_comment = any(
-        kw in col_comment_upper for kw in [
-            "나이", "연령", "AGE", "세", "YEARS OLD"
-        ]
-    )
+    is_age_by_comment = any(kw in col_comment_upper for kw in ["나이", "연령", "AGE", "세", "YEARS OLD"])
     is_age_column = is_age_by_comment
 
     # If it's an amount column but data_type is not detected as numeric, treat it as numeric
@@ -3279,8 +3642,10 @@ def _analyze_column_semantics(column_name: str, column_comment: str = "", data_t
     }
 
 
-def _get_default_anonymization_methods(column_name: str, column_comment: str = "", data_type: str = "") -> List[Dict[str, Any]]:
-    """Get default anonymization methods when LLM is not available
+def _get_default_anonymization_methods(
+    column_name: str, column_comment: str = "", data_type: str = ""
+) -> List[Dict[str, Any]]:
+    """Get default anonymization methods when LLM is not available.
 
     Args:
         column_name: Column name
@@ -3292,18 +3657,28 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
     """
     methods = []
 
-    logging.getLogger(__name__).debug(f"[DEBUG _get_default_anonymization_methods] column={column_name}, comment={column_comment}, data_type={data_type}")
+    logging.getLogger(__name__).debug(
+        f"[DEBUG _get_default_anonymization_methods] column={column_name}, comment={column_comment}, data_type={data_type}"
+    )
 
     # Use unified semantic analysis
     semantics = _analyze_column_semantics(column_name, column_comment, data_type)
 
-    logging.getLogger(__name__).debug(f"[DEBUG] is_phone={semantics['is_phone']} (comment:{semantics['is_phone_by_comment']}, name:{semantics['is_phone_by_name']})")
-    logging.getLogger(__name__).debug(f"[DEBUG] is_email={semantics['is_email']} (comment:{semantics['is_email_by_comment']}, name:{semantics['is_email_by_name']})")
-    logging.getLogger(__name__).debug(f"[DEBUG] is_name={semantics['is_name']} (comment:{semantics['is_name_by_comment']}, name:{semantics['is_name_by_name']})")
-    logging.getLogger(__name__).debug(f"[DEBUG] is_id={semantics['is_id']} (comment:{semantics['is_id_by_comment']}, name:{semantics['is_id_by_name']})")
+    logging.getLogger(__name__).debug(
+        f"[DEBUG] is_phone={semantics['is_phone']} (comment:{semantics['is_phone_by_comment']}, name:{semantics['is_phone_by_name']})"
+    )
+    logging.getLogger(__name__).debug(
+        f"[DEBUG] is_email={semantics['is_email']} (comment:{semantics['is_email_by_comment']}, name:{semantics['is_email_by_name']})"
+    )
+    logging.getLogger(__name__).debug(
+        f"[DEBUG] is_name={semantics['is_name']} (comment:{semantics['is_name_by_comment']}, name:{semantics['is_name_by_name']})"
+    )
+    logging.getLogger(__name__).debug(
+        f"[DEBUG] is_id={semantics['is_id']} (comment:{semantics['is_id_by_comment']}, name:{semantics['is_id_by_name']})"
+    )
 
     # Provide context-specific methods based on column semantics
-    if semantics['is_phone']:
+    if semantics["is_phone"]:
         # Phone numbers: MASK (hide the last 4 characters), HASH, ENCRYPT
         methods.append(
             {
@@ -3313,10 +3688,10 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
                 "parameters": {"mask_char": "*", "mask_last": 4, "short_value_mask_length": 4},
                 "code_snippet": f"masked_{column_name} = str(record['{column_name}'])[:-4] + '****' if len(str(record['{column_name}'])) > 4 else '****'",
                 "example_implementation": f"masked_{column_name} = str(record['{column_name}'])[:-4] + '****' if len(str(record['{column_name}'])) > 4 else '****'",
-                "legal_evidence": "Phone number masking - recommended for PII protection"
+                "legal_evidence": "Phone number masking - recommended for PII protection",
             }
         )
-    elif semantics['is_email']:
+    elif semantics["is_email"]:
         # Email: MASK (show domain only), HASH
         methods.append(
             {
@@ -3325,10 +3700,10 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
                 "description": f"Mask {column_name} - show domain only (e.g., user@example.com -> ****@example.com)",
                 "code_snippet": f"masked_{column_name} = '****@' + str(record['{column_name}']).split('@')[1] if '@' in str(record['{column_name}']) else '****'",
                 "example_implementation": f"masked_{column_name} = '****@' + str(record['{column_name}']).split('@')[1] if '@' in str(record['{column_name}']) else '****'",
-                "legal_evidence": "Email masking - recommended for PII protection"
+                "legal_evidence": "Email masking - recommended for PII protection",
             }
         )
-    elif semantics['is_name']:
+    elif semantics["is_name"]:
         # Names: GENERALIZATION (first character only), MASK, TOKENIZATION
         methods.append(
             {
@@ -3337,8 +3712,8 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
                 "description": f"Generalize {column_name} - show only first character (e.g., 홍길동 -> 홍**, John Doe -> J***)",
                 "code_snippet": f"generalized_{column_name} = str(record['{column_name}'])[0] + '*' * (len(str(record['{column_name}'])) - 1) if len(str(record['{column_name}'])) > 0 else ''",
                 "example_implementation": f"generalized_{column_name} = str(record['{column_name}'])[0] + '*' * (len(str(record['{column_name}'])) - 1) if len(str(record['{column_name}'])) > 0 else "
-                                          f"''",
-                "legal_evidence": "Name generalization - recommended for PII protection"
+                f"''",
+                "legal_evidence": "Name generalization - recommended for PII protection",
             }
         )
     else:
@@ -3350,7 +3725,7 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
                 "description": "Partial masking - hide sensitive parts while keeping some information visible",
                 "code_snippet": f"masked_{column_name} = str(record['{column_name}'])[:2] + '****' if len(str(record['{column_name}'])) > 2 else '****'",
                 "example_implementation": f"masked_{column_name} = str(record['{column_name}'])[:2] + '****' if len(str(record['{column_name}'])) > 2 else '****'",
-                "legal_evidence": "User-defined PII - Masking recommended"
+                "legal_evidence": "User-defined PII - Masking recommended",
             }
         )
 
@@ -3362,7 +3737,7 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
             "description": "Irreversible SHA-256 hashing - ensures data cannot be reversed to original form",
             "code_snippet": f"import hashlib\nhashed_{column_name} = hashlib.sha256(str(record['{column_name}']).encode()).hexdigest()",
             "example_implementation": f"import hashlib\nhashed_{column_name} = hashlib.sha256(str(record['{column_name}']).encode()).hexdigest()",
-            "legal_evidence": "User-defined PII - Hashing recommended"
+            "legal_evidence": "User-defined PII - Hashing recommended",
         }
     )
 
@@ -3374,16 +3749,18 @@ def _get_default_anonymization_methods(column_name: str, column_comment: str = "
             "description": "Reversible token assignment - replace with random token that can be mapped back",
             "code_snippet": f"import uuid\ntoken_map = {{}}\nif record['{column_name}'] not in token_map:\n    token_map[record['{column_name}']] = str(uuid.uuid4())\ntokenized_{column_name} = token_map[record['{column_name}']]",
             "example_implementation": f"import uuid\ntoken_map = {{}}\nif record['{column_name}'] not in token_map:\n    token_map[record['{column_name}']] = str(uuid.uuid4())\ntokenized_"
-                                      f"{column_name} = token_map[record['{column_name}']]",
-            "legal_evidence": "User-defined PII - Tokenization recommended"
+            f"{column_name} = token_map[record['{column_name}']]",
+            "legal_evidence": "User-defined PII - Tokenization recommended",
         }
     )
 
     return methods
 
 
-def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: str) -> List[Dict[str, Any]]:
-    """Generate pseudonymization methods for Non-PII columns using LLM
+def _generate_non_pii_methods(
+    column_name: str, column_comment: str, data_type: str
+) -> List[Dict[str, Any]]:
+    """Generate pseudonymization methods for Non-PII columns using LLM.
 
     For numeric columns (e.g., BLNC/Balance), this may recommend:
 
@@ -3425,10 +3802,12 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
         user_prompt = user_prompt_template.format(
             column=column_name,
             column_desc=column_comment if column_comment else "No description available",
-            data_type=data_type if data_type else "Unknown"
+            data_type=data_type if data_type else "Unknown",
         )
 
-        logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] Querying LLM for {column_name}")
+        logging.getLogger(__name__).debug(
+            f"[DEBUG _generate_non_pii_methods] Querying LLM for {column_name}"
+        )
         logging.getLogger(__name__).debug(f"  - Column: {column_name}")
         logging.getLogger(__name__).debug(f"  - Description: {column_comment}")
         logging.getLogger(__name__).debug(f"  - Data Type: {data_type}")
@@ -3438,18 +3817,20 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
             client=llm_client,
             system_prompt=system_prompt,
             session_id="temp_non_pii_methods",
-            max_history=0
+            max_history=0,
         )
 
         response = session.chat(
             user_prompt=user_prompt,
             model=Settings.LLM_STAGE_2,
-            temperature=Settings.LLM_TEMPERATURE
+            temperature=Settings.LLM_TEMPERATURE,
         )
 
         content = response.choices[0].message.content
 
-        logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] LLM response length: {len(content)} characters")
+        logging.getLogger(__name__).debug(
+            f"[DEBUG _generate_non_pii_methods] LLM response length: {len(content)} characters"
+        )
         logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] LLM FULL response:")
         print("=" * 80)
         logging.getLogger(__name__).debug("Model response received (%d characters)", len(content))
@@ -3458,15 +3839,13 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
         # Parse JSON response
         from pseudragon.llm.json_parser import safe_parse_json
 
-        result = safe_parse_json(
-            content, default_response={
-                "recommended_methods": []
-            }
-        )
+        result = safe_parse_json(content, default_response={"recommended_methods": []})
 
         methods_data = result.get("recommended_methods", [])
 
-        logging.getLogger(__name__).debug(f"[DEBUG _generate_non_pii_methods] Parsed {len(methods_data)} methods from LLM")
+        logging.getLogger(__name__).debug(
+            f"[DEBUG _generate_non_pii_methods] Parsed {len(methods_data)} methods from LLM"
+        )
 
         # Convert to expected format
         methods = []
@@ -3479,7 +3858,7 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
                 "description": tech.get("description", ""),
                 "code_snippet": tech.get("code_snippet", ""),
                 "example_implementation": tech.get("code_snippet", ""),
-                "legal_evidence": tech.get("rationale", "LLM-generated recommendation for Non-PII")
+                "legal_evidence": tech.get("rationale", "LLM-generated recommendation for Non-PII"),
             }
             methods.append(method_dict)
             logging.getLogger(__name__).debug(f"  - Added method: {method_name}")
@@ -3495,7 +3874,7 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
                     "description": "Keep the column unchanged for analysis",
                     "code_snippet": "# No transformation needed",
                     "example_implementation": "# No transformation needed",
-                    "legal_evidence": "Standard option for Non-PII data"
+                    "legal_evidence": "Standard option for Non-PII data",
                 }
             )
 
@@ -3507,7 +3886,7 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
                     "description": "Remove the column if not needed for analysis",
                     "code_snippet": f"record.pop('{column_name}', None)",
                     "example_implementation": f"record.pop('{column_name}', None)",
-                    "legal_evidence": "Standard option for Non-PII data"
+                    "legal_evidence": "Standard option for Non-PII data",
                 }
             )
 
@@ -3516,13 +3895,16 @@ def _generate_non_pii_methods(column_name: str, column_comment: str, data_type: 
     except Exception as e:
         print(f"Error generating Non-PII methods for {column_name}: {e}")
         import traceback
+
         traceback.print_exc()
         # Fallback to default
         return _get_default_non_pii_methods(column_name, data_type, column_comment)
 
 
-def _get_default_non_pii_methods(column_name: str, data_type: str, column_comment: str = "") -> List[Dict[str, Any]]:
-    """Get default Non-PII methods when LLM is not available
+def _get_default_non_pii_methods(
+    column_name: str, data_type: str, column_comment: str = ""
+) -> List[Dict[str, Any]]:
+    """Get default Non-PII methods when LLM is not available.
 
     Args:
         column_name: Column name
@@ -3534,40 +3916,50 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
     """
     methods = []
 
-    logging.getLogger(__name__).debug(f"[DEBUG _get_default_non_pii_methods] column={column_name}, data_type={data_type}, comment={column_comment}")
+    logging.getLogger(__name__).debug(
+        f"[DEBUG _get_default_non_pii_methods] column={column_name}, data_type={data_type}, comment={column_comment}"
+    )
 
     # Use unified semantic analysis
     semantics = _analyze_column_semantics(column_name, column_comment, data_type)
 
-    logging.getLogger(__name__).debug(f"[DEBUG] is_numeric={semantics['is_numeric']}, is_date_column={semantics['is_date_column']} (comment:{semantics['is_date_by_comment']}, name:{semantics['is_date_by_name']})")
-    logging.getLogger(__name__).debug(f"[DEBUG] is_amount_column={semantics['is_amount_column']} (comment:{semantics['is_amount_by_comment']}, name:{semantics['is_amount_by_name']})")
+    logging.getLogger(__name__).debug(
+        f"[DEBUG] is_numeric={semantics['is_numeric']}, is_date_column={semantics['is_date_column']} (comment:{semantics['is_date_by_comment']}, name:{semantics['is_date_by_name']})"
+    )
+    logging.getLogger(__name__).debug(
+        f"[DEBUG] is_amount_column={semantics['is_amount_column']} (comment:{semantics['is_amount_by_comment']}, name:{semantics['is_amount_by_name']})"
+    )
     logging.getLogger(__name__).debug(f"[DEBUG] is_age_column={semantics['is_age_column']}")
 
     # Get uppercase versions for checking
     col_name_upper = column_name.upper()
     col_comment_upper = (column_comment or "").upper()
 
-    if semantics['is_numeric']:
-        if semantics['is_date_column']:
+    if semantics["is_numeric"]:
+        if semantics["is_date_column"]:
             # Date column (YYYYMMDD format)
             # Check if it's a birth date (by comment or name) - prioritize age range for birth dates
-            is_birth_date = semantics['is_birth_date']
+            is_birth_date = semantics["is_birth_date"]
 
-            if is_birth_date or semantics['is_age_column']:
+            if is_birth_date or semantics["is_age_column"]:
                 methods.append(
                     {
                         "method": "Generalization",
                         "applicability": "High",
                         "description": f"Convert {column_name} to age range (e.g., 19900115 -> '30s')",
-                        "code_snippet": f"lambda x: f\"{{((datetime.now().year - int(str(x)[:4]))//10)*10}}s\" if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)",
-                        "example_implementation": f"lambda x: f\"{{((datetime.now().year - int(str(x)[:4]))//10)*10}}s\" if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)",
-                        "legal_evidence": "Age range generalization for privacy protection"
+                        "code_snippet": f'lambda x: f"{{((datetime.now().year - int(str(x)[:4]))//10)*10}}s" if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)',
+                        "example_implementation": f'lambda x: f"{{((datetime.now().year - int(str(x)[:4]))//10)*10}}s" if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)',
+                        "legal_evidence": "Age range generalization for privacy protection",
                     }
                 )
 
             # General date methods
             # Check if it's a datetime (YYYYMMDDhhmmss - 14 digits) or just date (YYYYMMDD - 8 digits)
-            is_datetime = "DATETIME" in col_comment_upper or "HHMMSS" in col_comment_upper or "DTIME" in col_name_upper
+            is_datetime = (
+                "DATETIME" in col_comment_upper
+                or "HHMMSS" in col_comment_upper
+                or "DTIME" in col_name_upper
+            )
 
             if is_datetime:
                 # DateTime-specific methods (YYYYMMDDhhmmss -> YYYYMMDD or YYYYMM or YYYY)
@@ -3578,7 +3970,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Extract date only from {column_name} (e.g., 20240115143025 -> 20240115)",
                         "code_snippet": f"lambda x: str(x)[:8] if pd.notna(x) and len(str(x)) >= 14 and str(x).isdigit() else str(x)",
                         "example_implementation": f"lambda x: str(x)[:8] if pd.notna(x) and len(str(x)) >= 14 and str(x).isdigit() else str(x)",
-                        "legal_evidence": "Temporal generalization for privacy protection (remove time)"
+                        "legal_evidence": "Temporal generalization for privacy protection (remove time)",
                     }
                 )
 
@@ -3589,7 +3981,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Extract year-month from {column_name} (e.g., 20240115143025 -> 202401)",
                         "code_snippet": f"lambda x: str(x)[:6] if pd.notna(x) and len(str(x)) >= 14 and str(x).isdigit() else str(x)",
                         "example_implementation": f"lambda x: str(x)[:6] if pd.notna(x) and len(str(x)) >= 14 and str(x).isdigit() else str(x)",
-                        "legal_evidence": "Temporal generalization for privacy protection (year-month only)"
+                        "legal_evidence": "Temporal generalization for privacy protection (year-month only)",
                     }
                 )
 
@@ -3600,7 +3992,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Extract year only from {column_name} (e.g., 20240115143025 -> 2024)",
                         "code_snippet": f"lambda x: str(x)[:4] if pd.notna(x) and len(str(x)) >= 14 and str(x).isdigit() else str(x)",
                         "example_implementation": f"lambda x: str(x)[:4] if pd.notna(x) and len(str(x)) >= 14 and str(x).isdigit() else str(x)",
-                        "legal_evidence": "Temporal generalization for privacy protection (year only)"
+                        "legal_evidence": "Temporal generalization for privacy protection (year only)",
                     }
                 )
             else:
@@ -3612,7 +4004,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Extract year only from {column_name} (e.g., 20240115 -> 2024)",
                         "code_snippet": f"lambda x: str(x)[:4] if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)",
                         "example_implementation": f"lambda x: str(x)[:4] if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)",
-                        "legal_evidence": "Temporal generalization for privacy protection"
+                        "legal_evidence": "Temporal generalization for privacy protection",
                     }
                 )
 
@@ -3623,13 +4015,13 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Extract year-month from {column_name} (e.g., 20240115 -> 202401)",
                         "code_snippet": f"lambda x: str(x)[:6] if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)",
                         "example_implementation": f"lambda x: str(x)[:6] if pd.notna(x) and len(str(x)) >= 8 and str(x).isdigit() else str(x)",
-                        "legal_evidence": "Temporal generalization for privacy protection"
+                        "legal_evidence": "Temporal generalization for privacy protection",
                     }
                 )
         else:
             # Regular numeric column (amount, balance, count, or age value)
             # Special handling for age columns (already age values, not birth dates)
-            if semantics['is_age_column']:
+            if semantics["is_age_column"]:
                 methods.append(
                     {
                         "method": "Generalization",
@@ -3637,7 +4029,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Convert {column_name} to age range (e.g., 34 -> '30s')",
                         "code_snippet": f"lambda x: f\"{{(int(x)//10)*10}}s\" if pd.notna(x) and str(x).replace('.','').isdigit() else str(x)",
                         "example_implementation": f"lambda x: f\"{{(int(x)//10)*10}}s\" if pd.notna(x) and str(x).replace('.','').isdigit() else str(x)",
-                        "legal_evidence": "Age range generalization for privacy protection"
+                        "legal_evidence": "Age range generalization for privacy protection",
                     }
                 )
                 methods.append(
@@ -3647,7 +4039,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Generalize {column_name} into broader age ranges (e.g., 34 -> '30-39')",
                         "code_snippet": f"lambda x: f\"{{(int(x)//10)*10}}-{{(int(x)//10)*10+9}}\" if pd.notna(x) and str(x).replace('.','').isdigit() else str(x)",
                         "example_implementation": f"lambda x: f\"{{(int(x)//10)*10}}-{{(int(x)//10)*10+9}}\" if pd.notna(x) and str(x).replace('.','').isdigit() else str(x)",
-                        "legal_evidence": "Age range generalization for privacy protection"
+                        "legal_evidence": "Age range generalization for privacy protection",
                     }
                 )
             else:
@@ -3659,7 +4051,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "description": f"Round {column_name} to reduce precision (e.g., round to nearest 1000)",
                         "code_snippet": f"lambda x: round(float(x), -3) if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else x",
                         "example_implementation": f"lambda x: round(float(x), -3) if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else x",
-                        "legal_evidence": "Numeric rounding for privacy protection"
+                        "legal_evidence": "Numeric rounding for privacy protection",
                     }
                 )
 
@@ -3669,10 +4061,10 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
                         "applicability": "Medium",
                         "description": f"Generalize {column_name} into ranges (e.g., 0-1000, 1001-5000)",
                         "code_snippet": f"lambda x: '0-1000' if pd.notna(x) and float(x) < 1000 else ('1001-5000' if float(x) < 5000 else ('5001-10000' if float(x) < 10000 else '10000+')) if "
-                                        f"pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else str(x)",
+                        f"pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else str(x)",
                         "example_implementation": f"lambda x: '0-1000' if pd.notna(x) and float(x) < 1000 else ('1001-5000' if float(x) < 5000 else ('5001-10000' if float(x) < 10000 else '10000+')) "
-                                                  f"if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else str(x)",
-                        "legal_evidence": "Range generalization for privacy protection"
+                        f"if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else str(x)",
+                        "legal_evidence": "Range generalization for privacy protection",
                     }
                 )
 
@@ -3684,7 +4076,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
             "description": "Keep the column unchanged for analysis",
             "code_snippet": "# No transformation needed",
             "example_implementation": "# No transformation needed",
-            "legal_evidence": "Standard option for Non-PII data"
+            "legal_evidence": "Standard option for Non-PII data",
         }
     )
 
@@ -3696,7 +4088,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
             "description": "Remove the column if not needed for analysis",
             "code_snippet": f"record.pop('{column_name}', None)",
             "example_implementation": f"record.pop('{column_name}', None)",
-            "legal_evidence": "Standard option for Non-PII data"
+            "legal_evidence": "Standard option for Non-PII data",
         }
     )
 
@@ -3708,7 +4100,7 @@ def _get_default_non_pii_methods(column_name: str, data_type: str, column_commen
 
 @app.route("/api/expert_feedback", methods=["GET"])
 def get_expert_feedback() -> Tuple:
-    """Get expert feedback data
+    """Get expert feedback data.
 
     Returns all accumulated expert feedback from Stage 3 HITL sessions.
 
@@ -3724,7 +4116,7 @@ def get_expert_feedback() -> Tuple:
             "status": "success",
             "method_preferences": [],
             "pii_classifications": [],
-            "statistics": expert_pref_manager.get_statistics()
+            "statistics": expert_pref_manager.get_statistics(),
         }
 
         # Get column exact matches (method preferences)
@@ -3742,7 +4134,7 @@ def get_expert_feedback() -> Tuple:
                     "pii_type": value.get("pii_type", ""),
                     "method_counts": method_counts,
                     "total_selections": value.get("total_selections", 0),
-                    "preferred_method": preferred_method
+                    "preferred_method": preferred_method,
                 }
             )
 
@@ -3755,7 +4147,7 @@ def get_expert_feedback() -> Tuple:
                     "classification": value.get("classification", ""),
                     "change_count": value.get("change_count", 0),
                     "rationale": value.get("rationale", ""),
-                    "history": value.get("history", [])
+                    "history": value.get("history", []),
                 }
             )
 
@@ -3770,13 +4162,14 @@ def get_expert_feedback() -> Tuple:
         return jsonify(feedback_data)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/api/expert_feedback/summary", methods=["GET"])
 def get_expert_feedback_summary() -> Tuple:
-    """Get expert feedback summary statistics
+    """Get expert feedback summary statistics.
 
     Returns:
         JSON with summary statistics
@@ -3785,12 +4178,7 @@ def get_expert_feedback_summary() -> Tuple:
         expert_pref_manager = ExpertPreferenceManager()
         stats = expert_pref_manager.get_statistics()
 
-        return jsonify(
-            {
-                "status": "success",
-                "summary": stats
-            }
-        )
+        return jsonify({"status": "success", "summary": stats})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -3800,7 +4188,7 @@ def get_expert_feedback_summary() -> Tuple:
 
 @app.route("/api/audit_log", methods=["GET"])
 def get_audit_log() -> Tuple:
-    """Get audit log entries with optional filtering
+    """Get audit log entries with optional filtering.
 
     Query parameters:
         - session_id: Client session ID (optional, if not provided returns all logs)
@@ -3830,10 +4218,7 @@ def get_audit_log() -> Tuple:
             session_state = session_manager.get_session(client_session_id)
             if session_state and session_state.audit_logger:
                 events = session_state.audit_logger.get_all_events(
-                    event_type=event_type,
-                    start_date=start_date,
-                    end_date=end_date,
-                    user_id=user_id
+                    event_type=event_type, start_date=start_date, end_date=end_date, user_id=user_id
                 )
                 return jsonify({"status": "success", "events": events, "count": len(events)})
 
@@ -3842,10 +4227,7 @@ def get_audit_log() -> Tuple:
         # This works even after page refresh or server restart
 
         events = global_audit_logger.get_all_events(
-            event_type=event_type,
-            start_date=start_date,
-            end_date=end_date,
-            user_id=user_id
+            event_type=event_type, start_date=start_date, end_date=end_date, user_id=user_id
         )
 
         return jsonify({"status": "success", "events": events, "count": len(events)})
@@ -3855,7 +4237,7 @@ def get_audit_log() -> Tuple:
 
 @app.route("/api/audit_log/summary", methods=["GET"])
 def get_audit_log_summary() -> Tuple:
-    """Get audit log summary
+    """Get audit log summary.
 
     Query parameters:
         - session_id: Client session ID (optional, if not provided returns combined summary)
@@ -3889,27 +4271,21 @@ def get_audit_log_summary() -> Tuple:
 
 @app.route("/api/sessions", methods=["GET"])
 def get_all_sessions() -> Tuple:
-    """Get list of all active sessions for monitoring
+    """Get list of all active sessions for monitoring.
 
     Returns:
         JSON with list of session info
     """
     try:
         sessions = session_manager.get_all_sessions_info()
-        return jsonify(
-            {
-                "status": "success",
-                "sessions": sessions,
-                "count": len(sessions)
-            }
-        )
+        return jsonify({"status": "success", "sessions": sessions, "count": len(sessions)})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/api/sessions/<session_id>/logs", methods=["GET"])
 def get_session_logs_api(session_id: str) -> Tuple:
-    """Get logs from a specific session for monitoring (read-only)
+    """Get logs from a specific session for monitoring (read-only).
 
     Args:
         session_id: Session ID to get logs from
@@ -3930,19 +4306,14 @@ def get_session_logs_api(session_id: str) -> Tuple:
         if "error" in result:
             return jsonify({"status": "error", "message": result["error"]}), 404
 
-        return jsonify(
-            {
-                "status": "success",
-                **result
-            }
-        )
+        return jsonify({"status": "success", **result})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/api/sessions/<session_id>/status", methods=["GET"])
 def get_session_status_api(session_id: str) -> Tuple:
-    """Get current status of a specific session
+    """Get current status of a specific session.
 
     Args:
         session_id: Session ID

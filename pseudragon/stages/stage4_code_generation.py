@@ -1,6 +1,6 @@
-"""Stage 4: Code Generation
+"""Stage 4: Code Generation.
 
-Implements code generation from the paper (Algorithm 1):
+Generate programs through:
 
 - Policy-to-Code translation
 - Template-based generation
@@ -8,12 +8,10 @@ Implements code generation from the paper (Algorithm 1):
 """
 
 
-# 표준 라이브러리 import
 import ast
 from typing import Any, Callable, Dict, Optional
 
 
-# 프로젝트 관련 import
 from pseudragon.domain.policy_dsl import ActionType, Policy
 
 
@@ -21,17 +19,22 @@ class Stage4CodeGeneration:
     """Generate Python transformations from selected policies and validate their syntax."""
 
     def __init__(self, llm_client=None):
-        """Initialize code generator
+        """Initialize code generator.
 
         Args:
             llm_client: Not used in template-based approach (kept for compatibility)
         """
         self.client = llm_client
 
-    def generate_code(self, schema: Dict[str, Any], policy: Policy, pii_metadata: Dict[str, Any], db_config: Optional[str] = None, log_callback: Optional[Callable] = None, ) -> str:
+    def generate_code(
+        self,
+        schema: Dict[str, Any],
+        policy: Policy,
+        pii_metadata: Dict[str, Any],
+        db_config: Optional[str] = None,
+        log_callback: Optional[Callable] = None,
+    ) -> str:
         """Generate Python code from policy using templates.
-
-        Implements f_code() from Algorithm 1.
 
         Args:
             schema: Database schema information
@@ -54,8 +57,14 @@ class Stage4CodeGeneration:
         self._log("✨ Code generation complete!", log_callback)
         return code
 
-    def _generate_from_template(self, schema: Dict[str, Any], policy: Policy, pii_metadata: Dict[str, Any], db_config: Optional[str] = None, ) -> str:
-        """Generate code using template"""
+    def _generate_from_template(
+        self,
+        schema: Dict[str, Any],
+        policy: Policy,
+        pii_metadata: Dict[str, Any],
+        db_config: Optional[str] = None,
+    ) -> str:
+        """Generate code using template."""
         table_name = policy.table_name
         schema.get("columns", [])
 
@@ -155,7 +164,9 @@ if __name__ == "__main__":
 
     def _build_encryption_init_code(self, policy: Policy) -> str:
         """Require a deployment-managed Fernet key without printing or storing it."""
-        if not any(column.action.action == ActionType.ENCRYPT for column in policy.columns.values()):
+        if not any(
+            column.action.action == ActionType.ENCRYPT for column in policy.columns.values()
+        ):
             return ""
         return """
 key = os.environ.get("PSEUDRAGON_ENCRYPTION_KEY")
@@ -165,7 +176,7 @@ fernet = Fernet(key.encode("ascii"))
 """
 
     def _build_db_connection_code(self, table_name: str, db_config: Optional[str] = None) -> str:
-        """Build database connection and data loading code"""
+        """Build database connection and data loading code."""
         if db_config:
             # Use provided DB path
             db_path = db_config
@@ -195,7 +206,7 @@ fernet = Fernet(key.encode("ascii"))
         return code
 
     def _build_processing_code(self, policy: Policy, pii_metadata: Dict[str, Any]) -> str:
-        """Build column processing code using LLM-generated code snippets from Stage 2"""
+        """Build column processing code using LLM-generated code snippets from Stage 2."""
         code_lines = []
 
         # First pass: Extract helper functions from complex snippets
@@ -204,9 +215,9 @@ fernet = Fernet(key.encode("ascii"))
             if col_policy.action.action in (ActionType.KEEP, ActionType.DELETE):
                 continue
             code_snippet = col_policy.action.code_snippet
-            if code_snippet and '\n' in code_snippet.strip():
+            if code_snippet and "\n" in code_snippet.strip():
                 # Check if it contains a function definition
-                if 'def ' in code_snippet:
+                if "def " in code_snippet:
                     # Keep helper setup (including imports, constants and
                     # decorators), but execute the target apply only once below.
                     snippet_tree = ast.parse(code_snippet.strip())
@@ -223,7 +234,7 @@ fernet = Fernet(key.encode("ascii"))
             code_lines.append("    # 복잡한 변환을 위한 헬퍼 함수")
             for func in helper_functions:
                 # Indent the function definition properly
-                for line in func.split('\n'):
+                for line in func.split("\n"):
                     code_lines.append(f"    {line}")
                 code_lines.append("")  # Empty line after each function
             code_lines.append("")  # Extra empty line before processing code
@@ -268,47 +279,53 @@ fernet = Fernet(key.encode("ascii"))
                         # Check if this is a complex snippet that needs a helper function
                         if lambda_code.startswith("__COMPLEX_SNIPPET__"):
                             # Complex snippet - check if it's a function definition with apply()
-                            if 'def ' in code_snippet and '.apply(' in code_snippet:
+                            if "def " in code_snippet and ".apply(" in code_snippet:
                                 # Extract the apply() statement (last line typically)
-                                lines = code_snippet.strip().split('\n')
+                                lines = code_snippet.strip().split("\n")
                                 apply_line = None
                                 for line in reversed(lines):
-                                    if '.apply(' in line or f"['{col_name}']" in line:
+                                    if ".apply(" in line or f"['{col_name}']" in line:
                                         apply_line = line.strip()
                                         break
 
                                 if apply_line:
                                     # Use the apply() statement directly (function already defined above)
-                                    code_lines.append(f"    # Apply transformation using helper function defined above")
+                                    code_lines.append(
+                                        f"    # Apply transformation using helper function defined above"
+                                    )
                                     code_lines.append(f"    if '{col_name}' in df.columns:")
-                                    guarded_apply = self._guard_apply_statement(apply_line, col_name)
+                                    guarded_apply = self._guard_apply_statement(
+                                        apply_line, col_name
+                                    )
                                     code_lines.append(f"        {guarded_apply}")
                                 else:
                                     # Fallback: couldn't extract apply line
-                                    code_lines.append(f"    # WARNING: Complex snippet - could not extract apply() statement")
+                                    code_lines.append(
+                                        f"    # WARNING: Complex snippet - could not extract apply() statement"
+                                    )
                                     code_lines.append(f"    # Original snippet:")
-                                    for snippet_line in code_snippet.split('\n'):
+                                    for snippet_line in code_snippet.split("\n"):
                                         code_lines.append(f"    # {snippet_line}")
 
                             # Check if snippet contains .apply() without function definition
                             # Example: "df['column'].apply(lambda x: str(uuid.uuid4()) if pd.notna(x) else None)"
-                            elif '.apply(' in code_snippet:
+                            elif ".apply(" in code_snippet:
                                 # Extract the lambda from .apply() using parenthesis matching
-                                apply_idx = code_snippet.find('.apply(')
+                                apply_idx = code_snippet.find(".apply(")
                                 if apply_idx != -1:
                                     # Find the opening parenthesis after .apply
-                                    start_idx = apply_idx + len('.apply(')
+                                    start_idx = apply_idx + len(".apply(")
                                     # Match parentheses to find the closing one
                                     paren_count = 1
                                     end_idx = start_idx
                                     while end_idx < len(code_snippet) and paren_count > 0:
-                                        if code_snippet[end_idx] == '(':
+                                        if code_snippet[end_idx] == "(":
                                             paren_count += 1
-                                        elif code_snippet[end_idx] == ')':
+                                        elif code_snippet[end_idx] == ")":
                                             paren_count -= 1
                                         end_idx += 1
 
-                                    lambda_expr = code_snippet[start_idx:end_idx - 1].strip()
+                                    lambda_expr = code_snippet[start_idx : end_idx - 1].strip()
 
                                     # Preserve apply arguments while guarding its
                                     # callback, including positional/keyword args.
@@ -316,34 +333,46 @@ fernet = Fernet(key.encode("ascii"))
                                     apply_statement = (
                                         f"df[{col_name!r}] = df[{col_name!r}].apply({lambda_expr})"
                                     )
-                                    guarded_apply = self._guard_apply_statement(apply_statement, col_name)
+                                    guarded_apply = self._guard_apply_statement(
+                                        apply_statement, col_name
+                                    )
                                     code_lines.append(f"        {guarded_apply}")
                                 else:
                                     # Couldn't extract lambda - use as-is
                                     code_lines.append(f"    if '{col_name}' in df.columns:")
                                     # Replace df['col_name'] or df["col_name"] with df['{col_name}']
-                                    cleaned_snippet = code_snippet.replace(f"df['{col_name}']", f"df['{col_name}']")
-                                    cleaned_snippet = cleaned_snippet.replace(f'df["{col_name}"]', f"df['{col_name}']")
+                                    cleaned_snippet = code_snippet.replace(
+                                        f"df['{col_name}']", f"df['{col_name}']"
+                                    )
+                                    cleaned_snippet = cleaned_snippet.replace(
+                                        f'df["{col_name}"]', f"df['{col_name}']"
+                                    )
                                     code_lines.append(f"        {cleaned_snippet}")
 
                             else:
                                 # Complex snippet without function definition - comment it out
-                                code_lines.append(f"    # WARNING: Complex snippet requires manual integration")
+                                code_lines.append(
+                                    f"    # WARNING: Complex snippet requires manual integration"
+                                )
                                 code_lines.append(f"    # Original snippet:")
-                                for snippet_line in code_snippet.split('\n'):
+                                for snippet_line in code_snippet.split("\n"):
                                     code_lines.append(f"    # {snippet_line}")
                         else:
                             # Use lambda function
                             code_lines.append(f"    if '{col_name}' in df.columns:")
                             code_lines.append(f"        df['{col_name}'] = df['{col_name}'].apply(")
-                            code_lines.append(f"            {self._null_preserving_callback(lambda_code)}")
+                            code_lines.append(
+                                f"            {self._null_preserving_callback(lambda_code)}"
+                            )
                             code_lines.append(f"        )")
 
             else:
                 # Fallback to template-based generation if no code snippet
                 code_lines.append(f"    # WARNING: No code snippet provided by LLM")
                 code_lines.append(f"    # Using fallback template for {action.value}")
-                fallback_code = self._generate_fallback_code(col_name, action, col_policy.action.parameters)
+                fallback_code = self._generate_fallback_code(
+                    col_name, action, col_policy.action.parameters
+                )
                 code_lines.extend(fallback_code)
 
             code_lines.append("")  # Empty line between columns
@@ -400,7 +429,7 @@ fernet = Fernet(key.encode("ascii"))
         return ast.unparse(ast.fix_missing_locations(tree))
 
     def _convert_snippet_to_lambda(self, code_snippet: str, col_name: str) -> str:
-        """Convert standalone code snippet to lambda function for pandas .apply()
+        """Convert standalone code snippet to lambda function for pandas .apply().
 
         Args:
             code_snippet: LLM-generated code snippet (e.g., "hashed_x = hashlib.sha256(...)")
@@ -414,10 +443,10 @@ fernet = Fernet(key.encode("ascii"))
 
         # Handle multi-line snippets with import statements
         # Extract the actual code (skip import lines)
-        if '\n' in snippet:
-            lines = snippet.split('\n')
+        if "\n" in snippet:
+            lines = snippet.split("\n")
             # Filter out import statements
-            non_import_lines = [line for line in lines if not line.strip().startswith('import ')]
+            non_import_lines = [line for line in lines if not line.strip().startswith("import ")]
 
             # If we have only one non-import line, process it as a single-line snippet
             if len(non_import_lines) == 1:
@@ -430,13 +459,13 @@ fernet = Fernet(key.encode("ascii"))
                 return f"__COMPLEX_SNIPPET__:{col_name}"
 
         # Single import statement without other code - this is an error
-        if snippet.startswith('import '):
+        if snippet.startswith("import "):
             return f"__COMPLEX_SNIPPET__:{col_name}"
 
         # Check if snippet already contains .apply() - this means it's a full transformation statement
         # Example: "df['column'].apply(lambda x: str(uuid.uuid4()) if pd.notna(x) else None)"
         # We should NOT wrap this in another lambda - mark it as complex for special handling
-        if '.apply(' in snippet:
+        if ".apply(" in snippet:
             return f"__COMPLEX_SNIPPET__:{col_name}"
 
         # Check if snippet contains assignment (e.g., "hashed_x = ...")
@@ -462,26 +491,38 @@ fernet = Fernet(key.encode("ascii"))
         # Fallback: wrap the entire snippet in a lambda (may not work, but better than nothing)
         return f"lambda x: ({snippet}) if pd.notna(x) else None"
 
-    def _generate_fallback_code(self, col_name: str, action: ActionType, parameters: Dict[str, Any]) -> list:
-        """Generate fallback code when LLM code snippet is not available"""
+    def _generate_fallback_code(
+        self, col_name: str, action: ActionType, parameters: Dict[str, Any]
+    ) -> list:
+        """Generate fallback code when LLM code snippet is not available."""
         fallback_lines = []
 
         if action == ActionType.HASH:
             fallback_lines.append(f"    if '{col_name}' in df.columns:")
             fallback_lines.append(f"        df['{col_name}'] = df['{col_name}'].apply(")
-            fallback_lines.append(f"            lambda x: hashlib.sha256(str(x).encode()).hexdigest() if pd.notna(x) else None")
+            fallback_lines.append(
+                f"            lambda x: hashlib.sha256(str(x).encode()).hexdigest() if pd.notna(x) else None"
+            )
             fallback_lines.append(f"        )")
 
         elif action == ActionType.MASK:
             # MASK requires specific masking rules from legal documents
             # Do NOT use generic fallback - this forces LLM to provide code_snippet
-            fallback_lines.append(f"    # ERROR: MASK action requires specific code snippet from legal document")
-            fallback_lines.append(f"    # The LLM must extract masking rules (e.g., 'show first 4', 'show last 3')")
+            fallback_lines.append(
+                f"    # ERROR: MASK action requires specific code snippet from legal document"
+            )
+            fallback_lines.append(
+                f"    # The LLM must extract masking rules (e.g., 'show first 4', 'show last 3')"
+            )
             fallback_lines.append(f"    # and generate appropriate code snippet in Stage 2.")
             fallback_lines.append(f"    if '{col_name}' in df.columns:")
             fallback_lines.append(f"        raise ValueError(")
-            fallback_lines.append(f"            f'MASK action for {{'{col_name}'}} requires code_snippet from Stage 2. '")
-            fallback_lines.append(f"            f'LLM must extract specific masking rule from legal documents.'")
+            fallback_lines.append(
+                f"            f'MASK action for {{'{col_name}'}} requires code_snippet from Stage 2. '"
+            )
+            fallback_lines.append(
+                f"            f'LLM must extract specific masking rule from legal documents.'"
+            )
             fallback_lines.append(f"        )")
 
         elif action == ActionType.DELETE:
@@ -491,7 +532,9 @@ fernet = Fernet(key.encode("ascii"))
         elif action == ActionType.TOKENIZE:
             fallback_lines.append(f"    if '{col_name}' in df.columns:")
             fallback_lines.append(f"        df['{col_name}'] = df['{col_name}'].apply(")
-            fallback_lines.append(f"            lambda x: str(uuid.uuid4()) if pd.notna(x) else None")
+            fallback_lines.append(
+                f"            lambda x: str(uuid.uuid4()) if pd.notna(x) else None"
+            )
             fallback_lines.append(f"        )")
 
         elif action == ActionType.GENERALIZE:
@@ -501,25 +544,39 @@ fernet = Fernet(key.encode("ascii"))
             fallback_lines.append(f"    # Using generic fallback: convert to string representation")
             fallback_lines.append(f"    if '{col_name}' in df.columns:")
             fallback_lines.append(f"        # TODO: Implement appropriate generalization strategy")
-            fallback_lines.append(f"        # Examples: age ranges, date truncation, geographic grouping")
+            fallback_lines.append(
+                f"        # Examples: age ranges, date truncation, geographic grouping"
+            )
             fallback_lines.append(f"        df['{col_name}'] = df['{col_name}'].apply(")
             fallback_lines.append(f"            lambda x: str(x) if pd.notna(x) else None")
             fallback_lines.append(f"        )")
 
         elif action == ActionType.ROUND:
             # Numeric rounding fallback - preserve original data type
-            fallback_lines.append(f"    # ROUND: Reduce numeric precision by rounding (preserving data type)")
+            fallback_lines.append(
+                f"    # ROUND: Reduce numeric precision by rounding (preserving data type)"
+            )
             fallback_lines.append(f"    if '{col_name}' in df.columns:")
-            fallback_lines.append(f"        # Default: Round to nearest 1000 for integers, 2 decimals for floats")
-            fallback_lines.append(f"        # Check if column is integer type to preserve data type")
-            fallback_lines.append(f"        is_integer_col = df['{col_name}'].dropna().apply(lambda x: float(x).is_integer()).all() if len(df['{col_name}'].dropna()) > 0 else False")
+            fallback_lines.append(
+                f"        # Default: Round to nearest 1000 for integers, 2 decimals for floats"
+            )
+            fallback_lines.append(
+                f"        # Check if column is integer type to preserve data type"
+            )
+            fallback_lines.append(
+                f"        is_integer_col = df['{col_name}'].dropna().apply(lambda x: float(x).is_integer()).all() if len(df['{col_name}'].dropna()) > 0 else False"
+            )
             fallback_lines.append(f"        if is_integer_col:")
             fallback_lines.append(f"            df['{col_name}'] = df['{col_name}'].apply(")
-            fallback_lines.append(f"                lambda x: int(round(float(x), -3)) if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else x")
+            fallback_lines.append(
+                f"                lambda x: int(round(float(x), -3)) if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else x"
+            )
             fallback_lines.append(f"            )")
             fallback_lines.append(f"        else:")
             fallback_lines.append(f"            df['{col_name}'] = df['{col_name}'].apply(")
-            fallback_lines.append(f"                lambda x: round(float(x), 2) if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else x")
+            fallback_lines.append(
+                f"                lambda x: round(float(x), 2) if pd.notna(x) and str(x).replace('.','').replace('-','').isdigit() else x"
+            )
             fallback_lines.append(f"            )")
 
         elif action == ActionType.ENCRYPT:
@@ -527,7 +584,9 @@ fernet = Fernet(key.encode("ascii"))
             fallback_lines.append(f"    # Encrypt column using Fernet (key initialized above)")
             fallback_lines.append(f"    if '{col_name}' in df.columns:")
             fallback_lines.append(f"        df['{col_name}'] = df['{col_name}'].apply(")
-            fallback_lines.append(f"            lambda x: fernet.encrypt(str(x).encode()).decode() if pd.notna(x) else None")
+            fallback_lines.append(
+                f"            lambda x: fernet.encrypt(str(x).encode()).decode() if pd.notna(x) else None"
+            )
             fallback_lines.append(f"        )")
 
         else:
@@ -536,7 +595,7 @@ fernet = Fernet(key.encode("ascii"))
         return fallback_lines
 
     def _build_policy_documentation(self, policy: Policy, pii_metadata: Dict[str, Any]) -> str:
-        """Build policy documentation for code header"""
+        """Build policy documentation for code header."""
         doc_lines = []
 
         for col_name, col_policy in policy.columns.items():
@@ -556,7 +615,7 @@ fernet = Fernet(key.encode("ascii"))
         return "\n".join(doc_lines)
 
     def _validate_syntax(self, code: str, log_callback: Optional[Callable] = None) -> str:
-        """Validate generated code syntax"""
+        """Validate generated code syntax."""
 
         self._log("  [Search] Validating generated code...", log_callback)
 
@@ -569,7 +628,7 @@ fernet = Fernet(key.encode("ascii"))
             raise e
 
     def _log(self, message: str, callback: Optional[Callable] = None):
-        """Helper for logging"""
+        """Helper for logging."""
         if callback:
             callback(message)
         else:

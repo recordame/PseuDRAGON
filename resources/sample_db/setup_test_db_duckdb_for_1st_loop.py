@@ -1,4 +1,4 @@
-"""Test Database Setup (DuckDB)
+"""Test Database Setup (DuckDB).
 
 Using DuckDB for COMMENT support in database schema
 """
@@ -12,9 +12,72 @@ import duckdb
 from schema_comments_ko import apply_korean_comments
 
 
-KOREAN_SURNAMES = ["김", "이", "박", "최", "정", "강", "조", "윤", "장", "임", "한", "오", "서", "신", "권", "황", "안", "송", "류", "홍", ]
-KOREAN_GIVEN_NAMES_1 = ["민", "서", "지", "하", "예", "도", "수", "은", "현", "준", "우", "진", "영", "재", "성", "태", "승", "경", "동", "철", ]
-KOREAN_GIVEN_NAMES_2 = ["준", "윤", "호", "우", "진", "민", "서", "영", "수", "현", "아", "연", "희", "정", "미", "선", "혁", "석", "훈", "빈", ]
+KOREAN_SURNAMES = [
+    "김",
+    "이",
+    "박",
+    "최",
+    "정",
+    "강",
+    "조",
+    "윤",
+    "장",
+    "임",
+    "한",
+    "오",
+    "서",
+    "신",
+    "권",
+    "황",
+    "안",
+    "송",
+    "류",
+    "홍",
+]
+KOREAN_GIVEN_NAMES_1 = [
+    "민",
+    "서",
+    "지",
+    "하",
+    "예",
+    "도",
+    "수",
+    "은",
+    "현",
+    "준",
+    "우",
+    "진",
+    "영",
+    "재",
+    "성",
+    "태",
+    "승",
+    "경",
+    "동",
+    "철",
+]
+KOREAN_GIVEN_NAMES_2 = [
+    "준",
+    "윤",
+    "호",
+    "우",
+    "진",
+    "민",
+    "서",
+    "영",
+    "수",
+    "현",
+    "아",
+    "연",
+    "희",
+    "정",
+    "미",
+    "선",
+    "혁",
+    "석",
+    "훈",
+    "빈",
+]
 
 
 BANK_CODES = {
@@ -43,12 +106,16 @@ BANK_CODES = {
 
 
 def generate_korean_name():
-    """한국 이름 생성"""
-    return (random.choice(KOREAN_SURNAMES) + random.choice(KOREAN_GIVEN_NAMES_1) + random.choice(KOREAN_GIVEN_NAMES_2))
+    """Generate a synthetic Korean name."""
+    return (
+        random.choice(KOREAN_SURNAMES)
+        + random.choice(KOREAN_GIVEN_NAMES_1)
+        + random.choice(KOREAN_GIVEN_NAMES_2)
+    )
 
 
 def generate_bank_tran_id():
-    """은행거래고유번호 생성 (AN 20자)"""
+    """Generate a synthetic 20-character transaction identifier."""
     prefix = "F"
     random_part = "".join([str(random.randint(0, 9)) for _ in range(9)])
     suffix = "".join([random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") for _ in range(10)])
@@ -56,22 +123,22 @@ def generate_bank_tran_id():
 
 
 def generate_fintech_use_num():
-    """핀테크이용번호 생성 (AN 24자)"""
+    """Generate a synthetic 24-character service identifier."""
     return "".join([str(random.randint(0, 9)) for _ in range(24)])
 
 
 def generate_account_num():
-    """계좌번호 생성 (N 16자)"""
+    """Generate a synthetic 16-digit account number."""
     return "".join([str(random.randint(0, 9)) for _ in range(16)])
 
 
 def generate_business_num():
-    """사업자등록번호 생성 (N 10자)"""
+    """Generate a synthetic 10-digit business registration number."""
     return "".join([str(random.randint(0, 9)) for _ in range(10)])
 
 
 def generate_datetime(days_ago_max=365):
-    """랜덤 날짜/시간 생성"""
+    """Generate a random date and time."""
     days_ago = random.randint(0, days_ago_max)
     hours = random.randint(0, 23)
     minutes = random.randint(0, 59)
@@ -81,7 +148,7 @@ def generate_datetime(days_ago_max=365):
 
 
 def initialize_sample_database(db_path: str, num_records: int = 1000):
-    """Initialize the Institution-A synthetic transfer database (DuckDB)
+    """Initialize the Institution-A synthetic transfer database (DuckDB).
 
                GR_JC_TRAN, GR_NJ_TRAN, CMS_REQ_TRAN, CMS_RES_TRAN
 
@@ -95,7 +162,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         except PermissionError:
             print(f"Warning: Could not remove existing DB. Using existing file.")
 
-    # DuckDB 연결
+    # Connect to the synthetic database.
     conn = duckdb.connect(db_path)
 
     print("=" * 80)
@@ -130,9 +197,18 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     hf_comments = [
         ("STD_DT", "Standard date(YYYYMMDD)"),
         ("TRNS_DTIME", "Transaction datetime(YYYYMMDDhhmmss)"),
-        ("RCMS_BSWR_CL_CD", "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)"),
-        ("TRNS_MED_CL_CD", "Transaction medium classification code(11:Internet banking, 12:Mobile banking, 13:Phone banking, 99:No information)"),
-        ("TRNS_CL_CD", "Transaction classification code(01:Transfer, 02:Utility payment, 03:Firm banking)"),
+        (
+            "RCMS_BSWR_CL_CD",
+            "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)",
+        ),
+        (
+            "TRNS_MED_CL_CD",
+            "Transaction medium classification code(11:Internet banking, 12:Mobile banking, 13:Phone banking, 99:No information)",
+        ),
+        (
+            "TRNS_CL_CD",
+            "Transaction classification code(01:Transfer, 02:Utility payment, 03:Firm banking)",
+        ),
         ("CRNO", "Corporate registration number"),
         ("CUST_ID", "Customer ID"),
         ("WD_BANK_CD", "Withdrawal bank code"),
@@ -141,7 +217,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         ("DPS_BANK_CD", "Deposit bank code"),
         ("DPS_ACNO", "Deposit account number"),
         ("WD_MN", "Withdrawal amount"),
-        ("FEE", "Fee")
+        ("FEE", "Fee"),
     ]
     for col, comment in hf_comments:
         conn.execute(f"COMMENT ON COLUMN HF_TRNS_TRAN.{col} IS '{comment}'")
@@ -172,7 +248,10 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     cd_comments = [
         ("STD_DT", "Standard date(YYYYMMDD)"),
         ("TRNS_DTIME", "Transaction datetime(YYYYMMDDhhmmss)"),
-        ("RCMS_BSWR_CL_CD", "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)"),
+        (
+            "RCMS_BSWR_CL_CD",
+            "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)",
+        ),
         ("TRNS_MED_CL_CD", "Transaction medium classification code(21:CD/ATM)"),
         ("TRNS_CL_CD", "Transaction classification code(01:Transfer, 04:Inter-bank withdrawal)"),
         ("CUST_ID", "Customer ID"),
@@ -182,7 +261,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         ("DPS_BANK_CD", "Deposit bank code"),
         ("DPS_ACNO", "Deposit account number"),
         ("WD_MN", "Withdrawal amount"),
-        ("FEE", "Fee")
+        ("FEE", "Fee"),
     ]
     for col, comment in cd_comments:
         conn.execute(f"COMMENT ON COLUMN CD_TRNS_TRAN.{col} IS '{comment}'")
@@ -207,11 +286,17 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     ob_inqr_comments = [
         ("STD_DT", "Standard date(YYYYMMDD)"),
         ("INQR_DTIME", "Inquiry datetime(YYYYMMDDhhmmss)"),
-        ("INQR_CL_CD", "Inquiry classification code(01:Balance inquiry, 02:Transaction history inquiry)"),
+        (
+            "INQR_CL_CD",
+            "Inquiry classification code(01:Balance inquiry, 02:Transaction history inquiry)",
+        ),
         ("USER_SEQ_NO", "User sequence number"),
-        ("CI", "CI - Connecting Information, identification value issued by identity verification agency"),
+        (
+            "CI",
+            "CI - Connecting Information, identification value issued by identity verification agency",
+        ),
         ("FIN_INTT_SVC_NO", "Financial transfer service number"),
-        ("BLNC", "Balance")
+        ("BLNC", "Balance"),
     ]
     for col, comment in ob_inqr_comments:
         conn.execute(f"COMMENT ON COLUMN OB_INQR_TRAN.{col} IS '{comment}'")
@@ -240,15 +325,21 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     ob_trns_comments = [
         ("STD_DT", "Standard date(YYYYMMDD)"),
         ("TRNS_DTIME", "Transaction datetime(YYYYMMDDhhmmss)"),
-        ("RCMS_BSWR_CL_CD", "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)"),
+        (
+            "RCMS_BSWR_CL_CD",
+            "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)",
+        ),
         ("USER_SEQ_NO", "User sequence number"),
-        ("CI", "CI - Connecting Information, identification value issued by identity verification agency"),
+        (
+            "CI",
+            "CI - Connecting Information, identification value issued by identity verification agency",
+        ),
         ("WD_BANK_CD", "Withdrawal bank code"),
         ("FIN_INTT_SVC_NO", "Financial transfer service number"),
         ("DPSTR_NM", "Depositor name"),
         ("DPS_BANK_CD", "Deposit bank code"),
         ("DPS_ACNO", "Deposit account number"),
-        ("WD_MN", "Withdrawal amount")
+        ("WD_MN", "Withdrawal amount"),
     ]
     for col, comment in ob_trns_comments:
         conn.execute(f"COMMENT ON COLUMN OB_TRNS_TRAN.{col} IS '{comment}'")
@@ -278,16 +369,22 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     pi_comments = [
         ("STD_DT", "Standard date(YYYYMMDD)"),
         ("TRNS_DTIME", "Transaction datetime(YYYYMMDDhhmmss)"),
-        ("RCMS_BSWR_CL_CD", "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)"),
+        (
+            "RCMS_BSWR_CL_CD",
+            "Recipient inquiry classification code(01:Inquired, 02:Not inquired, 99:No information)",
+        ),
         ("CMS_NO", "CMS number"),
         ("USER_SEQ_NO", "User sequence number"),
-        ("CI", "CI - Connecting Information, identification value issued by identity verification agency"),
+        (
+            "CI",
+            "CI - Connecting Information, identification value issued by identity verification agency",
+        ),
         ("WD_BANK_CD", "Withdrawal bank code"),
         ("WD_ACNO", "Withdrawal account number"),
         ("DPSTR_NM", "Depositor name"),
         ("DPS_BANK_CD", "Deposit bank code"),
         ("DPS_ACNO", "Deposit account number"),
-        ("WD_MN", "Withdrawal amount")
+        ("WD_MN", "Withdrawal amount"),
     ]
     for col, comment in pi_comments:
         conn.execute(f"COMMENT ON COLUMN PI_WD_LEDG.{col} IS '{comment}'")
@@ -322,7 +419,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         ("WD_BANK_CD", "Withdrawal bank code"),
         ("WD_ACNO", "Withdrawal account number"),
         ("WD_MN", "Withdrawal amount"),
-        ("DEALCO_CD", "Handling institution code")
+        ("DEALCO_CD", "Handling institution code"),
     ]
     for col, comment in gr_jc_comments:
         conn.execute(f"COMMENT ON COLUMN GR_JC_TRAN.{col} IS '{comment}'")
@@ -357,7 +454,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         ("WD_BANK_CD", "Withdrawal bank code "),
         ("WD_ACNO", "Withdrawal account number"),
         ("WD_MN", "Withdrawal amount"),
-        ("DEALCO_CD", "Handling institution code")
+        ("DEALCO_CD", "Handling institution code"),
     ]
     for col, comment in gr_nj_comments:
         conn.execute(f"COMMENT ON COLUMN GR_NJ_TRAN.{col} IS '{comment}'")
@@ -386,7 +483,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         ("CRNO", "Corporate registration number"),
         ("WD_BANK_CD", "Withdrawal bank code"),
         ("WD_ACNO", "Withdrawal account number"),
-        ("WD_MN", "Withdrawal amount")
+        ("WD_MN", "Withdrawal amount"),
     ]
     for col, comment in cms_req_comments:
         conn.execute(f"COMMENT ON COLUMN CMS_REQ_TRAN.{col} IS '{comment}'")
@@ -417,7 +514,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         ("WD_BANK_CD", "Withdrawal bank code"),
         ("WD_ACNO", "Withdrawal account number"),
         ("WD_MN", "Withdrawal amount"),
-        ("WD_RSLT_CD", "Withdrawal result code(00:Normal, 01:Insufficient balance, 99:Other)")
+        ("WD_RSLT_CD", "Withdrawal result code(00:Normal, 01:Insufficient balance, 99:Other)"),
     ]
     for col, comment in cms_res_comments:
         conn.execute(f"COMMENT ON COLUMN CMS_RES_TRAN.{col} IS '{comment}'")
@@ -483,7 +580,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             random.choice(list(BANK_CODES.keys())),  # DPS_BANK_CD
             generate_account_num(),  # DPS_ACNO
             int(random.uniform(10000, 5000000)),  # WD_MN
-            int(random.uniform(0, 1000))  # FEE
+            int(random.uniform(0, 1000)),  # FEE
         )
         hf_records.append(record)
 
@@ -491,7 +588,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO HF_TRNS_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, hf_records
+        """,
+        hf_records,
     )
 
     # Generate sample data for CD_TRNS_TRAN
@@ -511,7 +609,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 2000000)),
-            int(random.uniform(0, 1000))
+            int(random.uniform(0, 1000)),
         )
         cd_records.append(record)
 
@@ -519,7 +617,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO CD_TRNS_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, cd_records
+        """,
+        cd_records,
     )
 
     # Generate sample data for OB_INQR_TRAN
@@ -533,7 +632,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             f"{random.randint(1000000000, 9999999999)}",
             "".join([random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/") for _ in range(88)]),
             generate_fintech_use_num(),
-            int(random.uniform(100000, 10000000))
+            int(random.uniform(100000, 10000000)),
         )
         ob_inqr_records.append(record)
 
@@ -541,7 +640,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO OB_INQR_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, ob_inqr_records
+        """,
+        ob_inqr_records,
     )
 
     # Generate sample data for OB_TRNS_TRAN
@@ -559,7 +659,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             generate_korean_name(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
-            int(random.uniform(10000, 5000000))
+            int(random.uniform(10000, 5000000)),
         )
         ob_trns_records.append(record)
 
@@ -567,7 +667,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO OB_TRNS_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, ob_trns_records
+        """,
+        ob_trns_records,
     )
 
     # Generate sample data for PI_WD_LEDG
@@ -586,7 +687,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             generate_korean_name(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
-            int(random.uniform(10000, 3000000))
+            int(random.uniform(10000, 3000000)),
         )
         pi_records.append(record)
 
@@ -594,7 +695,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO PI_WD_LEDG
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, pi_records
+        """,
+        pi_records,
     )
 
     # Generate sample data for GR_JC_TRAN
@@ -602,7 +704,9 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     gr_jc_records = []
     for i in range(num_records):
         req_dt = (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%Y%m%d")
-        wd_dt = (datetime.strptime(req_dt, "%Y%m%d") + timedelta(days=random.randint(0, 5))).strftime("%Y%m%d")
+        wd_dt = (
+            datetime.strptime(req_dt, "%Y%m%d") + timedelta(days=random.randint(0, 5))
+        ).strftime("%Y%m%d")
         record = (
             datetime.now().strftime("%Y%m%d"),
             req_dt,
@@ -613,7 +717,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 1000000)),
-            random.choice(list(BANK_CODES.keys())[:10])
+            random.choice(list(BANK_CODES.keys())[:10]),
         )
         gr_jc_records.append(record)
 
@@ -621,7 +725,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO GR_JC_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, gr_jc_records
+        """,
+        gr_jc_records,
     )
 
     # Generate sample data for GR_NJ_TRAN
@@ -639,7 +744,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 1000000)),
-            random.choice(list(BANK_CODES.keys())[:10])
+            random.choice(list(BANK_CODES.keys())[:10]),
         )
         gr_nj_records.append(record)
 
@@ -647,7 +752,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO GR_NJ_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, gr_nj_records
+        """,
+        gr_nj_records,
     )
 
     # Generate sample data for CMS_REQ_TRAN
@@ -662,7 +768,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             generate_business_num(),
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
-            int(random.uniform(10000, 1000000))
+            int(random.uniform(10000, 1000000)),
         )
         cms_req_records.append(record)
 
@@ -670,7 +776,8 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO CMS_REQ_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, cms_req_records
+        """,
+        cms_req_records,
     )
 
     # Generate sample data for CMS_RES_TRAN
@@ -686,7 +793,7 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
             random.choice(list(BANK_CODES.keys())),
             generate_account_num(),
             int(random.uniform(10000, 1000000)),
-            random.choice(["00", "01", "99"])
+            random.choice(["00", "01", "99"]),
         )
         cms_res_records.append(record)
 
@@ -694,13 +801,13 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
         """
         INSERT INTO CMS_RES_TRAN
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, cms_res_records
+        """,
+        cms_res_records,
     )
 
     print("\n" + "=" * 80)
     print("Database Setup Complete!")
     print("=" * 80)
-
 
     print(f"\n Database Statistics:")
     print(f"   - Database Path: {db_path}")
@@ -708,8 +815,15 @@ def initialize_sample_database(db_path: str, num_records: int = 1000):
     print(f"   - Total Tables: 9")
 
     tables = [
-        "HF_TRNS_TRAN", "CD_TRNS_TRAN", "OB_INQR_TRAN", "OB_TRNS_TRAN",
-        "PI_WD_LEDG", "GR_JC_TRAN", "GR_NJ_TRAN", "CMS_REQ_TRAN", "CMS_RES_TRAN"
+        "HF_TRNS_TRAN",
+        "CD_TRNS_TRAN",
+        "OB_INQR_TRAN",
+        "OB_TRNS_TRAN",
+        "PI_WD_LEDG",
+        "GR_JC_TRAN",
+        "GR_NJ_TRAN",
+        "CMS_REQ_TRAN",
+        "CMS_RES_TRAN",
     ]
 
     for table in tables:

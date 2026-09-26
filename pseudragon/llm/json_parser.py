@@ -1,10 +1,9 @@
-"""Helper function to safely parse JSON from LLM responses
+"""Helper function to safely parse JSON from LLM responses.
 
 Handles various response formats from different LLM providers.
 """
 
 
-# 표준 라이브러리 import
 import json
 import re
 from typing import Any, Dict
@@ -32,9 +31,20 @@ def normalize_json_keys(data: Dict[str, Any]) -> Dict[str, Any]:
         "is_pii": ["is_pii", "ispii", "is pii", "pii"],
         "pii_type": ["pii_type", "piitype", "pii type", "type"],
         "reasoning": ["reasoning", "reason", "rationale", "explanation"],
-        "evidence_source": ["evidence_source", "evidencesource", "evidence source", "evidence", "source"],
+        "evidence_source": [
+            "evidence_source",
+            "evidencesource",
+            "evidence source",
+            "evidence",
+            "source",
+        ],
         "chain_of_thought": ["chain_of_thought", "chainofthought", "chain of thought", "cot"],
-        "recommended_methods": ["recommended_methods", "recommendedmethods", "recommended methods", "methods"],
+        "recommended_methods": [
+            "recommended_methods",
+            "recommendedmethods",
+            "recommended methods",
+            "methods",
+        ],
     }
 
     # First, copy all original keys
@@ -75,7 +85,11 @@ def safe_parse_json(content: str, default_response: Dict[str, Any] = None) -> Di
     """
     if not content:
         print("[WARNING] [JSON Parser] Empty response from LLM")
-        return default_response or {"is_pii": False, "pii_type": "Unknown", "reasoning": "Empty response from LLM"}
+        return default_response or {
+            "is_pii": False,
+            "pii_type": "Unknown",
+            "reasoning": "Empty response from LLM",
+        }
 
     parsed_json = None
 
@@ -89,7 +103,7 @@ def safe_parse_json(content: str, default_response: Dict[str, Any] = None) -> Di
     # Try to find JSON block in markdown (```json ... ```)
 
     if not parsed_json:
-        json_match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
+        json_match = re.search(r"```json\s*(\{.*?\})\s*```", content, re.DOTALL)
         if json_match:
             try:
                 parsed_json = json.loads(json_match.group(1))
@@ -99,7 +113,7 @@ def safe_parse_json(content: str, default_response: Dict[str, Any] = None) -> Di
     # Try to find any JSON object in the text
 
     if not parsed_json:
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', content, re.DOTALL)
+        json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", content, re.DOTALL)
         if json_match:
             try:
                 parsed_json = json.loads(json_match.group(0))
@@ -114,7 +128,11 @@ def safe_parse_json(content: str, default_response: Dict[str, Any] = None) -> Di
         if not parsed_json or parsed_json == {}:
             print("[WARNING] [JSON Parser] LLM returned empty JSON object: {}")
             print(f"   Raw content preview: {content[:200]}")
-            return default_response or {"is_pii": False, "pii_type": "Unknown", "reasoning": "LLM returned empty JSON"}
+            return default_response or {
+                "is_pii": False,
+                "pii_type": "Unknown",
+                "reasoning": "LLM returned empty JSON",
+            }
 
         # Normalize keys to standard format
 
@@ -123,7 +141,7 @@ def safe_parse_json(content: str, default_response: Dict[str, Any] = None) -> Di
         # Validate required fields only if default_response expects them
         # Stage 1 expects "is_pii", Stage 2 expects "recommended_methods"
 
-        # Stage 1은 "is_pii" 기대, Stage 2는 "recommended_methods" 기대
+        # Stage 1 expects is_pii; Stage 2 expects recommended_methods.
         if default_response and "is_pii" in default_response and "is_pii" not in normalized:
             print(f"[WARNING] [JSON Parser] Missing 'is_pii' field in response")
             print(f"   Original keys: {list(parsed_json.keys())}")
@@ -144,4 +162,10 @@ def safe_parse_json(content: str, default_response: Dict[str, Any] = None) -> Di
     if default_response:
         return default_response
 
-    return {"is_pii": False, "pii_type": "Unknown", "reasoning": "Failed to parse LLM response", "error": "Failed to parse JSON", "raw_content": content}
+    return {
+        "is_pii": False,
+        "pii_type": "Unknown",
+        "reasoning": "Failed to parse LLM response",
+        "error": "Failed to parse JSON",
+        "raw_content": content,
+    }

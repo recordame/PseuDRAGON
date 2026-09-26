@@ -1,4 +1,4 @@
-"""Compliance Validator
+"""Compliance Validator.
 
 Implements automatic compliance checks:
 
@@ -19,17 +19,13 @@ from pseudragon.domain.policy_dsl import ActionType, Policy
 
 @dataclass
 class Violation:
-    """Represents a policy violation
+    """Represents a policy violation.
 
     Attributes:
         severity: HIGH, MEDIUM, or LOW
-
         column: Affected column name(s)
-
         message: Description of the violation
-
         suggestion: Recommended fix
-
         check_type: Which check detected this (legal, consistency, etc.)
     """
 
@@ -41,9 +37,9 @@ class Violation:
 
 
 class ComplianceValidator:
-    """Automatic Compliance Validator
+    """Automatic Compliance Validator.
 
-    Implements the 5-check validation framework from paper Section 4.3.1.
+    Run five schema-level validation checks.
 
     Note: Check 4 (Privacy metrics) uses heuristic-based estimation.
     Full k-anonymity calculation requires actual data, which is beyond
@@ -51,7 +47,7 @@ class ComplianceValidator:
     """
 
     def __init__(self, rag_system=None):
-        """Initialize validator
+        """Initialize validator.
 
         Args:
             rag_system: Optional RAG system for legal context retrieval
@@ -59,13 +55,12 @@ class ComplianceValidator:
         self.rag = rag_system
 
     def validate_policy(self, policy: Policy, schema: Dict[str, str]) -> List[Violation]:
-        """Run all 5 compliance checks on a policy
+        """Run all 5 compliance checks on a policy.
 
-        Implements CONTEXTUAL_COMPLIANCE_CHECK from Algorithm (Line 541).
+        Check the policy against its field context.
 
         Args:
             policy: Policy object to validate
-
             schema: Database schema (column_name -> data_type)
 
         Returns:
@@ -91,7 +86,7 @@ class ComplianceValidator:
         return violations
 
     def _check_legal_compliance(self, policy: Policy) -> List[Violation]:
-        """Check 1: Legal Compliance
+        """Check 1: Legal Compliance.
 
         Verifies that all PII columns are processed according to legal requirements.
 
@@ -110,42 +105,52 @@ class ComplianceValidator:
                 continue
 
             # Check for legal evidence
-            if (not col_policy.action.legal_evidence or col_policy.action.legal_evidence == "Unknown Source"):
+            if (
+                not col_policy.action.legal_evidence
+                or col_policy.action.legal_evidence == "Unknown Source"
+            ):
                 violations.append(
                     Violation(
                         severity="HIGH",
                         column=col_name,
                         message=f"Missing legal justification for PII column '{col_name}'",
                         suggestion="Add PIPA/GDPR citation for this action. Use RAG to retrieve relevant legal provisions.",
-                        check_type="legal_compliance", )
+                        check_type="legal_compliance",
+                    )
                 )
 
             # Check DELETE rationale
-            if (col_policy.action.action == ActionType.DELETE and not col_policy.action.rationale):
+            if col_policy.action.action == ActionType.DELETE and not col_policy.action.rationale:
                 violations.append(
                     Violation(
                         severity="MEDIUM",
                         column=col_name,
                         message=f"DELETE action on '{col_name}' lacks rationale",
                         suggestion="Explain why this column is not needed for the preferred method.",
-                        check_type="legal_compliance", )
+                        check_type="legal_compliance",
+                    )
                 )
 
             # Check PII handling
-            if (col_policy.pii_type == "PII" and col_policy.action.action not in [ActionType.DELETE, ActionType.HASH, ActionType.TOKENIZE, ]):
+            if col_policy.pii_type == "PII" and col_policy.action.action not in [
+                ActionType.DELETE,
+                ActionType.HASH,
+                ActionType.TOKENIZE,
+            ]:
                 violations.append(
                     Violation(
                         severity="HIGH",
                         column=col_name,
                         message=f"Direct identifier '{col_name}' must be deleted, hashed, or tokenized",
                         suggestion="PII require strong pseudonymization or removal.",
-                        check_type="legal_compliance", )
+                        check_type="legal_compliance",
+                    )
                 )
 
         return violations
 
     def _check_consistency(self, policy: Policy) -> List[Violation]:
-        """Check 2: Consistency
+        """Check 2: Consistency.
 
         Ensures no logical contradictions in the policy.
 
@@ -175,13 +180,14 @@ class ComplianceValidator:
                             category="COMPLIANCE",
                             column=col,
                             message=f"Column '{col}' is deleted but mentioned in preferred method",
-                            suggestion="Consider using HASH or MASK instead of DELETE for this column.", )
+                            suggestion="Consider using HASH or MASK instead of DELETE for this column.",
+                        )
                     )
 
         return violations
 
     def _check_utility_preservation(self, policy: Policy) -> List[Violation]:
-        """Check 3: Utility Preservation
+        """Check 3: Utility Preservation.
 
         Verifies that the preferred method can still be achieved.
 
@@ -201,7 +207,14 @@ class ComplianceValidator:
             return violations
 
         obj_lower = policy.preferred_method.lower()
-        aggregation_keywords = ["group by", "sum", "count", "average", "trend", "analysis", ]
+        aggregation_keywords = [
+            "group by",
+            "sum",
+            "count",
+            "average",
+            "trend",
+            "analysis",
+        ]
 
         # Check for deleted non-PII columns
         if any(kw in obj_lower for kw in aggregation_keywords):
@@ -217,7 +230,8 @@ class ComplianceValidator:
                         column=", ".join(non_pii_deleted),
                         message=f"Non-PII columns deleted may affect preferred method: {non_pii_deleted}",
                         suggestion="Consider keeping these columns as they are not PII and may be needed for analysis.",
-                        check_type="utility_preservation", )
+                        check_type="utility_preservation",
+                    )
                 )
 
         # Check for PII columns kept without transformation
@@ -233,13 +247,14 @@ class ComplianceValidator:
                     column=f"{pii_cols_kept} PII column(s)",
                     message=f"{pii_cols_kept} PII columns are kept without transformation",
                     suggestion="All PII columns should be pseudonymized or anonymized. Use HASH, MASK, or TOKENIZE.",
-                    check_type="utility_preservation", )
+                    check_type="utility_preservation",
+                )
             )
 
         return violations
 
     def _check_completeness(self, policy: Policy, schema: Dict[str, str]) -> List[Violation]:
-        """Check 5: Completeness
+        """Check 5: Completeness.
 
         Verifies that all columns in the schema are addressed in the policy.
         """
@@ -257,7 +272,8 @@ class ComplianceValidator:
                     column=", ".join(missing),
                     message=f"Columns not addressed in policy: {missing}",
                     suggestion="Add policy actions for all columns. Use KEEP for non-PII columns.",
-                    check_type="completeness", )
+                    check_type="completeness",
+                )
             )
 
         # Check for extra columns
@@ -269,13 +285,14 @@ class ComplianceValidator:
                     column=", ".join(extra),
                     message=f"Policy contains columns not in schema: {extra}",
                     suggestion="Remove these columns from the policy or verify schema correctness.",
-                    check_type="completeness", )
+                    check_type="completeness",
+                )
             )
 
         return violations
 
     def get_validation_summary(self, violations: List[Violation]) -> Dict[str, Any]:
-        """Generate a summary of validation results
+        """Generate a summary of validation results.
 
         Returns:
             Dictionary with counts by severity and check type
@@ -283,7 +300,13 @@ class ComplianceValidator:
         summary = {
             "total": len(violations),
             "by_severity": {"HIGH": 0, "MEDIUM": 0, "LOW": 0},
-            "by_check": {"legal_compliance": 0, "consistency": 0, "utility_preservation": 0, "privacy_metrics": 0, "completeness": 0, },
+            "by_check": {
+                "legal_compliance": 0,
+                "consistency": 0,
+                "utility_preservation": 0,
+                "privacy_metrics": 0,
+                "completeness": 0,
+            },
             "is_compliant": len([v for v in violations if v.severity == "HIGH"]) == 0,
         }
 

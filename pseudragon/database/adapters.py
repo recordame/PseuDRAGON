@@ -1,4 +1,4 @@
-"""Database Utility Module for PseuDRAGON Framework
+"""Database Utility Module for PseuDRAGON Framework.
 
 This module provides utilities for interacting with databases (DuckDB, Oracle, MariaDB),
 including connection management, schema extraction with COMMENT support, and data sampling.
@@ -16,47 +16,47 @@ except ImportError:
 
 
 class DatabaseError(Exception):
-    """Custom exception for database operations"""
+    """Custom exception for database operations."""
 
 
 class DatabaseConnector(ABC):
-    """Abstract base class for database connectors
+    """Abstract base class for database connectors.
 
     Provides a unified interface for different database types.
     """
 
     @abstractmethod
     def connect(self):
-        """Establish database connection / 데이터베이스 연결 수립"""
+        """Establish database connection."""
 
     @abstractmethod
     def get_table_names(self) -> List[str]:
-        """Get all table names / 모든 테이블 이름 가져오기"""
+        """Get all table names."""
 
     @abstractmethod
     def get_table_schema(self, table_name: str) -> List[Dict[str, Any]]:
-        """Get table schema / 테이블 스키마 가져오기"""
+        """Get table schema."""
 
     @abstractmethod
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """Get column comments / 컬럼 COMMENT 가져오기"""
+        """Get column comments."""
 
     @abstractmethod
     def get_table_sample(self, table_name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
-        """Get sample row from table / 테이블에서 샘플 행 가져오기"""
+        """Get sample row from table."""
 
     @abstractmethod
     def close(self):
-        """Close database connection / 데이터베이스 연결 종료"""
+        """Close database connection."""
 
 
 class DuckDBConnector(DatabaseConnector):
-    """DuckDB database connector with COMMENT support"""
+    """DuckDB database connector with COMMENT support."""
 
     SYSTEM_TABLES = {"information_schema", "pg_catalog"}
 
     def __init__(self, db_path: str):
-        """Initialize DuckDB connector
+        """Initialize DuckDB connector.
 
         Args:
             db_path: Path to DuckDB database file
@@ -68,7 +68,7 @@ class DuckDBConnector(DatabaseConnector):
         self.conn = None
 
     def connect(self):
-        """Establish DuckDB connection"""
+        """Establish DuckDB connection."""
         try:
             self.conn = duckdb.connect(self.db_path)
             return self.conn
@@ -76,7 +76,7 @@ class DuckDBConnector(DatabaseConnector):
             raise DatabaseError(f"Failed to connect to DuckDB: {e}")
 
     def get_table_names(self) -> List[str]:
-        """Get all user table names from DuckDB"""
+        """Get all user table names from DuckDB."""
         if not self.conn:
             self.connect()
 
@@ -95,7 +95,7 @@ class DuckDBConnector(DatabaseConnector):
             raise DatabaseError(f"Failed to retrieve table names: {e}")
 
     def get_table_schema(self, table_name: str) -> List[Dict[str, Any]]:
-        """Get table schema from DuckDB"""
+        """Get table schema from DuckDB."""
         if not self.conn:
             self.connect()
 
@@ -117,14 +117,23 @@ class DuckDBConnector(DatabaseConnector):
 
             schema = []
             for row in result:
-                schema.append({"name": row[0], "type": row[1], "nullable": row[2] == "YES", "default": row[3], "position": row[4], "comment": row[5] if row[5] else None, })
+                schema.append(
+                    {
+                        "name": row[0],
+                        "type": row[1],
+                        "nullable": row[2] == "YES",
+                        "default": row[3],
+                        "position": row[4],
+                        "comment": row[5] if row[5] else None,
+                    }
+                )
 
             return schema
         except Exception as e:
             raise DatabaseError(f"Failed to retrieve schema for table '{table_name}': {e}")
 
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """Get column comments from DuckDB
+        """Get column comments from DuckDB.
 
         Note: DuckDB stores comments via COMMENT ON COLUMN syntax
 
@@ -138,12 +147,8 @@ class DuckDBConnector(DatabaseConnector):
             self.connect()
 
         try:
-            # DuckDB doesn't have a standard way to query comments yet
-            # We'll try to get them from the catalog if available
-            # For now, return empty dict - comments are set but not easily queryable
-            # TODO: Update when DuckDB adds comment query support
+            # Read catalog comments when the connected database exposes them.
 
-            # Workaround: Parse from table description
             comments = {}
 
             # Try to get comments from information_schema
@@ -170,7 +175,7 @@ class DuckDBConnector(DatabaseConnector):
             return {}
 
     def get_table_sample(self, table_name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
-        """Get sample row from DuckDB table"""
+        """Get sample row from DuckDB table."""
         if not self.conn:
             self.connect()
 
@@ -185,17 +190,17 @@ class DuckDBConnector(DatabaseConnector):
             raise DatabaseError(f"Failed to retrieve sample from table '{table_name}': {e}")
 
     def close(self):
-        """Close DuckDB connection"""
+        """Close DuckDB connection."""
         if self.conn:
             self.conn.close()
             self.conn = None
 
 
 class OracleConnector(DatabaseConnector):
-    """Oracle database connector"""
+    """Oracle database connector."""
 
     def __init__(self, host: str, port: int, service_name: str, user: str, password: str):
-        """Initialize Oracle connector"""
+        """Initialize Oracle connector."""
         try:
             import cx_Oracle
 
@@ -211,7 +216,7 @@ class OracleConnector(DatabaseConnector):
         self.conn = None
 
     def connect(self):
-        """Establish Oracle connection"""
+        """Establish Oracle connection."""
         try:
             dsn = self.cx_Oracle.makedsn(self.host, self.port, service_name=self.service_name)
             self.conn = self.cx_Oracle.connect(user=self.user, password=self.password, dsn=dsn)
@@ -220,7 +225,7 @@ class OracleConnector(DatabaseConnector):
             raise DatabaseError(f"Failed to connect to Oracle: {e}")
 
     def get_table_names(self) -> List[str]:
-        """Get all user table names from Oracle"""
+        """Get all user table names from Oracle."""
         if not self.conn:
             self.connect()
 
@@ -229,7 +234,7 @@ class OracleConnector(DatabaseConnector):
         return [row[0] for row in cursor.fetchall()]
 
     def get_table_schema(self, table_name: str) -> List[Dict[str, Any]]:
-        """Get table schema from Oracle"""
+        """Get table schema from Oracle."""
         if not self.conn:
             self.connect()
 
@@ -245,12 +250,20 @@ class OracleConnector(DatabaseConnector):
 
         schema = []
         for row in cursor.fetchall():
-            schema.append({"name": row[0], "type": row[1], "nullable": row[2] == "Y", "default": row[3], "position": row[4], })
+            schema.append(
+                {
+                    "name": row[0],
+                    "type": row[1],
+                    "nullable": row[2] == "Y",
+                    "default": row[3],
+                    "position": row[4],
+                }
+            )
 
         return schema
 
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """Get column comments from Oracle"""
+        """Get column comments from Oracle."""
         if not self.conn:
             self.connect()
 
@@ -267,7 +280,7 @@ class OracleConnector(DatabaseConnector):
         return {row[0]: row[1] for row in cursor.fetchall()}
 
     def get_table_sample(self, table_name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
-        """Get sample row from Oracle table"""
+        """Get sample row from Oracle table."""
         if not self.conn:
             self.connect()
 
@@ -281,17 +294,17 @@ class OracleConnector(DatabaseConnector):
         return None
 
     def close(self):
-        """Close Oracle connection"""
+        """Close Oracle connection."""
         if self.conn:
             self.conn.close()
             self.conn = None
 
 
 class MariaDBConnector(DatabaseConnector):
-    """MariaDB/MySQL database connector"""
+    """MariaDB/MySQL database connector."""
 
     def __init__(self, host: str, port: int, database: str, user: str, password: str):
-        """Initialize MariaDB connector"""
+        """Initialize MariaDB connector."""
         try:
             import pymysql
 
@@ -307,15 +320,22 @@ class MariaDBConnector(DatabaseConnector):
         self.conn = None
 
     def connect(self):
-        """Establish MariaDB connection"""
+        """Establish MariaDB connection."""
         try:
-            self.conn = self.pymysql.connect(host=self.host, port=self.port, database=self.database, user=self.user, password=self.password, charset="utf8mb4", )
+            self.conn = self.pymysql.connect(
+                host=self.host,
+                port=self.port,
+                database=self.database,
+                user=self.user,
+                password=self.password,
+                charset="utf8mb4",
+            )
             return self.conn
         except Exception as e:
             raise DatabaseError(f"Failed to connect to MariaDB: {e}")
 
     def get_table_names(self) -> List[str]:
-        """Get all table names from MariaDB"""
+        """Get all table names from MariaDB."""
         if not self.conn:
             self.connect()
 
@@ -324,7 +344,7 @@ class MariaDBConnector(DatabaseConnector):
         return [row[0] for row in cursor.fetchall()]
 
     def get_table_schema(self, table_name: str) -> List[Dict[str, Any]]:
-        """Get table schema from MariaDB"""
+        """Get table schema from MariaDB."""
         if not self.conn:
             self.connect()
 
@@ -346,12 +366,20 @@ class MariaDBConnector(DatabaseConnector):
 
         schema = []
         for row in cursor.fetchall():
-            schema.append({"name": row[0], "type": row[1], "nullable": row[2] == "YES", "default": row[3], "position": row[4], })
+            schema.append(
+                {
+                    "name": row[0],
+                    "type": row[1],
+                    "nullable": row[2] == "YES",
+                    "default": row[3],
+                    "position": row[4],
+                }
+            )
 
         return schema
 
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """Get column comments from MariaDB"""
+        """Get column comments from MariaDB."""
         if not self.conn:
             self.connect()
 
@@ -369,7 +397,7 @@ class MariaDBConnector(DatabaseConnector):
         return {row[0]: row[1] for row in cursor.fetchall()}
 
     def get_table_sample(self, table_name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
-        """Get sample row from MariaDB table"""
+        """Get sample row from MariaDB table."""
         if not self.conn:
             self.connect()
 
@@ -383,21 +411,21 @@ class MariaDBConnector(DatabaseConnector):
         return None
 
     def close(self):
-        """Close MariaDB connection"""
+        """Close MariaDB connection."""
         if self.conn:
             self.conn.close()
             self.conn = None
 
 
 class DatabaseManager:
-    """Database Manager with multi-database support
+    """Database Manager with multi-database support.
 
     This class provides a centralized interface for database operations,
     supporting DuckDB, Oracle, and MariaDB with COMMENT extraction.
     """
 
     def __init__(self, db_config):
-        """Initialize DatabaseManager with configuration
+        """Initialize DatabaseManager with configuration.
 
         Args:
             db_config: Database path (str) for DuckDB or config dict for others
@@ -405,7 +433,7 @@ class DatabaseManager:
         self.connector = self._create_connector(db_config)
 
     def _create_connector(self, db_config) -> DatabaseConnector:
-        """Create appropriate database connector based on configuration"""
+        """Create appropriate database connector based on configuration."""
         if isinstance(db_config, str):
             # DuckDB path
             return DuckDBConnector(db_config)
@@ -420,9 +448,16 @@ class DatabaseManager:
                     port=int(db_config["port"]),
                     service_name=db_config.get("service_name", db_config["database"]),
                     user=db_config["user"],
-                    password=db_config["password"], )
+                    password=db_config["password"],
+                )
             elif db_type in ("mariadb", "mysql"):
-                return MariaDBConnector(host=db_config["host"], port=int(db_config["port"]), database=db_config["database"], user=db_config["user"], password=db_config["password"], )
+                return MariaDBConnector(
+                    host=db_config["host"],
+                    port=int(db_config["port"]),
+                    database=db_config["database"],
+                    user=db_config["user"],
+                    password=db_config["password"],
+                )
             else:
                 raise DatabaseError(f"Unsupported database type: {db_type}")
         else:
@@ -430,7 +465,7 @@ class DatabaseManager:
 
     @contextmanager
     def get_connection(self):
-        """Context manager for database connections
+        """Context manager for database connections.
 
         Ensures proper connection cleanup even if errors occur.
         """
@@ -441,15 +476,15 @@ class DatabaseManager:
             self.connector.close()
 
     def get_table_names(self) -> List[str]:
-        """Get all user table names"""
+        """Get all user table names."""
         return self.connector.get_table_names()
 
     def get_table_schema(self, table_name: str) -> List[Dict[str, Any]]:
-        """Get table schema"""
+        """Get table schema."""
         return self.connector.get_table_schema(table_name)
 
     def get_column_comments(self, table_name: str) -> Dict[str, str]:
-        """Get column comments for a table
+        """Get column comments for a table.
 
         Args:
             table_name: Name of the table
@@ -460,7 +495,7 @@ class DatabaseManager:
         return self.connector.get_column_comments(table_name)
 
     def get_enhanced_schema(self, table_name: str) -> Dict[str, Dict[str, Any]]:
-        """Get enhanced schema with column names, types, and comments
+        """Get enhanced schema with column names, types, and comments.
 
         This is the key method for PII detection with COMMENT support.
 
@@ -476,12 +511,17 @@ class DatabaseManager:
         enhanced = {}
         for col in schema:
             col_name = col["name"]
-            enhanced[col_name] = {"type": col["type"], "nullable": col.get("nullable", True), "comment": comments.get(col_name, ""), "position": col.get("position", 0), }
+            enhanced[col_name] = {
+                "type": col["type"],
+                "nullable": col.get("nullable", True),
+                "comment": comments.get(col_name, ""),
+                "position": col.get("position", 0),
+            }
 
         return enhanced
 
     def get_all_schemas(self) -> Dict[str, List[Dict[str, Any]]]:
-        """Get schema information for all tables"""
+        """Get schema information for all tables."""
         tables = self.get_table_names()
         schemas = {}
 
@@ -491,11 +531,11 @@ class DatabaseManager:
         return schemas
 
     def get_table_sample(self, table_name: str, limit: int = 1) -> Optional[Dict[str, Any]]:
-        """Get sample row from table"""
+        """Get sample row from table."""
         return self.connector.get_table_sample(table_name, limit)
 
     def close(self):
-        """Close database connection"""
+        """Close database connection."""
         self.connector.close()
 
 
@@ -503,7 +543,7 @@ class DatabaseManager:
 
 
 def get_db_connection(db_path: str):
-    """Legacy function: Returns a connection to the database
+    """Legacy function: Returns a connection to the database.
 
     Note: Consider using DatabaseManager.get_connection() context manager instead
     """
@@ -512,19 +552,19 @@ def get_db_connection(db_path: str):
 
 
 def get_db_schema(db_path: str) -> Dict[str, List[Dict[str, Any]]]:
-    """Legacy function: Returns the schema of all tables"""
+    """Legacy function: Returns the schema of all tables."""
     db_manager = DatabaseManager(db_path)
     return db_manager.get_all_schemas()
 
 
 def get_table_names(db_path: str) -> List[str]:
-    """Legacy function: Returns a list of all table names"""
+    """Legacy function: Returns a list of all table names."""
     db_manager = DatabaseManager(db_path)
     return db_manager.get_table_names()
 
 
 def get_table_sample(db_path: str, table_name: str) -> Dict[str, Any]:
-    """Legacy function: Retrieves a single row from the specified table"""
+    """Legacy function: Retrieves a single row from the specified table."""
     try:
         db_manager = DatabaseManager(db_path)
         result = db_manager.get_table_sample(table_name)

@@ -1,4 +1,4 @@
-"""RAG (Retrieval-Augmented Generation) system for PseuDRAGON"""
+"""RAG (Retrieval-Augmented Generation) system for PseuDRAGON."""
 from .retriever import RAGSystem
 from .expert_preference_manager import ExpertPreferenceManager
 

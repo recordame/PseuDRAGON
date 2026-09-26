@@ -11,4 +11,9 @@ Stage2PolicySynthesis = Stage2PolicySynthesis
 Stage3HITLRefinement = Stage3HITLRefinement
 Stage4CodeGeneration = Stage4CodeGeneration
 
-__all__ = ["Stage1PIIDetection", "Stage2PolicySynthesis", "Stage3HITLRefinement", "Stage4CodeGeneration"]
+__all__ = [
+    "Stage1PIIDetection",
+    "Stage2PolicySynthesis",
+    "Stage3HITLRefinement",
+    "Stage4CodeGeneration",
+]

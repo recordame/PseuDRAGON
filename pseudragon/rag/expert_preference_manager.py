@@ -1,4 +1,4 @@
-"""Expert Feedback Manager for PseuDRAGON
+"""Expert Feedback Manager for PseuDRAGON.
 
 Tracks and applies expert's method preferences across sessions.
 Uses RAG-based semantic search to find similar columns and apply learned preferences.
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExpertPreferenceManager:
-    """Manages expert feedback for pseudonymization methods
+    """Manages expert feedback for pseudonymization methods.
 
     Learns from expert selections in Stage 3 and adjusts method rankings
     for similar columns in future runs.
@@ -28,7 +28,7 @@ class ExpertPreferenceManager:
     SIMILARITY_THRESHOLD = 0.75
 
     def __init__(self, preference_file: str = "resources/expert_feedback.json", rag_system=None):
-        """Initialize preference manager
+        """Initialize preference manager.
 
         Args:
             preference_file: Path to expert feedback JSON file
@@ -60,16 +60,17 @@ class ExpertPreferenceManager:
         self._initialize_feedback_embeddings()
 
     def _initialize_heuristic_learner(self):
-        """Initialize heuristic pattern learner"""
+        """Initialize heuristic pattern learner."""
         try:
             from pseudragon.rag.heuristic_pattern_learner import HeuristicPatternLearner
+
             self._heuristic_learner = HeuristicPatternLearner(
                 feedback_file=self.preference_file,
                 # Keep ablation runs isolated.  When an experiment supplies
                 # HEURISTICS_FILE, the pattern learner must use that same
                 # store instead of silently falling back to the repository's
                 # live HITL artifact.
-                heuristics_file=os.environ.get("HEURISTICS_FILE", "resources/heuristics.json")
+                heuristics_file=os.environ.get("HEURISTICS_FILE", "resources/heuristics.json"),
             )
             logger.info("Initialized heuristic pattern learner")
         except Exception as e:
@@ -77,7 +78,7 @@ class ExpertPreferenceManager:
             self._heuristic_learner = None
 
     def _load_preferences(self) -> Dict[str, Any]:
-        """Load expert feedback from file
+        """Load expert feedback from file.
 
         Returns:
             Dictionary of expert feedback
@@ -88,16 +89,15 @@ class ExpertPreferenceManager:
                 "version": "1.0",
                 "column_patterns": {},  # Pattern-based preferences
                 "column_exact": {},  # Exact column name matches
-                "statistics": {
-                    "total_selections": 0,
-                    "last_updated": None
-                }
+                "statistics": {"total_selections": 0, "last_updated": None},
             }
 
         try:
-            with open(self.preference_file, 'r', encoding='utf-8') as f:
+            with open(self.preference_file, "r", encoding="utf-8") as f:
                 preferences = json.load(f)
-                logger.info(f"Loaded {len(preferences.get('column_exact', {}))} expert feedback entries")
+                logger.info(
+                    f"Loaded {len(preferences.get('column_exact', {}))} expert feedback entries"
+                )
                 return preferences
         except Exception as e:
             logger.warning(f"Failed to load expert feedback: {e}")
@@ -105,14 +105,11 @@ class ExpertPreferenceManager:
                 "version": "1.0",
                 "column_patterns": {},
                 "column_exact": {},
-                "statistics": {
-                    "total_selections": 0,
-                    "last_updated": None
-                }
+                "statistics": {"total_selections": 0, "last_updated": None},
             }
 
     def _save_preferences(self):
-        """Save expert feedback to file"""
+        """Save expert feedback to file."""
         try:
             # Create directory if it doesn't exist
             # Only create directory if the path contains a directory component
@@ -120,7 +117,7 @@ class ExpertPreferenceManager:
             if dir_name:  # Only create if there's actually a directory path
                 os.makedirs(dir_name, exist_ok=True)
 
-            with open(self.preference_file, 'w', encoding='utf-8') as f:
+            with open(self.preference_file, "w", encoding="utf-8") as f:
                 json.dump(self.preferences, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Saved expert feedback to {self.preference_file}")
@@ -128,7 +125,7 @@ class ExpertPreferenceManager:
             logger.error(f"Failed to save expert feedback: {e}")
 
     def _initialize_feedback_embeddings(self):
-        """Initialize embeddings for existing feedback entries to enable semantic search"""
+        """Initialize embeddings for existing feedback entries to enable semantic search."""
         has_column_exact = bool(self.preferences.get("column_exact"))
         has_pii_classification = bool(self.preferences.get("pii_classification"))
 
@@ -144,8 +141,10 @@ class ExpertPreferenceManager:
 
             # Check if RAG is enabled
 
-            if not getattr(Settings, 'RAG_ENABLED', True):
-                logger.info("RAG disabled - skipping embedding initialization for expert preferences")
+            if not getattr(Settings, "RAG_ENABLED", True):
+                logger.info(
+                    "RAG disabled - skipping embedding initialization for expert preferences"
+                )
                 self._column_embeddings = {}
                 self._embedding_generator = None
                 return
@@ -153,10 +152,12 @@ class ExpertPreferenceManager:
             # Use FEEDBACK_EMBEDDING_MODEL for column similarity search (general-purpose model)
             # instead of LEGAL_EMBEDDING_MODEL (legal-domain document RAG)
 
-            # LEGAL_EMBEDDING_MODEL(법률 도메인 문서 RAG용)과 분리
+            # Use a separate embedding model for feedback and legal documents.
             pii_model = Settings.FEEDBACK_EMBEDDING_MODEL
             self._embedding_generator = EmbeddingGenerator(DEFAULT_LLM_CLIENT, pii_model)
-            logger.info(f"Initialized embedding generator for PII classification RAG search (model: {pii_model})")
+            logger.info(
+                f"Initialized embedding generator for PII classification RAG search (model: {pii_model})"
+            )
 
             # Generate embeddings for each stored column in column_exact
 
@@ -173,18 +174,23 @@ class ExpertPreferenceManager:
                     embedding = self._embedding_generator._generate_local_embeddings([description])
                     self._column_embeddings[key] = embedding[0]
 
-                logger.info(f"Initialized {len(self._column_embeddings)} feedback embeddings for RAG search")
+                logger.info(
+                    f"Initialized {len(self._column_embeddings)} feedback embeddings for RAG search"
+                )
 
         except Exception as e:
             logger.warning(f"Failed to initialize feedback embeddings: {e}")
             import traceback
+
             logger.warning(traceback.format_exc())
             # Continue without RAG - will fall back to exact matching
             self._column_embeddings = {}
             self._embedding_generator = None
 
-    def _create_column_description(self, column_name: str, pii_type: str, entry: Dict[str, Any]) -> str:
-        """Create a descriptive text for a column to generate meaningful embeddings
+    def _create_column_description(
+        self, column_name: str, pii_type: str, entry: Dict[str, Any]
+    ) -> str:
+        """Create a descriptive text for a column to generate meaningful embeddings.
 
         Args:
             column_name: Column name
@@ -214,25 +220,25 @@ class ExpertPreferenceManager:
         # Add semantic hints based on column name patterns
 
         column_lower = column_name.lower()
-        if any(x in column_lower for x in ['balance', 'blnc', 'amt', 'amount', 'money', 'price']):
+        if any(x in column_lower for x in ["balance", "blnc", "amt", "amount", "money", "price"]):
             parts.append("Semantic: Financial amount, balance, monetary value")
-        elif any(x in column_lower for x in ['phone', 'mobile', 'tel', 'contact']):
+        elif any(x in column_lower for x in ["phone", "mobile", "tel", "contact"]):
             parts.append("Semantic: Phone number, contact information")
-        elif any(x in column_lower for x in ['name', 'nm', 'firstname', 'lastname']):
+        elif any(x in column_lower for x in ["name", "nm", "firstname", "lastname"]):
             parts.append("Semantic: Person name, identifier")
-        elif any(x in column_lower for x in ['id', 'no', 'num', 'seq', 'code']):
+        elif any(x in column_lower for x in ["id", "no", "num", "seq", "code"]):
             parts.append("Semantic: Identifier, sequence number, code")
-        elif any(x in column_lower for x in ['date', 'dt', 'time', 'dtime']):
+        elif any(x in column_lower for x in ["date", "dt", "time", "dtime"]):
             parts.append("Semantic: Date, time, timestamp")
-        elif any(x in column_lower for x in ['addr', 'address', 'loc', 'location']):
+        elif any(x in column_lower for x in ["addr", "address", "loc", "location"]):
             parts.append("Semantic: Address, location information")
-        elif any(x in column_lower for x in ['email', 'mail']):
+        elif any(x in column_lower for x in ["email", "mail"]):
             parts.append("Semantic: Email address")
 
         return " | ".join(parts)
 
     def _update_column_embedding(self, key: str, entry: Dict[str, Any]):
-        """Update embedding for a single column after recording new feedback
+        """Update embedding for a single column after recording new feedback.
 
         Args:
             key: Column key (column_name:pii_type)
@@ -254,13 +260,9 @@ class ExpertPreferenceManager:
             logger.warning(f"Failed to update column embedding: {e}")
 
     def find_similar_column(
-            self,
-            column_name: str,
-            pii_type: str,
-            column_comment: str = "",
-            data_type: str = ""
+        self, column_name: str, pii_type: str, column_comment: str = "", data_type: str = ""
     ) -> Optional[Tuple[str, str, float]]:
-        """Find a similar column in the feedback database using RAG semantic search
+        """Find a similar column in the feedback database using RAG semantic search.
 
         Args:
             column_name: New column name to search for
@@ -287,25 +289,29 @@ class ExpertPreferenceManager:
 
             # Add semantic hints
             column_lower = column_name.lower()
-            if any(x in column_lower for x in ['balance', 'blnc', 'amt', 'amount', 'money', 'price']):
+            if any(
+                x in column_lower for x in ["balance", "blnc", "amt", "amount", "money", "price"]
+            ):
                 query_parts.append("Semantic: Financial amount, balance, monetary value")
-            elif any(x in column_lower for x in ['phone', 'mobile', 'tel', 'contact']):
+            elif any(x in column_lower for x in ["phone", "mobile", "tel", "contact"]):
                 query_parts.append("Semantic: Phone number, contact information")
-            elif any(x in column_lower for x in ['name', 'nm', 'firstname', 'lastname']):
+            elif any(x in column_lower for x in ["name", "nm", "firstname", "lastname"]):
                 query_parts.append("Semantic: Person name, identifier")
-            elif any(x in column_lower for x in ['id', 'no', 'num', 'seq', 'code']):
+            elif any(x in column_lower for x in ["id", "no", "num", "seq", "code"]):
                 query_parts.append("Semantic: Identifier, sequence number, code")
-            elif any(x in column_lower for x in ['date', 'dt', 'time', 'dtime']):
+            elif any(x in column_lower for x in ["date", "dt", "time", "dtime"]):
                 query_parts.append("Semantic: Date, time, timestamp")
-            elif any(x in column_lower for x in ['addr', 'address', 'loc', 'location']):
+            elif any(x in column_lower for x in ["addr", "address", "loc", "location"]):
                 query_parts.append("Semantic: Address, location information")
-            elif any(x in column_lower for x in ['email', 'mail']):
+            elif any(x in column_lower for x in ["email", "mail"]):
                 query_parts.append("Semantic: Email address")
 
             query_description = " | ".join(query_parts)
 
             # Generate embedding for query
-            query_embedding = self._embedding_generator._generate_local_embeddings([query_description])[0]
+            query_embedding = self._embedding_generator._generate_local_embeddings(
+                [query_description]
+            )[0]
 
             # Compare with all stored embeddings
 
@@ -314,8 +320,7 @@ class ExpertPreferenceManager:
 
             for key, stored_embedding in self._column_embeddings.items():
                 similarity = cosine_similarity(
-                    query_embedding.reshape(1, -1),
-                    stored_embedding.reshape(1, -1)
+                    query_embedding.reshape(1, -1), stored_embedding.reshape(1, -1)
                 )[0][0]
 
                 if similarity > best_similarity:
@@ -327,7 +332,9 @@ class ExpertPreferenceManager:
                 entry = self.preferences["column_exact"].get(best_match, {})
                 similar_column_name = entry.get("column_name", "")
                 similar_column_comment = entry.get("column_comment", "")
-                logger.info(f"[RAG] Found similar column: {column_name} ≈ {similar_column_name} (similarity: {best_similarity:.3f})")
+                logger.info(
+                    f"[RAG] Found similar column: {column_name} ≈ {similar_column_name} (similarity: {best_similarity:.3f})"
+                )
                 if similar_column_comment:
                     logger.info(f"[RAG] Similar column description: {similar_column_comment}")
                 if column_comment:
@@ -341,13 +348,9 @@ class ExpertPreferenceManager:
             return None
 
     def get_preference_from_similar(
-            self,
-            column_name: str,
-            pii_type: str,
-            column_comment: str = "",
-            data_type: str = ""
+        self, column_name: str, pii_type: str, column_comment: str = "", data_type: str = ""
     ) -> Optional[Dict[str, Any]]:
-        """Get preference (method and code snippet) from a similar column
+        """Get preference (method and code snippet) from a similar column.
 
         Args:
             column_name: New column name
@@ -376,7 +379,7 @@ class ExpertPreferenceManager:
                     "similar_column": column_name,
                     "similar_column_comment": stored_comment,
                     "similarity": 1.0,
-                    "match_type": "exact"
+                    "match_type": "exact",
                 }
 
         # Then try RAG-based similarity search
@@ -393,7 +396,9 @@ class ExpertPreferenceManager:
                 custom_description = entry.get("custom_descriptions", {}).get(preferred_method)
                 stored_comment = entry.get("column_comment", "")
 
-                logger.info(f"[RAG] Applying preference from similar column {similar_column_name} -> {column_name}")
+                logger.info(
+                    f"[RAG] Applying preference from similar column {similar_column_name} -> {column_name}"
+                )
                 if stored_comment:
                     logger.info(f"[RAG] Similar column description: {stored_comment}")
                 return {
@@ -403,26 +408,26 @@ class ExpertPreferenceManager:
                     "similar_column": similar_column_name,
                     "similar_column_comment": stored_comment,
                     "similarity": similarity,
-                    "match_type": "rag_similar"
+                    "match_type": "rag_similar",
                 }
 
         return None
 
     def record_selection(
-            self,
-            table_name: str,
-            column_name: str,
-            pii_type: str,
-            selected_method: str,
-            available_methods: List[str],
-            selected_index: int,
-            code_snippet: Optional[str] = None,
-            code_modified: bool = False,
-            description: Optional[str] = None,
-            description_modified: bool = False,
-            column_comment: Optional[str] = None
+        self,
+        table_name: str,
+        column_name: str,
+        pii_type: str,
+        selected_method: str,
+        available_methods: List[str],
+        selected_index: int,
+        code_snippet: Optional[str] = None,
+        code_modified: bool = False,
+        description: Optional[str] = None,
+        description_modified: bool = False,
+        column_comment: Optional[str] = None,
     ):
-        """Record expert's method selection
+        """Record expert's method selection.
 
         Args:
             table_name: Table name
@@ -437,10 +442,7 @@ class ExpertPreferenceManager:
             description_modified: Whether the user edited the description
             column_comment: Column comment/description from database schema
         """
-        # Record ALL selections including default (selected_index == 0)
-
-        # Previously only recorded when expert changed from default, but user wants all selections recorded
-
+        # Record every selection, including the default option.
 
         # Create preference key based on column name and PII type
         exact_key = f"{column_name.lower()}:{pii_type}"
@@ -451,7 +453,7 @@ class ExpertPreferenceManager:
                 "column_name": column_name,
                 "pii_type": pii_type,
                 "method_counts": {},
-                "total_selections": 0
+                "total_selections": 0,
             }
 
         # Increment selection count
@@ -483,6 +485,7 @@ class ExpertPreferenceManager:
         # Update statistics
         self.preferences["statistics"]["total_selections"] += 1
         from datetime import datetime
+
         self.preferences["statistics"]["last_updated"] = datetime.now().isoformat()
 
         # Save preferences
@@ -492,18 +495,13 @@ class ExpertPreferenceManager:
 
         self._update_column_embedding(exact_key, entry)
 
-        # Note: Pattern learning is now triggered at Stage 3 completion, not per-selection
-
+        # Learn patterns when Stage 3 completes.
 
         logger.info(f"Recorded expert feedback: {column_name} ({pii_type}) -> {selected_method}")
         logger.info(f"Total selections for {column_name}: {entry['total_selections']}")
 
-    def get_preferred_method(
-            self,
-            column_name: str,
-            pii_type: str
-    ) -> Optional[str]:
-        """Get expert's preferred method for a column
+    def get_preferred_method(self, column_name: str, pii_type: str) -> Optional[str]:
+        """Get expert's preferred method for a column.
 
         Args:
             column_name: Column name
@@ -525,20 +523,19 @@ class ExpertPreferenceManager:
                 count = method_counts[preferred_method]
                 total = entry["total_selections"]
 
-                logger.info(f"Found expert feedback for {column_name}: {preferred_method} ({count}/{total} times)")
+                logger.info(
+                    f"Found expert feedback for {column_name}: {preferred_method} ({count}/{total} times)"
+                )
                 return preferred_method
 
         # Check pattern-based match (future enhancement)
-        # For now, return None
+
         return None
 
     def get_custom_code_snippet(
-            self,
-            column_name: str,
-            pii_type: str,
-            method: str
+        self, column_name: str, pii_type: str, method: str
     ) -> Optional[str]:
-        """Get user's custom code snippet for a column and method
+        """Get user's custom code snippet for a column and method.
 
         Args:
             column_name: Column name
@@ -562,12 +559,9 @@ class ExpertPreferenceManager:
         return None
 
     def reorder_methods(
-            self,
-            column_name: str,
-            pii_type: str,
-            methods: List[Dict[str, Any]]
+        self, column_name: str, pii_type: str, methods: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
-        """Reorder methods based on expert feedback
+        """Reorder methods based on expert feedback.
 
         Args:
             column_name: Column name
@@ -604,12 +598,14 @@ class ExpertPreferenceManager:
         preferred_method_obj = reordered.pop(preferred_index)
         reordered.insert(0, preferred_method_obj)
 
-        logger.info(f"Reordered methods for {column_name}: {preferred_method} moved to top (was at index {preferred_index})")
+        logger.info(
+            f"Reordered methods for {column_name}: {preferred_method} moved to top (was at index {preferred_index})"
+        )
 
         return reordered
 
     def get_statistics(self) -> Dict[str, Any]:
-        """Get usage statistics
+        """Get usage statistics.
 
         Returns:
             Dictionary with statistics
@@ -620,14 +616,14 @@ class ExpertPreferenceManager:
         return stats
 
     def record_pii_classification_change(
-            self,
-            column_name: str,
-            old_classification: str,
-            new_classification: str,
-            rationale: str = "",
-            column_comment: str = ""
+        self,
+        column_name: str,
+        old_classification: str,
+        new_classification: str,
+        rationale: str = "",
+        column_comment: str = "",
     ):
-        """Record user's PII classification change
+        """Record user's PII classification change.
 
         This allows the system to learn from user corrections:
         - If user changes Non-PII -> PII, remember this for future runs
@@ -635,13 +631,9 @@ class ExpertPreferenceManager:
 
         Args:
             column_name: Column name
-
             old_classification: Original classification (PII or Non-PII)
-
             new_classification: New classification (PII or Non-PII)
-
             rationale: User's rationale for the change
-
             column_comment: Column comment/description from database schema
         """
         # Only record if there was an actual change
@@ -661,7 +653,7 @@ class ExpertPreferenceManager:
                 "classification": new_classification,
                 "change_count": 0,
                 "rationale": rationale,
-                "history": []
+                "history": [],
             }
 
         entry = self.preferences["pii_classification"][col_key]
@@ -681,12 +673,13 @@ class ExpertPreferenceManager:
         # Record change in history
 
         from datetime import datetime
+
         entry["history"].append(
             {
                 "timestamp": datetime.now().isoformat(),
                 "old": old_classification,
                 "new": new_classification,
-                "rationale": rationale
+                "rationale": rationale,
             }
         )
 
@@ -699,31 +692,26 @@ class ExpertPreferenceManager:
 
         self._save_preferences()
 
-        # Note: Pattern learning is now triggered at Stage 3 completion, not per-change
+        # Learn patterns when Stage 3 completes.
 
-
-        logger.info(f"Recorded PII classification change: {column_name} ({old_classification} -> {new_classification})")
+        logger.info(
+            f"Recorded PII classification change: {column_name} ({old_classification} -> {new_classification})"
+        )
         if rationale:
             logger.info(f"Rationale: {rationale}")
 
     def get_learned_pii_classification(
-            self,
-            column_name: str,
-            column_comment: str = "",
-            data_type: str = ""
+        self, column_name: str, column_comment: str = "", data_type: str = ""
     ) -> Optional[Dict[str, Any]]:
-        """Get learned PII classification for a column with RAG-based similarity search
+        """Get learned PII classification for a column with RAG-based similarity search.
 
         Args:
             column_name: Column name
-
             column_comment: Column comment/description for similarity search
-
             data_type: Column data type
 
         Returns:
             Dict with classification info if learned, None otherwise
-
             Returns: {"classification": "PII"/"Non-PII", "match_type": "exact"/"rag_similar",
                       "similar_column": str, "similarity": float, "rationale": str}
         """
@@ -738,7 +726,9 @@ class ExpertPreferenceManager:
             rationale = entry.get("rationale", "")
             stored_comment = entry.get("column_comment", "")
 
-            logger.info(f"Found learned PII classification for {column_name}: {classification} ({change_count} change(s))")
+            logger.info(
+                f"Found learned PII classification for {column_name}: {classification} ({change_count} change(s))"
+            )
             if rationale:
                 logger.info(f"Rationale: {rationale}")
 
@@ -749,30 +739,23 @@ class ExpertPreferenceManager:
                 "similar_column_comment": stored_comment,
                 "similarity": 1.0,
                 "rationale": rationale,
-                "change_count": change_count
+                "change_count": change_count,
             }
 
         # RAG-based similarity search using general-purpose embedding model
-        # Previously disabled due to a high false-positive rate in legal-document embeddings
-        # Now re-enabled with sentence-transformers/all-MiniLM-L6-v2 which provides
-        # better semantic matching for database column descriptions
 
-
-        # 현재 sentence-transformers/all-MiniLM-L6-v2로 재활성화됨
-
-        similar_result = self._find_similar_pii_classification(column_name, column_comment, data_type)
+        similar_result = self._find_similar_pii_classification(
+            column_name, column_comment, data_type
+        )
         if similar_result:
             return similar_result
 
         return None
 
     def _find_similar_pii_classification(
-            self,
-            column_name: str,
-            column_comment: str = "",
-            data_type: str = ""
+        self, column_name: str, column_comment: str = "", data_type: str = ""
     ) -> Optional[Dict[str, Any]]:
-        """Find similar column in pii_classification using pure embedding-based semantic search
+        """Find similar column in pii_classification using pure embedding-based semantic search.
 
         Strategy:
         1. If column_comment exists, compute direct embedding similarity between comments
@@ -793,10 +776,14 @@ class ExpertPreferenceManager:
             return None
 
         if self._embedding_generator is None:
-            logger.warning(f"[RAG-PII] Embedding generator not initialized, skipping RAG search for {column_name}")
+            logger.warning(
+                f"[RAG-PII] Embedding generator not initialized, skipping RAG search for {column_name}"
+            )
             return None
 
-        logger.info(f"[RAG-PII] Starting similarity search for column: {column_name}, comment: '{column_comment}'")
+        logger.info(
+            f"[RAG-PII] Starting similarity search for column: {column_name}, comment: '{column_comment}'"
+        )
 
         try:
             from sklearn.metrics.pairwise import cosine_similarity
@@ -809,7 +796,9 @@ class ExpertPreferenceManager:
 
             query_comment_embedding = None
             if column_comment:
-                query_comment_embedding = self._embedding_generator._generate_local_embeddings([column_comment])[0]
+                query_comment_embedding = self._embedding_generator._generate_local_embeddings(
+                    [column_comment]
+                )[0]
 
             # Full context embedding (column_name + comment + data_type)
             query_full_parts = [column_name]
@@ -818,7 +807,9 @@ class ExpertPreferenceManager:
             if data_type:
                 query_full_parts.append(data_type)
             query_full_description = " | ".join(query_full_parts)
-            query_full_embedding = self._embedding_generator._generate_local_embeddings([query_full_description])[0]
+            query_full_embedding = self._embedding_generator._generate_local_embeddings(
+                [query_full_description]
+            )[0]
 
             for key, entry in self.preferences["pii_classification"].items():
                 stored_column_name = entry.get("column_name", "")
@@ -829,10 +820,12 @@ class ExpertPreferenceManager:
 
                 comment_similarity = 0.0
                 if query_comment_embedding is not None and stored_comment:
-                    stored_comment_embedding = self._embedding_generator._generate_local_embeddings([stored_comment])[0]
+                    stored_comment_embedding = self._embedding_generator._generate_local_embeddings(
+                        [stored_comment]
+                    )[0]
                     comment_similarity = cosine_similarity(
                         query_comment_embedding.reshape(1, -1),
-                        stored_comment_embedding.reshape(1, -1)
+                        stored_comment_embedding.reshape(1, -1),
                     )[0][0]
 
                 # Strategy 2: Full context similarity
@@ -843,11 +836,12 @@ class ExpertPreferenceManager:
                 if stored_rationale:
                     stored_full_parts.append(stored_rationale)
                 stored_full_description = " | ".join(stored_full_parts)
-                stored_full_embedding = self._embedding_generator._generate_local_embeddings([stored_full_description])[0]
+                stored_full_embedding = self._embedding_generator._generate_local_embeddings(
+                    [stored_full_description]
+                )[0]
 
                 full_similarity = cosine_similarity(
-                    query_full_embedding.reshape(1, -1),
-                    stored_full_embedding.reshape(1, -1)
+                    query_full_embedding.reshape(1, -1), stored_full_embedding.reshape(1, -1)
                 )[0][0]
 
                 # Use the higher similarity
@@ -880,8 +874,10 @@ class ExpertPreferenceManager:
             if best_match_key:
                 entry = self.preferences["pii_classification"][best_match_key]
                 similar_column_name = entry.get("column_name", "")
-                logger.info(f"[RAG-PII] Best match: {column_name} ≈ {similar_column_name} "
-                            f"(similarity: {best_similarity:.3f}, type: {best_match_type}, threshold: {threshold})")
+                logger.info(
+                    f"[RAG-PII] Best match: {column_name} ≈ {similar_column_name} "
+                    f"(similarity: {best_similarity:.3f}, type: {best_match_type}, threshold: {threshold})"
+                )
 
             if best_match_key and best_similarity >= threshold:
                 entry = self.preferences["pii_classification"][best_match_key]
@@ -891,7 +887,9 @@ class ExpertPreferenceManager:
                 rationale = entry.get("rationale", "")
                 change_count = entry.get("change_count", 0)
 
-                logger.info(f"[RAG-PII] [OK] Match accepted! Applying classification: {classification}")
+                logger.info(
+                    f"[RAG-PII] [OK] Match accepted! Applying classification: {classification}"
+                )
                 if stored_comment:
                     logger.info(f"[RAG-PII] Similar column description: {stored_comment}")
                 if column_comment:
@@ -906,10 +904,12 @@ class ExpertPreferenceManager:
                     "similar_column_comment": stored_comment,
                     "similarity": best_similarity,
                     "rationale": rationale,
-                    "change_count": change_count
+                    "change_count": change_count,
                 }
             elif best_match_key:
-                logger.info(f"[RAG-PII] [X] Match rejected: similarity {best_similarity:.3f} < threshold {threshold}")
+                logger.info(
+                    f"[RAG-PII] [X] Match rejected: similarity {best_similarity:.3f} < threshold {threshold}"
+                )
 
             return None
 
@@ -918,7 +918,7 @@ class ExpertPreferenceManager:
             return None
 
     def trigger_pattern_learning(self):
-        """Trigger heuristic pattern learning from current feedback data
+        """Trigger heuristic pattern learning from current feedback data.
 
         This method should be called at Stage 3 completion to learn patterns
         from all accumulated expert feedback. It's a fast operation (typically < 100ms).
@@ -942,18 +942,18 @@ class ExpertPreferenceManager:
             self._heuristic_learner.refine_heuristics()
 
             stats = self._heuristic_learner.get_statistics()
-            logger.info(f"[Heuristic] Pattern learning completed: {stats['total_patterns']} patterns learned")
+            logger.info(
+                f"[Heuristic] Pattern learning completed: {stats['total_patterns']} patterns learned"
+            )
             return stats
         except Exception as e:
             logger.warning(f"Failed to trigger pattern learning: {e}")
             return None
 
     def classify_by_heuristics(
-            self,
-            column_name: str,
-            column_comment: str = ""
+        self, column_name: str, column_comment: str = ""
     ) -> Optional[Dict[str, Any]]:
-        """Classify a column using learned heuristic patterns (fast, no LLM)
+        """Classify a column using learned heuristic patterns (fast, no LLM).
 
         This method provides fast classification (< 1ms) using regex patterns
         learned from expert feedback. Should be called before RAG similarity search.
@@ -974,7 +974,7 @@ class ExpertPreferenceManager:
         return self._heuristic_learner.classify_column(column_name, column_comment)
 
     def get_heuristic_statistics(self) -> Optional[Dict[str, Any]]:
-        """Get statistics about learned heuristic patterns
+        """Get statistics about learned heuristic patterns.
 
         Returns:
             Dictionary with pattern statistics or None if learner not initialized

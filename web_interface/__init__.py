@@ -1,1 +1,1 @@
-"""Web interface for PseuDRAGON"""
+"""Web interface for PseuDRAGON."""

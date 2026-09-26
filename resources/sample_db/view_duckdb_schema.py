@@ -1,4 +1,4 @@
-"""View COMMENT from DuckDB database"""
+"""View COMMENT from DuckDB database."""
 
 import os
 
@@ -23,8 +23,15 @@ print("=" * 120)
 
 
 tables = [
-    "HF_TRNS_TRAN", "CD_TRNS_TRAN", "OB_INQR_TRAN", "OB_TRNS_TRAN",
-    "PI_WD_LEDG", "GR_JC_TRAN", "GR_NJ_TRAN", "CMS_REQ_TRAN", "CMS_RES_TRAN"
+    "HF_TRNS_TRAN",
+    "CD_TRNS_TRAN",
+    "OB_INQR_TRAN",
+    "OB_TRNS_TRAN",
+    "PI_WD_LEDG",
+    "GR_JC_TRAN",
+    "GR_NJ_TRAN",
+    "CMS_REQ_TRAN",
+    "CMS_RES_TRAN",
 ]
 
 table_descriptions = {
@@ -36,7 +43,7 @@ table_descriptions = {
     "GR_JC_TRAN": "자동이체 출금청구 내역",
     "GR_NJ_TRAN": "납부자 자동이체 내역",
     "CMS_REQ_TRAN": "CMS 출금 의뢰 내역",
-    "CMS_RES_TRAN": "CMS 출금 결과 내역"
+    "CMS_RES_TRAN": "CMS 출금 결과 내역",
 }
 
 
@@ -45,7 +52,7 @@ for table_name in tables:
     print(f"[Table: {table_name}] - {table_descriptions[table_name]}")
     print(f"{'=' * 120}")
 
-    # DuckDB에서 컬럼 정보 및 COMMENT 조회
+    # Read column metadata and descriptions from the DuckDB catalog.
     result = conn.execute(
         """
         SELECT column_name,
@@ -55,7 +62,8 @@ for table_name in tables:
         FROM information_schema.columns
         WHERE table_name = ?
         ORDER BY ordinal_position
-        """, [table_name]
+        """,
+        [table_name],
     ).fetchall()
 
     if not result:
@@ -69,17 +77,15 @@ for table_name in tables:
         print(f"{i:<4} {col_name:<30} {data_type:<15} {nullable:<10}")
         if comment:
             # Wrap long comments
-            comment_lines = [comment[j: j + 100] for j in range(0, len(comment), 100)]
+            comment_lines = [comment[j : j + 100] for j in range(0, len(comment), 100)]
             for line in comment_lines:
                 print(f"     [COMMENT] {line}")
         else:
             print(f"     [COMMENT] (no comment)")
         print()
 
-
     print(f"\n[Sample Data from {table_name} - First 3 Records]")
     print("-" * 120)
-
 
     if table_name in ["HF_TRNS_TRAN", "CD_TRNS_TRAN"]:
         sample_data = conn.execute(
@@ -168,7 +174,7 @@ pii_columns_all = {
     "CRNO": "법인등록번호 - 고유식별정보",
     "CI": "연계정보 - 개인식별정보",
     "FIN_INTT_SVC_NO": "금융이체서비스번호 - 핀테크이용번호",
-    "USER_SEQ_NO": "이용자일련번호 - 개인식별정보"
+    "USER_SEQ_NO": "이용자일련번호 - 개인식별정보",
 }
 
 for table_name in tables:
@@ -181,25 +187,26 @@ for table_name in tables:
     """
     ).fetchall()
 
-    table_pii = [(col, dtype, cmt) for col, dtype, cmt in pii_found
-                 if col in pii_columns_all]
+    table_pii = [(col, dtype, cmt) for col, dtype, cmt in pii_found if col in pii_columns_all]
 
     if table_pii:
         print(f"\n[{table_name}] - {table_descriptions[table_name]}")
         print("-" * 120)
         for col_name, data_type, comment in table_pii:
-            print(f"  [PII] {col_name:<25} ({data_type:<15}) - {pii_columns_all.get(col_name, 'PII')}")
+            print(
+                f"  [PII] {col_name:<25} ({data_type:<15}) - {pii_columns_all.get(col_name, 'PII')}"
+            )
             if comment:
                 print(f"        Comment: {comment}")
 
 print("\n" + "=" * 120)
 
-# PseuDRAGON이 사용할 스키마 정보
+# Assemble schema metadata for the pipeline.
 print("\n[Enhanced Schema for PseuDRAGON]")
 print("PseuDRAGON uses both column names and COMMENT for accurate PII detection")
 print("-" * 120)
 
-# Enhanced schema 예시
+# Show a schema metadata example.
 print("\nEnhanced Schema Format:")
 print("{\n  'column_name': {")
 print("    'type': 'VARCHAR',")

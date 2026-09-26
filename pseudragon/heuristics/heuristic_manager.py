@@ -1,4 +1,4 @@
-"""Heuristic Manager
+"""Heuristic Manager.
 
 Manages heuristic rules for PII detection.
 
@@ -19,13 +19,13 @@ from typing import Any, Dict, List, Optional
 
 
 class HeuristicManager:
-    """Manager for heuristic rules
+    """Manager for heuristic rules.
 
     Handles loading, saving, and querying heuristic patterns.
     """
 
     def __init__(self, heuristics_file: Optional[str] = None):
-        """Initialize heuristic manager
+        """Initialize heuristic manager.
 
         Args:
             heuristics_file: Path to heuristics.json file
@@ -53,7 +53,7 @@ class HeuristicManager:
             self.save()
 
     def _create_empty_heuristics(self) -> Dict[str, Any]:
-        """Create empty heuristics structure (v2.0 format)
+        """Create empty heuristics structure (v2.0 format).
 
         Returns:
             Empty heuristics dictionary
@@ -67,14 +67,14 @@ class HeuristicManager:
                 "manual_patterns": 0,
                 "auto_learned_patterns": 0,
                 "last_updated": None,
-                "last_auto_learn": None
-            }
+                "last_auto_learn": None,
+            },
         }
 
     def load(self) -> None:
-        """Load heuristics from file"""
+        """Load heuristics from file."""
         try:
-            with open(self.heuristics_file, 'r', encoding='utf-8') as f:
+            with open(self.heuristics_file, "r", encoding="utf-8") as f:
                 self.heuristics = json.load(f)
                 # Migrate v1.0 to v2.0 format if needed
                 if self.heuristics.get("version") == "1.0":
@@ -84,7 +84,7 @@ class HeuristicManager:
             self.heuristics = self._create_empty_heuristics()
 
     def _migrate_v1_to_v2(self, old_heuristics: Dict[str, Any]) -> Dict[str, Any]:
-        """Migrate v1.0 heuristics format to v2.0
+        """Migrate v1.0 heuristics format to v2.0.
 
         Args:
             old_heuristics: Old format heuristics
@@ -103,26 +103,30 @@ class HeuristicManager:
         return new_heuristics
 
     def save(self) -> None:
-        """Save heuristics to file"""
+        """Save heuristics to file."""
         now = datetime.now().isoformat()
 
         # Update statistics
         if "statistics" not in self.heuristics:
             self.heuristics["statistics"] = {}
 
-        manual_count = sum(1 for h in self.heuristics.get("heuristics", []) if h.get("source") == "manual")
-        auto_count = sum(1 for h in self.heuristics.get("heuristics", []) if h.get("source") == "auto_learned")
+        manual_count = sum(
+            1 for h in self.heuristics.get("heuristics", []) if h.get("source") == "manual"
+        )
+        auto_count = sum(
+            1 for h in self.heuristics.get("heuristics", []) if h.get("source") == "auto_learned"
+        )
 
         self.heuristics["statistics"]["total_patterns"] = len(self.heuristics.get("heuristics", []))
         self.heuristics["statistics"]["manual_patterns"] = manual_count
         self.heuristics["statistics"]["auto_learned_patterns"] = auto_count
         self.heuristics["statistics"]["last_updated"] = now
 
-        with open(self.heuristics_file, 'w', encoding='utf-8') as f:
+        with open(self.heuristics_file, "w", encoding="utf-8") as f:
             json.dump(self.heuristics, f, indent=2, ensure_ascii=False)
 
     def get_all(self, enabled_only: bool = False) -> List[Dict[str, Any]]:
-        """Get all heuristics
+        """Get all heuristics.
 
         Args:
             enabled_only: Only return enabled heuristics
@@ -139,7 +143,7 @@ class HeuristicManager:
         return sorted(heuristics, key=lambda h: h.get("priority", 0), reverse=True)
 
     def get_by_id(self, heuristic_id: str) -> Optional[Dict[str, Any]]:
-        """Get heuristic by ID
+        """Get heuristic by ID.
 
         Args:
             heuristic_id: Heuristic ID
@@ -153,27 +157,26 @@ class HeuristicManager:
         return None
 
     def add(
-            self, name: str, regex: str, pii_type: str, rationale: str,
-            priority: int = 50, enabled: bool = True, source: str = "manual",
-            pattern_type: str = ""
+        self,
+        name: str,
+        regex: str,
+        pii_type: str,
+        rationale: str,
+        priority: int = 50,
+        enabled: bool = True,
+        source: str = "manual",
+        pattern_type: str = "",
     ) -> Dict[str, Any]:
-        """Add new heuristic
+        """Add new heuristic.
 
         Args:
             name: Heuristic name
-
             regex: Regular expression pattern
-
             pii_type: PII type (PII or Non-PII)
-
             rationale: Reason for this heuristic
-
             priority: Priority (higher = more important)
-
             enabled: Whether heuristic is enabled
-
             source: Source of heuristic ("manual" or "auto_learned")
-
             pattern_type: Type of pattern ("suffix", "prefix", "keyword", "custom")
 
         Returns:
@@ -202,7 +205,7 @@ class HeuristicManager:
             "enabled": enabled,
             "source": source,
             "created_at": now,
-            "updated_at": now
+            "updated_at": now,
         }
 
         # Add pattern_type if provided
@@ -215,11 +218,10 @@ class HeuristicManager:
         return heuristic
 
     def update(self, heuristic_id: str, **kwargs) -> Optional[Dict[str, Any]]:
-        """Update existing heuristic
+        """Update existing heuristic.
 
         Args:
             heuristic_id: Heuristic ID to update
-
             **kwargs: Fields to update
 
         Returns:
@@ -238,7 +240,16 @@ class HeuristicManager:
                 raise ValueError(f"Invalid regex pattern: {kwargs['regex']}")
 
         # Update fields
-        allowed_fields = ["name", "regex", "pii_type", "rationale", "priority", "enabled", "source", "pattern_type"]
+        allowed_fields = [
+            "name",
+            "regex",
+            "pii_type",
+            "rationale",
+            "priority",
+            "enabled",
+            "source",
+            "pattern_type",
+        ]
         for field in allowed_fields:
             if field in kwargs:
                 heuristic[field] = kwargs[field]
@@ -249,7 +260,7 @@ class HeuristicManager:
         return heuristic
 
     def delete(self, heuristic_id: str) -> bool:
-        """Delete heuristic
+        """Delete heuristic.
 
         Args:
             heuristic_id: Heuristic ID to delete
@@ -260,9 +271,7 @@ class HeuristicManager:
         heuristics = self.heuristics.get("heuristics", [])
         original_length = len(heuristics)
 
-        self.heuristics["heuristics"] = [
-            h for h in heuristics if h.get("id") != heuristic_id
-        ]
+        self.heuristics["heuristics"] = [h for h in heuristics if h.get("id") != heuristic_id]
 
         if len(self.heuristics["heuristics"]) < original_length:
             self.save()
@@ -271,22 +280,17 @@ class HeuristicManager:
         return False
 
     def test_pattern(self, regex: str, test_strings: List[str]) -> Dict[str, Any]:
-        """Test regex pattern against sample strings
+        """Test regex pattern against sample strings.
 
         Args:
             regex: Regular expression pattern to test
-
             test_strings: List of strings to test against
 
         Returns:
             Dictionary with test results
         """
         if not self.validate_regex(regex):
-            return {
-                "valid": False,
-                "error": "Invalid regex pattern",
-                "matches": []
-            }
+            return {"valid": False, "error": "Invalid regex pattern", "matches": []}
 
         try:
             pattern = re.compile(regex, re.IGNORECASE)
@@ -294,27 +298,14 @@ class HeuristicManager:
 
             for test_str in test_strings:
                 is_match = bool(pattern.search(test_str))
-                matches.append(
-                    {
-                        "string": test_str,
-                        "matched": is_match
-                    }
-                )
+                matches.append({"string": test_str, "matched": is_match})
 
-            return {
-                "valid": True,
-                "error": None,
-                "matches": matches
-            }
+            return {"valid": True, "error": None, "matches": matches}
         except Exception as e:
-            return {
-                "valid": False,
-                "error": str(e),
-                "matches": []
-            }
+            return {"valid": False, "error": str(e), "matches": []}
 
     def match_column(self, column_name: str) -> Optional[Dict[str, Any]]:
-        """Find matching heuristic for a column name
+        """Find matching heuristic for a column name.
 
         Args:
             column_name: Column name to match
@@ -337,7 +328,7 @@ class HeuristicManager:
 
     @staticmethod
     def validate_regex(regex: str) -> bool:
-        """Validate regex pattern
+        """Validate regex pattern.
 
         Args:
             regex: Regular expression pattern
@@ -355,7 +346,7 @@ class HeuristicManager:
             return False
 
     def _generate_id(self, existing_ids: List[str]) -> str:
-        """Generate unique heuristic ID
+        """Generate unique heuristic ID.
 
         Args:
             existing_ids: List of existing IDs
@@ -381,25 +372,27 @@ class HeuristicManager:
         return f"h{next_num:03d}"
 
     def get_statistics(self) -> Dict[str, Any]:
-        """Get statistics about heuristic patterns
+        """Get statistics about heuristic patterns.
 
         Returns:
             Dictionary with pattern statistics
         """
-        return self.heuristics.get("statistics", {
-            "total_patterns": len(self.heuristics.get("heuristics", [])),
-            "manual_patterns": 0,
-            "auto_learned_patterns": 0,
-            "last_updated": None,
-            "last_auto_learn": None
-        })
+        return self.heuristics.get(
+            "statistics",
+            {
+                "total_patterns": len(self.heuristics.get("heuristics", [])),
+                "manual_patterns": 0,
+                "auto_learned_patterns": 0,
+                "last_updated": None,
+                "last_auto_learn": None,
+            },
+        )
 
     def get_by_source(self, source: str, enabled_only: bool = False) -> List[Dict[str, Any]]:
-        """Get heuristics filtered by source
+        """Get heuristics filtered by source.
 
         Args:
             source: Source to filter by ("manual" or "auto_learned")
-
             enabled_only: Only return enabled heuristics
 
         Returns:

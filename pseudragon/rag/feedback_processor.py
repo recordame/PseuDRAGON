@@ -1,11 +1,10 @@
-"""Feedback Processor for PseuDRAGON Framework
+"""Feedback Processor for PseuDRAGON Framework.
 
 This module processes audit logs from HITL stage and converts them into
 searchable feedback knowledge base entries for the RAG system.
 """
 
 
-# 표준 라이브러리 import
 import json
 import os
 from pathlib import Path
@@ -13,14 +12,14 @@ from typing import Any, Dict, List
 
 
 class FeedbackProcessor:
-    """Audit Log Analyzer and Feedback Knowledge Base Generator
+    """Audit Log Analyzer and Feedback Knowledge Base Generator.
 
     Processes USER_EDIT events from audit logs and converts them into
     searchable feedback documents that can be integrated into the RAG system.
     """
 
     def process_audit_logs(self, log_dir: str) -> List[Dict[str, Any]]:
-        """Process all audit log files in the directory and extract feedback entries
+        """Process all audit log files in the directory and extract feedback entries.
 
         Args:
             log_dir: Path to directory containing audit logs (output directory)
@@ -56,7 +55,7 @@ class FeedbackProcessor:
 
         for log_file in audit_files:
             try:
-                with open(log_file, 'r', encoding='utf-8') as f:
+                with open(log_file, "r", encoding="utf-8") as f:
                     for line in f:
                         try:
                             event = json.loads(line.strip())
@@ -78,7 +77,7 @@ class FeedbackProcessor:
         return feedback_entries
 
     def _create_feedback_entry(self, edit_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert a USER_EDIT event into a searchable feedback document
+        """Convert a USER_EDIT event into a searchable feedback document.
 
         Args:
             edit_data: USER_EDIT event data containing table, column, actions, and rationale
@@ -97,8 +96,8 @@ class FeedbackProcessor:
         # Basic sanitization: remove potential control characters
 
         def sanitize(text: str) -> str:
-            """Remove control characters but keep whitespace and newlines"""
-            return ''.join(char for char in text if char.isprintable() or char in '\n\t ')
+            """Remove control characters but keep whitespace and newlines."""
+            return "".join(char for char in text if char.isprintable() or char in "\n\t ")
 
         table_name = sanitize(table_name)
         column_name = sanitize(column_name)
@@ -119,6 +118,15 @@ LLM 제안 기법: {old_action}
 이유: {rationale}"""
 
         return {
-            "text": feedback_text, "source": "FEEDBACK_KNOWLEDGE_BASE", "priority_level": 0,  # Highest priority
-            "priority_label": "EXPERT_FEEDBACK", "metadata": {"table": table_name, "column": column_name, "old_action": old_action, "new_action": new_action, "rationale": rationale}
+            "text": feedback_text,
+            "source": "FEEDBACK_KNOWLEDGE_BASE",
+            "priority_level": 0,  # Highest priority
+            "priority_label": "EXPERT_FEEDBACK",
+            "metadata": {
+                "table": table_name,
+                "column": column_name,
+                "old_action": old_action,
+                "new_action": new_action,
+                "rationale": rationale,
+            },
         }

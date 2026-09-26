@@ -1,4 +1,4 @@
-"""Policy Validators
+"""Policy Validators.
 
 Implements consistency checks for policy validation.
 """
@@ -11,55 +11,65 @@ from pseudragon.domain.policy_dsl import ActionType, Policy
 
 @dataclass
 class ValidationViolation:
-    """Represents a policy validation violation
+    """Represents a policy validation violation.
 
     Attributes:
         severity: Violation severity level ('error', 'warning', 'info')
-
         message: Description of the violation
-
         column: Column name associated with the violation (if applicable)
-
         suggestion: Suggested fix for the violation
     """
+
     severity: str
     message: str
     column: Optional[str] = None
     suggestion: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary
+        """Convert to dictionary.
 
         Returns:
             Dictionary representation
         """
-        return {'severity': self.severity, 'message': self.message, 'column': self.column, 'suggestion': self.suggestion}
+        return {
+            "severity": self.severity,
+            "message": self.message,
+            "column": self.column,
+            "suggestion": self.suggestion,
+        }
 
     def __repr__(self) -> str:
-        """String representation"""
+        """String representation."""
         col_str = f" [{self.column}]" if self.column else ""
         return f"{self.severity.upper()}{col_str}: {self.message}"
 
     def is_error(self) -> bool:
-        """Check if violation is an error"""
-        return self.severity == 'error'
+        """Check if violation is an error."""
+        return self.severity == "error"
 
     def is_warning(self) -> bool:
-        """Check if violation is a warning"""
-        return self.severity == 'warning'
+        """Check if violation is a warning."""
+        return self.severity == "warning"
 
 
 class LegalComplianceChecker:
-    """Legal Compliance Checker
+    """Legal Compliance Checker.
 
     Verifies that all PII columns are processed according to PIPA/GDPR.
     """
 
-    ALLOWED_PII_ACTIONS = {ActionType.DELETE, ActionType.HASH, ActionType.MASK, ActionType.TOKENIZE, ActionType.GENERALIZE, ActionType.ENCRYPT}
+    ALLOWED_PII_ACTIONS = {
+        ActionType.DELETE,
+        ActionType.HASH,
+        ActionType.MASK,
+        ActionType.TOKENIZE,
+        ActionType.GENERALIZE,
+        ActionType.ENCRYPT,
+    }
 
     @staticmethod
     def check(policy: Policy) -> list[ValidationViolation]:
-        """Check legal compliance
+        """Check legal compliance.
 
         Args:
             policy: Policy to validate
@@ -73,10 +83,10 @@ class LegalComplianceChecker:
             if col_policy.is_pii and col_policy.action.action == ActionType.KEEP:
                 violations.append(
                     ValidationViolation(
-                        severity='error',
+                        severity="error",
                         message=f"PII column '{col_name}' cannot be kept without processing",
                         column=col_name,
-                        suggestion="Apply HASH, GENERALIZE, MASK, TOKENIZE, ENCRYPT, or DELETE action"
+                        suggestion="Apply HASH, GENERALIZE, MASK, TOKENIZE, ENCRYPT, or DELETE action",
                     )
                 )
 
@@ -84,7 +94,7 @@ class LegalComplianceChecker:
 
 
 class ConsistencyChecker:
-    """Consistency Checker
+    """Consistency Checker.
 
     Ensures no logical contradictions in the policy.
 
@@ -93,7 +103,7 @@ class ConsistencyChecker:
 
     @staticmethod
     def check(policy: Policy) -> List[ValidationViolation]:
-        """Check consistency
+        """Check consistency.
 
         Args:
             policy: Policy to validate
@@ -110,28 +120,32 @@ class ConsistencyChecker:
 
     @staticmethod
     def _get_deleted_columns(policy: Policy) -> set:
-        """Get set of deleted columns"""
-        return {col for col, pol in policy.columns.items() if pol.action.action == ActionType.DELETE}
+        """Get set of deleted columns."""
+        return {
+            col for col, pol in policy.columns.items() if pol.action.action == ActionType.DELETE
+        }
 
     @staticmethod
-    def _check_group_by_consistency(policy: Policy, deleted_columns: set) -> List[ValidationViolation]:
-        """Check that group_by columns are not deleted"""
+    def _check_group_by_consistency(
+        policy: Policy, deleted_columns: set
+    ) -> List[ValidationViolation]:
+        """Check that group_by columns are not deleted."""
         violations = []
 
         for col_name, col_policy in policy.columns.items():
             params = col_policy.action.parameters
 
-            if 'group_by' in params:
-                group_cols = params['group_by']
+            if "group_by" in params:
+                group_cols = params["group_by"]
                 if isinstance(group_cols, list):
                     for gcol in group_cols:
                         if gcol in deleted_columns:
                             violations.append(
                                 ValidationViolation(
-                                    severity='error',
+                                    severity="error",
                                     message=f"Column '{col_name}' groups by deleted column '{gcol}'",
                                     column=col_name,
-                                    suggestion=f"Do not delete '{gcol}' or remove it from group_by"
+                                    suggestion=f"Do not delete '{gcol}' or remove it from group_by",
                                 )
                             )
 
@@ -139,7 +153,7 @@ class ConsistencyChecker:
 
 
 class UtilityPreservationChecker:
-    """Utility Preservation Checker
+    """Utility Preservation Checker.
 
     Verifies that preferred methods can still be achieved after pseudonymization.
 
@@ -147,10 +161,10 @@ class UtilityPreservationChecker:
     """
 
     OBJECTIVE_KEYWORDS = {
-        'user': ['user_id', 'user', 'customer_id', 'customer'],
-        'age': ['age', 'birth_date', 'birthday', 'dob'],
-        'location': ['address', 'city', 'region', 'location'],
-        'time': ['date', 'time', 'timestamp', 'created_at']
+        "user": ["user_id", "user", "customer_id", "customer"],
+        "age": ["age", "birth_date", "birthday", "dob"],
+        "location": ["address", "city", "region", "location"],
+        "time": ["date", "time", "timestamp", "created_at"],
     }
 
     @staticmethod
@@ -170,17 +184,21 @@ class UtilityPreservationChecker:
             return violations
 
         preferred_method_lower = preferred_method.lower()
-        deleted_columns = {col for col, pol in policy.columns.items() if pol.action.action == ActionType.DELETE}
+        deleted_columns = {
+            col for col, pol in policy.columns.items() if pol.action.action == ActionType.DELETE
+        }
 
         for keyword, related_cols in UtilityPreservationChecker.OBJECTIVE_KEYWORDS.items():
             if keyword in preferred_method_lower:
-                deleted_related = [col for col in deleted_columns if any(rc in col.lower() for rc in related_cols)]
+                deleted_related = [
+                    col for col in deleted_columns if any(rc in col.lower() for rc in related_cols)
+                ]
                 if deleted_related:
                     violations.append(
                         ValidationViolation(
-                            severity='warning',
+                            severity="warning",
                             message=f"Preferred method mentions '{keyword}' but related columns are deleted: {deleted_related}",
-                            suggestion=f"Consider using HASH or MASK instead of DELETE"
+                            suggestion=f"Consider using HASH or MASK instead of DELETE",
                         )
                     )
 
@@ -188,7 +206,7 @@ class UtilityPreservationChecker:
 
 
 class PrivacyMetricsChecker:
-    """Privacy Metrics Checker
+    """Privacy Metrics Checker.
 
     Estimates k-anonymity and re-identification risk.
 
@@ -196,12 +214,12 @@ class PrivacyMetricsChecker:
     require actual data analysis.
     """
 
-    DIRECT_IDENTIFIER_TYPES = {'PII'}
+    DIRECT_IDENTIFIER_TYPES = {"PII"}
     SAFE_ACTIONS = {ActionType.DELETE, ActionType.HASH}
 
     @staticmethod
     def check(policy: Policy) -> List[ValidationViolation]:
-        """Check privacy metrics
+        """Check privacy metrics.
 
         Args:
             policy: Policy to validate
@@ -217,18 +235,23 @@ class PrivacyMetricsChecker:
 
     @staticmethod
     def _check_direct_identifiers(policy: Policy) -> List[ValidationViolation]:
-        """Check direct identifier handling"""
+        """Check direct identifier handling."""
         violations = []
 
-        direct_identifiers = [col for col, pol in policy.columns.items() if pol.pii_type in PrivacyMetricsChecker.DIRECT_IDENTIFIER_TYPES and pol.action.action == ActionType.KEEP]
+        direct_identifiers = [
+            col
+            for col, pol in policy.columns.items()
+            if pol.pii_type in PrivacyMetricsChecker.DIRECT_IDENTIFIER_TYPES
+            and pol.action.action == ActionType.KEEP
+        ]
 
         if direct_identifiers:
             violations.append(
                 ValidationViolation(
-                    severity='error',
+                    severity="error",
                     message=f"Direct identifiers must not be kept: {direct_identifiers}",
                     column=direct_identifiers[0] if direct_identifiers else None,
-                    suggestion="Apply HASH, TOKENIZE, or DELETE"
+                    suggestion="Apply HASH, TOKENIZE, or DELETE",
                 )
             )
 
@@ -236,14 +259,14 @@ class PrivacyMetricsChecker:
 
 
 class CompletenessChecker:
-    """Completeness Checker
+    """Completeness Checker.
 
     Verifies that all necessary columns are addressed.
     """
 
     @staticmethod
     def check(policy: Policy) -> List[ValidationViolation]:
-        """Check completeness
+        """Check completeness.
 
         Args:
             policy: Policy to validate
@@ -253,24 +276,32 @@ class CompletenessChecker:
         """
         violations = []
 
-        unprocessed_pii = [col for col, pol in policy.columns.items() if pol.is_pii and not pol.action.action]
+        unprocessed_pii = [
+            col for col, pol in policy.columns.items() if pol.is_pii and not pol.action.action
+        ]
 
         if unprocessed_pii:
-            violations.append(ValidationViolation(severity='error', message=f"PII columns without action: {unprocessed_pii}", suggestion="Assign an action to all PII columns"))
+            violations.append(
+                ValidationViolation(
+                    severity="error",
+                    message=f"PII columns without action: {unprocessed_pii}",
+                    suggestion="Assign an action to all PII columns",
+                )
+            )
 
         return violations
 
 
 class PolicyValidator:
-    """Policy Validator
+    """Policy Validator.
 
     Main validator class that orchestrates all validation checks.
 
-    Validates policies according to the paper's 5 checks (Line 558-564).
+    Run the configured policy checks and collect their violations.
     """
 
     def __init__(self, legal_kb=None):
-        """Initialize PolicyValidator
+        """Initialize PolicyValidator.
 
         Args:
             legal_kb: Legal knowledge base (optional)
@@ -298,7 +329,7 @@ class PolicyValidator:
         return violations
 
     def check_legal_compliance(self, policy: Policy) -> list[ValidationViolation]:
-        """Check 1: Verify all PII columns are processed according to PIPA/GDPR
+        """Check 1: Verify all PII columns are processed according to PIPA/GDPR.
 
         Args:
             policy: Policy to validate
@@ -309,7 +340,7 @@ class PolicyValidator:
         return LegalComplianceChecker.check(policy)
 
     def check_consistency(self, policy: Policy) -> list[ValidationViolation]:
-        """Check 2: Ensure no logical contradictions
+        """Check 2: Ensure no logical contradictions.
 
         Args:
             policy: Policy to validate
@@ -319,8 +350,10 @@ class PolicyValidator:
         """
         return ConsistencyChecker.check(policy)
 
-    def check_utility_preservation(self, policy: Policy, preferred_method: str) -> list[ValidationViolation]:
-        """Check 3: Verify preferred method can still be achieved
+    def check_utility_preservation(
+        self, policy: Policy, preferred_method: str
+    ) -> list[ValidationViolation]:
+        """Check 3: Verify preferred method can still be achieved.
 
         Args:
             policy: Policy to check
@@ -330,8 +363,9 @@ class PolicyValidator:
             List of violations
         """
         return UtilityPreservationChecker.check(policy, preferred_method)
+
     def check_privacy_metrics(self, policy: Policy) -> List[ValidationViolation]:
-        """Check 4: Estimate k-anonymity and re-identification risk
+        """Check 4: Estimate k-anonymity and re-identification risk.
 
         Args:
             policy: Policy to validate
@@ -342,7 +376,7 @@ class PolicyValidator:
         return PrivacyMetricsChecker.check(policy)
 
     def check_completeness(self, policy: Policy) -> list[ValidationViolation]:
-        """Check 5: Verify all necessary columns are addressed
+        """Check 5: Verify all necessary columns are addressed.
 
         Args:
             policy: Policy to validate
@@ -353,11 +387,10 @@ class PolicyValidator:
         return CompletenessChecker.check(policy)
 
     def suggest_fixes(self, policy: Policy, violations: list[ValidationViolation]) -> Policy:
-        """Automatically suggest fixes for violations (Line 545)
+        """Suggest policy corrections for reported violations.
 
         Args:
             policy: Policy with violations
-
             violations: List of violations to fix
 
         Returns:
@@ -375,7 +408,7 @@ class PolicyValidator:
         return policy
 
     def has_errors(self, violations: list[ValidationViolation]) -> bool:
-        """Check if there are any error-level violations
+        """Check if there are any error-level violations.
 
         Args:
             violations: List of violations
@@ -386,7 +419,7 @@ class PolicyValidator:
         return any(v.is_error() for v in violations)
 
     def get_summary(self, violations: list[ValidationViolation]) -> dict[str, int]:
-        """Get summary of violations by severity
+        """Get summary of violations by severity.
 
         Args:
             violations: List of violations
@@ -394,7 +427,7 @@ class PolicyValidator:
         Returns:
             Dictionary with counts by severity
         """
-        summary = {'error': 0, 'warning': 0, 'info': 0}
+        summary = {"error": 0, "warning": 0, "info": 0}
         for v in violations:
             if v.severity in summary:
                 summary[v.severity] += 1

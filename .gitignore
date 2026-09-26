@@ -69,3 +69,4 @@ resources/legal_documents/**/*
 *.sqlite3
 *.db
 .release-work/
+node_modules/

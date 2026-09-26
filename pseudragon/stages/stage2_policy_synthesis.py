@@ -1,17 +1,15 @@
-"""Optimized Stage 2: Policy Synthesis with Universal Caching
+"""Optimized Stage 2: Policy Synthesis with Universal Caching.
 
 Supports both OpenAI (prompt caching) and Ollama (KV cache).
 """
 
 
-# 표준 라이브러리 import
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
-# 프로젝트 관련 import
 from config.config import PolicyConfig, Settings
 from pseudragon.domain.policy_dsl import ActionType, ColumnPolicy, Policy, PolicyAction
 from pseudragon.llm.json_parser import safe_parse_json
@@ -19,11 +17,10 @@ from pseudragon.llm.session_manager import UniversalSessionManager
 
 
 def load_prompt(stage_name: str, prompt_type: str = "system") -> str:
-    """Load prompt template from resources/prompts/ based on PROMPT_MODE
+    """Load prompt template from resources/prompts/ based on PROMPT_MODE.
 
     Args:
         stage_name: Name of the stage (e.g., "stage2_policy_synthesis")
-
         prompt_type: Type of prompt ("system" or "user")
 
     Returns:
@@ -38,7 +35,7 @@ def load_prompt(stage_name: str, prompt_type: str = "system") -> str:
     elif "stage2" in stage_name:
         stage = "stage2"
     else:
-        # Fallback to old behavior for other stages
+        # Resolve other stages with their stage-specific prompt filename.
 
         filename = f"{stage_name}_{prompt_type}.txt"
         filepath = os.path.join(prompt_dir, "resources", "prompts", filename)
@@ -55,7 +52,7 @@ def load_prompt(stage_name: str, prompt_type: str = "system") -> str:
 
 
 class Stage2PolicySynthesis:
-    """Optimized Stage 2: Policy Synthesis with Universal Session Management
+    """Optimized Stage 2: Policy Synthesis with Universal Session Management.
 
     Key features:
     - Auto-detects LLM provider (OpenAI, Ollama, etc.)
@@ -69,7 +66,9 @@ class Stage2PolicySynthesis:
     - Others: Manual conversation history
     """
 
-    def __init__(self, rag_system, llm_client, provider: str = "auto", base_url: Optional[str] = None):
+    def __init__(
+        self, rag_system, llm_client, provider: str = "auto", base_url: Optional[str] = None
+    ):
         """Initialize optimized Stage 2 with provider detection.
 
         Args:
@@ -83,10 +82,12 @@ class Stage2PolicySynthesis:
 
         # Get base_url from Settings if not provided
         if base_url is None:
-            base_url = getattr(Settings, 'STAGE_2_OPENAI_BASE_URL', None)
+            base_url = getattr(Settings, "STAGE_2_OPENAI_BASE_URL", None)
 
         # Initialize universal session manager with provider detection
-        self.session_manager = UniversalSessionManager(llm_client, provider=provider, base_url=base_url)
+        self.session_manager = UniversalSessionManager(
+            llm_client, provider=provider, base_url=base_url
+        )
 
         # Load system prompt once
         self.system_prompt = load_prompt("stage2_policy_synthesis", "system")
@@ -94,12 +95,17 @@ class Stage2PolicySynthesis:
         # Initialize audit logger (optional, for COT logging)
         self.audit_logger = None
 
-    def synthesize_policy(self, pii_analysis: Dict[str, Any], table_name: str, preferred_method: str = "", purpose_goal: str = "", log_callback: Optional[Callable] = None) -> Policy:
+    def synthesize_policy(
+        self,
+        pii_analysis: Dict[str, Any],
+        table_name: str,
+        preferred_method: str = "",
+        purpose_goal: str = "",
+        log_callback: Optional[Callable] = None,
+    ) -> Policy:
         """Synthesize policy from PII analysis and preferred method using session.
 
-        Implements f_policy() from Algorithm 1 with session optimization.
-
-        Now supports batch parallel processing for LLM calls.
+        Process model requests in parallel batches.
 
         Args:
             pii_analysis: PII analysis result from Stage 1
@@ -128,8 +134,7 @@ class Stage2PolicySynthesis:
             session_id=session_id,
             system_prompt=self.system_prompt,
             ttl_minutes=30,
-            max_history=0  # No history - each column is independent
-
+            max_history=0,  # No history - each column is independent
         )
 
         self._log(f"Session ID: {session_id}", log_callback)
@@ -154,7 +159,10 @@ class Stage2PolicySynthesis:
             # If pii_type indicates PII but is_pii is False, treat as PII (conservative approach)
             if pii_type in ["PII"]:
                 is_truly_pii = True
-                self._log(f"  [WARN]️  Data consistency: {column} has pii_type='{pii_type}', treating as PII", log_callback)
+                self._log(
+                    f"  [WARN]️  Data consistency: {column} has pii_type='{pii_type}', treating as PII",
+                    log_callback,
+                )
 
             if is_truly_pii:
                 pii_columns.append((column, analysis))
@@ -169,7 +177,10 @@ class Stage2PolicySynthesis:
         # Process Non-PII columns in parallel
 
         if non_pii_columns:
-            self._log(f"\n  [Parallel] Parallel Non-PII processing: {len(non_pii_columns)} columns (batch_size={batch_size})", log_callback)
+            self._log(
+                f"\n  [Parallel] Parallel Non-PII processing: {len(non_pii_columns)} columns (batch_size={batch_size})",
+                log_callback,
+            )
 
             for batch_start in range(0, len(non_pii_columns), batch_size):
                 batch_end = min(batch_start + batch_size, len(non_pii_columns))
@@ -177,7 +188,10 @@ class Stage2PolicySynthesis:
                 batch_num = (batch_start // batch_size) + 1
                 total_batches = (len(non_pii_columns) + batch_size - 1) // batch_size
 
-                self._log(f"  [Batch] Non-PII batch {batch_num}/{total_batches} ({len(batch)} columns)", log_callback)
+                self._log(
+                    f"  [Batch] Non-PII batch {batch_num}/{total_batches} ({len(batch)} columns)",
+                    log_callback,
+                )
 
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     future_to_column = {}
@@ -187,7 +201,7 @@ class Stage2PolicySynthesis:
                             session=session,
                             column=column,
                             analysis=analysis,
-                            log_callback=log_callback
+                            log_callback=log_callback,
                         )
                         future_to_column[future] = (column, analysis)
 
@@ -197,24 +211,38 @@ class Stage2PolicySynthesis:
                             col_policy = future.result()
                             policy.add_column_policy(col_policy)
                         except Exception as e:
-                            self._log(f"   [ERROR] Error processing Non-PII {column}: {str(e)}", log_callback)
+                            self._log(
+                                f"   [ERROR] Error processing Non-PII {column}: {str(e)}",
+                                log_callback,
+                            )
                             # Fallback policy
                             col_policy = ColumnPolicy(
                                 column_name=column,
                                 pii_type=analysis["pii_type"],
                                 is_pii=False,
-                                action=PolicyAction(action=ActionType.KEEP, rationale="Default: Keep non-PII column"),
+                                action=PolicyAction(
+                                    action=ActionType.KEEP, rationale="Default: Keep non-PII column"
+                                ),
                                 candidate_actions=[
-                                    PolicyAction(action=ActionType.KEEP, rationale="Keep this non-PII column for analysis"),
-                                    PolicyAction(action=ActionType.DELETE, rationale="Remove this column if not needed"),
-                                ]
+                                    PolicyAction(
+                                        action=ActionType.KEEP,
+                                        rationale="Keep this non-PII column for analysis",
+                                    ),
+                                    PolicyAction(
+                                        action=ActionType.DELETE,
+                                        rationale="Remove this column if not needed",
+                                    ),
+                                ],
                             )
                             policy.add_column_policy(col_policy)
 
         # Process PII columns in parallel
 
         if pii_columns:
-            self._log(f"\n  [Parallel] Parallel PII processing: {len(pii_columns)} columns (batch_size={batch_size})", log_callback)
+            self._log(
+                f"\n  [Parallel] Parallel PII processing: {len(pii_columns)} columns (batch_size={batch_size})",
+                log_callback,
+            )
 
             for batch_start in range(0, len(pii_columns), batch_size):
                 batch_end = min(batch_start + batch_size, len(pii_columns))
@@ -222,7 +250,10 @@ class Stage2PolicySynthesis:
                 batch_num = (batch_start // batch_size) + 1
                 total_batches = (len(pii_columns) + batch_size - 1) // batch_size
 
-                self._log(f"  [Batch] PII batch {batch_num}/{total_batches} ({len(batch)} columns)", log_callback)
+                self._log(
+                    f"  [Batch] PII batch {batch_num}/{total_batches} ({len(batch)} columns)",
+                    log_callback,
+                )
 
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     future_to_column = {}
@@ -234,7 +265,7 @@ class Stage2PolicySynthesis:
                             analysis=analysis,
                             preferred_method=preferred_method,
                             purpose_goal=purpose_goal,
-                            log_callback=log_callback
+                            log_callback=log_callback,
                         )
                         future_to_column[future] = (column, analysis)
 
@@ -244,7 +275,9 @@ class Stage2PolicySynthesis:
                             col_policy = future.result()
                             policy.add_column_policy(col_policy)
                         except Exception as e:
-                            self._log(f"   [ERROR] Error processing PII {column}: {str(e)}", log_callback)
+                            self._log(
+                                f"   [ERROR] Error processing PII {column}: {str(e)}", log_callback
+                            )
                             # Fallback policy
                             pii_type = analysis["pii_type"]
                             col_policy = ColumnPolicy(
@@ -252,20 +285,32 @@ class Stage2PolicySynthesis:
                                 pii_type=pii_type,
                                 is_pii=True,
                                 action=PolicyAction(
-                                    action=ActionType.from_string(PolicyConfig.get_default_action(is_pii=True)),
-                                    rationale=f"Default action for PII: {PolicyConfig.DEFAULT_PII_ACTION}"
+                                    action=ActionType.from_string(
+                                        PolicyConfig.get_default_action(is_pii=True)
+                                    ),
+                                    rationale=f"Default action for PII: {PolicyConfig.DEFAULT_PII_ACTION}",
                                 ),
-                                candidate_actions=self._generate_fallback_methods(column, pii_type, "Fallback")
+                                candidate_actions=self._generate_fallback_methods(
+                                    column, pii_type, "Fallback"
+                                ),
                             )
                             policy.add_column_policy(col_policy)
 
         # Get session stats for monitoring
         stats = session.get_stats()
-        self._log(f"\nTokens saved in this session: ~{stats['estimated_tokens_saved']}", log_callback)
+        self._log(
+            f"\nTokens saved in this session: ~{stats['estimated_tokens_saved']}", log_callback
+        )
 
         return policy
 
-    def _process_non_pii_column(self, session, column: str, analysis: Dict[str, Any], log_callback: Optional[Callable] = None) -> ColumnPolicy:
+    def _process_non_pii_column(
+        self,
+        session,
+        column: str,
+        analysis: Dict[str, Any],
+        log_callback: Optional[Callable] = None,
+    ) -> ColumnPolicy:
         """Process a single Non-PII column (used for parallel processing).
 
         Args:
@@ -296,24 +341,38 @@ class Stage2PolicySynthesis:
             column_name=column,
             pii_type=analysis["pii_type"],
             is_pii=False,
-            action=(methods
-            [0] if methods
-             else PolicyAction(
-                action=ActionType.from_string(default_action),
-                rationale=f"Non-PII column - default action: {default_action}",
-            )),
+            action=(
+                methods[0]
+                if methods
+                else PolicyAction(
+                    action=ActionType.from_string(default_action),
+                    rationale=f"Non-PII column - default action: {default_action}",
+                )
+            ),
             candidate_actions=methods
-             if methods
-             else [
-                PolicyAction(action=ActionType.KEEP, rationale="Keep this non-PII column for analysis"),
-                PolicyAction(action=ActionType.DELETE, rationale="Remove this column if not needed"),
-            ]
+            if methods
+            else [
+                PolicyAction(
+                    action=ActionType.KEEP, rationale="Keep this non-PII column for analysis"
+                ),
+                PolicyAction(
+                    action=ActionType.DELETE, rationale="Remove this column if not needed"
+                ),
+            ],
         )
 
         self._log(f"   [OK] Generated {len(methods)} Non-PII methods for {column}", log_callback)
         return col_policy
 
-    def _process_pii_column(self, session, column: str, analysis: Dict[str, Any], preferred_method: str, purpose_goal: str, log_callback: Optional[Callable] = None) -> ColumnPolicy:
+    def _process_pii_column(
+        self,
+        session,
+        column: str,
+        analysis: Dict[str, Any],
+        preferred_method: str,
+        purpose_goal: str,
+        log_callback: Optional[Callable] = None,
+    ) -> ColumnPolicy:
         """Process a single PII column (used for parallel processing).
 
         Args:
@@ -336,31 +395,44 @@ class Stage2PolicySynthesis:
         # table grammar; neither route approves legal applicability.
         if "display_mask_requirement" in analysis:
             from pseudragon.validation.display_requirement import compile_display_requirement
+
             if str(preferred_method).upper() != "MASK":
                 raise ValueError("An explicit display-mask rule requires preferred method MASK.")
             candidate = compile_display_requirement(analysis["display_mask_requirement"])
             action = PolicyAction(
-                action=ActionType.MASK, parameters=candidate["parameters"],
-                rationale=candidate["description"], legal_evidence=candidate["legal_source"],
-                code_snippet=candidate["code_snippet"])
+                action=ActionType.MASK,
+                parameters=candidate["parameters"],
+                rationale=candidate["description"],
+                legal_evidence=candidate["legal_source"],
+                code_snippet=candidate["code_snippet"],
+            )
             return ColumnPolicy(
-                column_name=column, pii_type=pii_type, is_pii=True,
-                action=action, candidate_actions=[action],
-                retrieved_evidence=[candidate["parameters"]["requirement_source"]])
+                column_name=column,
+                pii_type=pii_type,
+                is_pii=True,
+                action=action,
+                candidate_actions=[action],
+                retrieved_evidence=[candidate["parameters"]["requirement_source"]],
+            )
 
         self._log(f"  -> Generating policy for: {column}", log_callback)
 
         query = f"Pseudonymization and anonymization methods for {pii_type} ({column}) considering preferred method '{preferred_method}'"
-        metadata_filter = {'description': column_comment, 'purpose': purpose_goal,
-                           'requested_operation': preferred_method}
-        if 'legal_source_levels' in analysis:
-            metadata_filter['legal_source_levels'] = analysis['legal_source_levels']
+        metadata_filter = {
+            "description": column_comment,
+            "purpose": purpose_goal,
+            "requested_operation": preferred_method,
+        }
+        if "legal_source_levels" in analysis:
+            metadata_filter["legal_source_levels"] = analysis["legal_source_levels"]
         if hasattr(self.rag, "retrieve_with_details"):
-            context, source_docs, details = self.rag.retrieve_with_details(query, metadata_filter=metadata_filter)
+            context, source_docs, details = self.rag.retrieve_with_details(
+                query, metadata_filter=metadata_filter
+            )
         else:
             context, source_docs = self.rag.retrieve(query, metadata_filter=metadata_filter)
             details = []
-        retrieval_trace = getattr(details, 'retrieval_result', None)
+        retrieval_trace = getattr(details, "retrieval_result", None)
         # Both modes retain the exact source material used for this proposal.
         evidence_records = [d["evidence_record"] for d in details if "evidence_record" in d]
 
@@ -374,46 +446,58 @@ class Stage2PolicySynthesis:
             data_type=data_type,
             column_comment=column_comment,
             source_docs=source_docs,
-            log_callback=log_callback
+            log_callback=log_callback,
         )
 
         # Model proposals remain unchanged, even when their MASK interpretation
         # is wrong or incomplete. A separate deterministic candidate can be
         # compiled only from an exact, supported display-rule table row.
         from pseudragon.validation.display_requirement import source_display_candidates
-        compiled = source_display_candidates(evidence_records, column_comment, purpose_goal, preferred_method)
-        compiled_methods = [PolicyAction(
-            action=ActionType.MASK, parameters=c['parameters'], rationale=c['description'],
-            legal_evidence=c['legal_source'], code_snippet=c['code_snippet']) for c in compiled]
+
+        compiled = source_display_candidates(
+            evidence_records, column_comment, purpose_goal, preferred_method
+        )
+        compiled_methods = [
+            PolicyAction(
+                action=ActionType.MASK,
+                parameters=c["parameters"],
+                rationale=c["description"],
+                legal_evidence=c["legal_source"],
+                code_snippet=c["code_snippet"],
+            )
+            for c in compiled
+        ]
         methods = compiled_methods + methods
 
         col_policy = ColumnPolicy(
             column_name=column,
             pii_type=pii_type,
             is_pii=True,
-            action=(methods
-            [0] if methods
-             else PolicyAction(
-                action=ActionType.from_string(PolicyConfig.get_default_action(is_pii=True)),
-                rationale=f"Default action for PII: {PolicyConfig.DEFAULT_PII_ACTION}"
-            )),
+            action=(
+                methods[0]
+                if methods
+                else PolicyAction(
+                    action=ActionType.from_string(PolicyConfig.get_default_action(is_pii=True)),
+                    rationale=f"Default action for PII: {PolicyConfig.DEFAULT_PII_ACTION}",
+                )
+            ),
             candidate_actions=methods,
             retrieved_evidence=evidence_records,
-            retrieval_trace=retrieval_trace
+            retrieval_trace=retrieval_trace,
         )
 
         self._log(f"   [OK] Generated {len(methods)} methods for {column}", log_callback)
         return col_policy
 
     def _generate_non_pii_methods_with_session(
-            self,
-            session,
-            column: str,
-            column_comment: str = "",
-            data_type: str = "",
-            log_callback: Optional[Callable] = None
+        self,
+        session,
+        column: str,
+        column_comment: str = "",
+        data_type: str = "",
+        log_callback: Optional[Callable] = None,
     ) -> List[PolicyAction]:
-        """Generate recommended methods
+        """Generate recommended methods.
          for Non-PII columns using LLM.
 
         Args:
@@ -431,10 +515,16 @@ class Stage2PolicySynthesis:
             non_pii_system_prompt = load_prompt("non_pii_methods", "system")
             non_pii_user_prompt_template = load_prompt("non_pii_methods", "user")
         except FileNotFoundError:
-            self._log(f"  WARNING: Non-PII prompts not found, using default KEEP/DELETE", log_callback)
+            self._log(
+                f"  WARNING: Non-PII prompts not found, using default KEEP/DELETE", log_callback
+            )
             return [
-                PolicyAction(action=ActionType.KEEP, rationale="Keep this non-PII column for analysis"),
-                PolicyAction(action=ActionType.DELETE, rationale="Remove this column if not needed"),
+                PolicyAction(
+                    action=ActionType.KEEP, rationale="Keep this non-PII column for analysis"
+                ),
+                PolicyAction(
+                    action=ActionType.DELETE, rationale="Remove this column if not needed"
+                ),
             ]
 
         # Create separate session for Non-PII (uses different system prompt)
@@ -443,14 +533,14 @@ class Stage2PolicySynthesis:
             session_id=non_pii_session_id,
             system_prompt=non_pii_system_prompt,
             ttl_minutes=30,
-            max_history=0
+            max_history=0,
         )
 
         # Format user prompt
         user_prompt = non_pii_user_prompt_template.format(
             column=column,
             column_desc=column_comment if column_comment else "No description",
-            data_type=data_type if data_type else "Unknown"
+            data_type=data_type if data_type else "Unknown",
         )
 
         # Prepare streaming settings
@@ -473,17 +563,26 @@ class Stage2PolicySynthesis:
                 temperature=Settings.LLM_TEMPERATURE,
                 response_format={"type": "json_object"},
                 stream=stream_enabled,
-                stream_callback=stream_callback
+                stream_callback=stream_callback,
             )
 
             content = response.choices[0].message.content
             result = safe_parse_json(
-                content, default_response={
+                content,
+                default_response={
                     "recommended_methods": [
-                        {"method": "KEEP", "description": "Keep this non-PII column for analysis", "code_snippet": f"# Keep df['{column}'] as-is"},
-                        {"method": "DELETE", "description": "Remove this column if not needed", "code_snippet": f"# df.drop(columns=['{column}'], inplace=True)"}
+                        {
+                            "method": "KEEP",
+                            "description": "Keep this non-PII column for analysis",
+                            "code_snippet": f"# Keep df['{column}'] as-is",
+                        },
+                        {
+                            "method": "DELETE",
+                            "description": "Remove this column if not needed",
+                            "code_snippet": f"# df.drop(columns=['{column}'], inplace=True)",
+                        },
                     ]
-                }
+                },
             )
 
             # Parse methods
@@ -500,22 +599,20 @@ class Stage2PolicySynthesis:
                         parameters=method.get("parameters", {}),
                         code_snippet=code_snippet,
                         rationale=rationale,
-                        legal_evidence=method.get("legal_source", "Data Minimization Principle")
+                        legal_evidence=method.get("legal_source", "Data Minimization Principle"),
                     )
                 )
 
             # Ensure KEEP and DELETE are always included
-            has_keep = any(t.action == ActionType.KEEP for t in methods
-            )
-            has_delete = any(t.action == ActionType.DELETE for t in methods
-            )
+            has_keep = any(t.action == ActionType.KEEP for t in methods)
+            has_delete = any(t.action == ActionType.DELETE for t in methods)
 
             if not has_keep:
                 methods.append(
                     PolicyAction(
                         action=ActionType.KEEP,
                         rationale="Keep this non-PII column for analysis",
-                        code_snippet=f"# Keep df['{column}'] as-is"
+                        code_snippet=f"# Keep df['{column}'] as-is",
                     )
                 )
 
@@ -524,34 +621,41 @@ class Stage2PolicySynthesis:
                     PolicyAction(
                         action=ActionType.DELETE,
                         rationale="Remove this column if not needed",
-                        code_snippet=f"# df.drop(columns=['{column}'], inplace=True)"
+                        code_snippet=f"# df.drop(columns=['{column}'], inplace=True)",
                     )
                 )
 
             return methods
 
-
         except Exception as e:
             self._log(f"  ERROR generating Non-PII methods for {column}: {e}", log_callback)
             return [
-                PolicyAction(action=ActionType.KEEP, rationale="Keep this non-PII column for analysis", code_snippet=f"# Keep df['{column}'] as-is"),
-                PolicyAction(action=ActionType.DELETE, rationale="Remove this column if not needed", code_snippet=f"# df.drop(columns=['{column}'], inplace=True)"),
+                PolicyAction(
+                    action=ActionType.KEEP,
+                    rationale="Keep this non-PII column for analysis",
+                    code_snippet=f"# Keep df['{column}'] as-is",
+                ),
+                PolicyAction(
+                    action=ActionType.DELETE,
+                    rationale="Remove this column if not needed",
+                    code_snippet=f"# df.drop(columns=['{column}'], inplace=True)",
+                ),
             ]
 
     def _generate_pii_methods_with_session(
-            self,
-            session,
-            column: str,
-            pii_type: str,
-            preferred_method: str,
-            purpose_goal: str,
-            context: str,
-            data_type: str = "",
-            column_comment: str = "",
-            source_docs: list[str] = None,
-            log_callback: Optional[Callable] = None
+        self,
+        session,
+        column: str,
+        pii_type: str,
+        preferred_method: str,
+        purpose_goal: str,
+        context: str,
+        data_type: str = "",
+        column_comment: str = "",
+        source_docs: list[str] = None,
+        log_callback: Optional[Callable] = None,
     ) -> List[PolicyAction]:
-        """Generate recommended methods
+        """Generate recommended methods.
          using session (system prompt already set).
 
         Args:
@@ -597,7 +701,6 @@ class Stage2PolicySynthesis:
 
         max_retries = 3
         for attempt in range(max_retries):
-            # Note: Streaming header removed to reduce log verbosity
 
             # Use session.chat() with streaming support
             response = session.chat(
@@ -606,14 +709,18 @@ class Stage2PolicySynthesis:
                 temperature=Settings.LLM_TEMPERATURE,
                 response_format={"type": "json_object"},
                 stream=stream_enabled,
-                stream_callback=stream_callback
+                stream_callback=stream_callback,
             )
-
-            # Note: Streaming completion log removed to reduce verbosity
 
             # Safely parse JSON response (handles Ollama and other providers)
             content = response.choices[0].message.content
-            result = safe_parse_json(content, default_response={"recommended_methods": [], "evidence_source": "Failed to parse LLM response"})
+            result = safe_parse_json(
+                content,
+                default_response={
+                    "recommended_methods": [],
+                    "evidence_source": "Failed to parse LLM response",
+                },
+            )
 
             # Log Chain-of-Thought reasoning if available
             if "chain_of_thought" in result:
@@ -627,18 +734,28 @@ class Stage2PolicySynthesis:
                         column=column,
                         pii_type=pii_type,
                         chain_of_thought=result["chain_of_thought"],
-                        methods_count=methods_count
+                        methods_count=methods_count,
                     )
 
             methods_data = result.get("recommended_methods", [])
-            all_have_code = all(method.get("code_snippet", "").strip() != "" for method in methods_data if method.get("method", "").upper() not in ["KEEP", "DELETE"])
+            all_have_code = all(
+                method.get("code_snippet", "").strip() != ""
+                for method in methods_data
+                if method.get("method", "").upper() not in ["KEEP", "DELETE"]
+            )
 
             if all_have_code or attempt == max_retries - 1:
                 if not all_have_code:
-                    self._log(f"  WARNING: After {max_retries} attempts, LLM still didn't provide all code_snippets for {column}", None, )
+                    self._log(
+                        f"  WARNING: After {max_retries} attempts, LLM still didn't provide all code_snippets for {column}",
+                        None,
+                    )
                 break
             else:
-                self._log(f"  Retry {attempt + 1}/{max_retries}: LLM didn't provide code_snippet, retrying...", None, )
+                self._log(
+                    f"  Retry {attempt + 1}/{max_retries}: LLM didn't provide code_snippet, retrying...",
+                    None,
+                )
 
         evidence = result.get("evidence_source", "Unknown Source")
 
@@ -661,7 +778,15 @@ class Stage2PolicySynthesis:
             # Extract legal evidence from method or fall back to general evidence
             method_legal_evidence = method.get("legal_source", evidence)
 
-            methods.append(PolicyAction(action=action_type, parameters=method.get("parameters", {}), code_snippet=code_snippet, rationale=rationale, legal_evidence=method_legal_evidence))
+            methods.append(
+                PolicyAction(
+                    action=action_type,
+                    parameters=method.get("parameters", {}),
+                    code_snippet=code_snippet,
+                    rationale=rationale,
+                    legal_evidence=method_legal_evidence,
+                )
+            )
 
         # Separate KEEP/DELETE from other methods
 
@@ -679,7 +804,10 @@ class Stage2PolicySynthesis:
         # If LLM failed to generate sufficient methods
         # , use fallback
         if len(other_methods) < 2:
-            self._log(f"  WARNING: Only {len(other_methods)} anonymization method(s) generated for {column}. Adding fallback methods...", None)
+            self._log(
+                f"  WARNING: Only {len(other_methods)} anonymization method(s) generated for {column}. Adding fallback methods...",
+                None,
+            )
             fallback_methods = self._generate_fallback_methods(column, pii_type, evidence)
 
             # Add fallback methods
@@ -695,21 +823,35 @@ class Stage2PolicySynthesis:
         has_keep = any(t.action == ActionType.KEEP for t in keep_delete_methods)
         if not has_keep:
             keep_delete_methods.append(
-                PolicyAction(action=ActionType.KEEP, rationale="Keep the column as-is without any transformation for analysis purposes.", legal_evidence=evidence, code_snippet="")
+                PolicyAction(
+                    action=ActionType.KEEP,
+                    rationale="Keep the column as-is without any transformation for analysis purposes.",
+                    legal_evidence=evidence,
+                    code_snippet="",
+                )
             )
 
         # Always add DELETE option if not already present
         has_delete = any(t.action == ActionType.DELETE for t in keep_delete_methods)
         if not has_delete:
             # DELETE doesn't need code snippet
-            keep_delete_methods.append(PolicyAction(action=ActionType.DELETE, rationale="Remove the column if not needed for analysis.", legal_evidence=evidence, code_snippet=""))
+            keep_delete_methods.append(
+                PolicyAction(
+                    action=ActionType.DELETE,
+                    rationale="Remove the column if not needed for analysis.",
+                    legal_evidence=evidence,
+                    code_snippet="",
+                )
+            )
 
         # Return other methods
         #  first, then KEEP/DELETE at the end
         return other_methods + keep_delete_methods
 
-    def _generate_fallback_methods(self, column: str, pii_type: str, legal_evidence: str) -> List[PolicyAction]:
-        """Generate fallback anonymization methods
+    def _generate_fallback_methods(
+        self, column: str, pii_type: str, legal_evidence: str
+    ) -> List[PolicyAction]:
+        """Generate fallback anonymization methods.
          when LLM fails to produce sufficient methods
 
         Args:
@@ -729,7 +871,7 @@ class Stage2PolicySynthesis:
                 rationale=f"SHA-256 hashing ensures irreversible pseudonymization for {pii_type}",
                 legal_evidence=legal_evidence,
                 code_snippet=f"import hashlib\nhashed_{column} = hashlib.sha256(str(record['{column}']).encode()).hexdigest()",
-                parameters={"algorithm": "SHA-256"}
+                parameters={"algorithm": "SHA-256"},
             )
         )
 
@@ -741,7 +883,7 @@ class Stage2PolicySynthesis:
                     rationale=f"Partial masking retains data utility while protecting {pii_type}",
                     legal_evidence=legal_evidence,
                     code_snippet=f"masked_{column} = str(record['{column}'])[:-4] + '****' if len(str(record['{column}'])) > 4 else '****'",
-                    parameters={"mask_char": "*", "mask_last": 4, "short_value_mask_length": 4}
+                    parameters={"mask_char": "*", "mask_last": 4, "short_value_mask_length": 4},
                 )
             )
         else:
@@ -752,7 +894,7 @@ class Stage2PolicySynthesis:
                     rationale=f"Full masking ensures complete protection of {pii_type}",
                     legal_evidence=legal_evidence,
                     code_snippet=f"masked_{column} = '*' * len(str(record['{column}']))",
-                    parameters={"mask_char": "*", "full_mask": True}
+                    parameters={"mask_char": "*", "full_mask": True},
                 )
             )
 
@@ -766,14 +908,20 @@ class Stage2PolicySynthesis:
                     rationale=f"Tokenization allows reversible pseudonymization for {pii_type}",
                     legal_evidence=legal_evidence,
                     code_snippet=f"import uuid\nif '{column}' not in token_map:\n    token_map['{column}'] = {{}}\nif record['{column}'] not in token_map['{column}']:\n    token_map['{column}']["
-                                 f"record['{column}']] = str(uuid.uuid4())\ntokenized_{column} = token_map['{column}'][record['{column}']]",
-                    parameters={"reversible": True}
+                    f"record['{column}']] = str(uuid.uuid4())\ntokenized_{column} = token_map['{column}'][record['{column}']]",
+                    parameters={"reversible": True},
                 )
             )
 
         return fallback_methods
 
-    def _log_cot_reasoning(self, column: str, pii_type: str, cot: Dict[str, Any], log_callback: Optional[Callable] = None):
+    def _log_cot_reasoning(
+        self,
+        column: str,
+        pii_type: str,
+        cot: Dict[str, Any],
+        log_callback: Optional[Callable] = None,
+    ):
         """Log chain-of-thought reasoning for policy synthesis.
 
         Args:
@@ -802,7 +950,9 @@ class Stage2PolicySynthesis:
 
         # Implementation Rationale
         if "implementation_rationale" in cot:
-            self._log(f"      [Tip] Implementation: {cot['implementation_rationale']}", log_callback)
+            self._log(
+                f"      [Tip] Implementation: {cot['implementation_rationale']}", log_callback
+            )
 
         self._log("", log_callback)  # Empty line for readability
 
@@ -815,7 +965,7 @@ class Stage2PolicySynthesis:
         self.audit_logger = audit_logger
 
     def _map_method_to_action(self, method: str) -> ActionType:
-        """Map LLM-generated method name to ActionType enum"""
+        """Map LLM-generated method name to ActionType enum."""
         method_upper = method.upper()
 
         mapping = {
@@ -833,13 +983,13 @@ class Stage2PolicySynthesis:
             "ENCRYPTION": ActionType.ENCRYPT,
             "DELETE": ActionType.DELETE,
             "DELETION": ActionType.DELETE,
-            "KEEP": ActionType.KEEP
+            "KEEP": ActionType.KEEP,
         }
 
         return mapping.get(method_upper, ActionType.HASH)
 
     def _log(self, message: str, callback: Optional[Callable] = None):
-        """Helper for logging"""
+        """Helper for logging."""
         if callback:
             callback(message)
         else:

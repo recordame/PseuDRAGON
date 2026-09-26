@@ -118,6 +118,27 @@ method/parameter validation, display-rule provenance and missing-value
 preservation. Install Node.js to include the JavaScript rendering check;
 without it, that check is explicitly skipped. Tests do not call a model API.
 
+## Code style
+
+Python follows Black with four-space indentation, double-quoted strings and a
+100-character target line width. JavaScript, CSS and HTML follow the checked-in
+Prettier configuration. Use UTF-8 and LF line endings throughout.
+
+Write comments and docstrings in concise English. Describe current behavior,
+invariants and design reasons. Put change history in Git commits, not in code
+comments. Use Google-style `Args`, `Returns` and `Raises` sections where useful.
+Keep schema descriptions, model prompts, generated-code templates and runtime
+messages intact when making formatting-only changes.
+
+```bash
+python -m pip install -r requirements-dev.txt
+npm ci
+python -m black .
+npm run format
+python -m black --check .
+npm run format:check
+```
+
 ## Included and excluded files
 
 This repository contains runtime code, prompt templates, synthetic sample-data

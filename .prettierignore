@@ -1,0 +1,6 @@
+.git/
+.release-work/
+.venv/
+node_modules/
+output/
+logs/

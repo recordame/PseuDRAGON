@@ -146,8 +146,7 @@ def apply_korean_comments(connection) -> None:
         for column_name, comment in columns.items():
             escaped_comment = comment.replace("'", "''")
             connection.execute(
-                f'COMMENT ON COLUMN "{table_name}"."{column_name}" '
-                f"IS '{escaped_comment}'"
+                f'COMMENT ON COLUMN "{table_name}"."{column_name}" ' f"IS '{escaped_comment}'"
             )
 
     rows = connection.execute(

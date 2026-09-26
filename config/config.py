@@ -1,4 +1,4 @@
-"""PseuDRAGON Configuration Module
+"""PseuDRAGON Configuration Module.
 
 This module manages all configuration settings for the PseuDRAGON framework.
 
@@ -12,13 +12,11 @@ Configuration includes:
 """
 
 
-# 표준 라이브러리 import
 import os
 import ssl
 from typing import Optional
 
 
-# 서드파티 라이브러리 import
 import httpx
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -29,13 +27,12 @@ load_dotenv()
 
 
 class ModelConfig:
-    """Model Configuration
+    """Model Configuration.
 
     Defines the AI models used for embeddings and language generation.
     """
 
     # Embedding Configuration
-
 
     # Provider: "openai" or "local"
 
@@ -55,12 +52,13 @@ class ModelConfig:
 
     # General-purpose models are better for database column description matching
 
-    #
+    # .
     # Note: Legal-BERT produces high false positives for PII classification similarity search
     # because it finds superficial structural similarities rather than semantic PII-related meanings.
 
-
-    FEEDBACK_EMBEDDING_MODEL = os.getenv("FEEDBACK_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    FEEDBACK_EMBEDDING_MODEL = os.getenv(
+        "FEEDBACK_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+    )
 
     # LLM Settings
     DEFAULT_LLM = os.getenv("DEFAULT_LLM", "gpt-oss:120b")
@@ -70,7 +68,7 @@ class ModelConfig:
 
 
 class DirectoryConfig:
-    """Directory Configuration
+    """Directory Configuration.
 
     Defines paths for documentation, output, and other directories.
     """
@@ -82,14 +80,14 @@ class DirectoryConfig:
 
     @classmethod
     def ensure_directories_exist(cls) -> None:
-        """Create necessary directories if they don't exist"""
+        """Create necessary directories if they don't exist."""
         os.makedirs(cls.DOCS_DIR, exist_ok=True)
         os.makedirs(cls.OUTPUT_DIR, exist_ok=True)
         os.makedirs(cls.SAMPLE_DB_DIR, exist_ok=True)
 
 
 class HeuristicConfig:
-    """Heuristic Pattern Configuration for Stage 1 PII Detection
+    """Heuristic Pattern Configuration for Stage 1 PII Detection.
 
     Allows domain experts to customize PII detection patterns for their organization.
     """
@@ -106,7 +104,7 @@ class HeuristicConfig:
 
         for key, value in os.environ.items():
             if key.startswith(prefix) and value.strip():
-                pattern_name = key[len(prefix):].lower()
+                pattern_name = key[len(prefix) :].lower()
                 patterns[pattern_name] = value.strip()
 
         return patterns
@@ -126,7 +124,7 @@ class HeuristicConfig:
 
         for key, value in os.environ.items():
             if key.startswith(prefix) and value.strip():
-                pattern_name = key[len(prefix):].lower()
+                pattern_name = key[len(prefix) :].lower()
                 patterns[pattern_name] = value.strip()
 
         return patterns
@@ -144,7 +142,7 @@ class HeuristicConfig:
 
         for key, value in os.environ.items():
             if key.startswith(prefix) and key.endswith(suffix) and value.strip():
-                type_name = key[len(prefix):-len(suffix)]
+                type_name = key[len(prefix) : -len(suffix)]
                 # Format type name: replace underscores with spaces and title case
 
                 type_name = type_name.replace("_", " ").title()
@@ -154,7 +152,7 @@ class HeuristicConfig:
 
 
 class DatabaseConfig:
-    """Database Configuration
+    """Database Configuration.
 
     Manages database connection settings for both sample and production databases.
     """
@@ -175,7 +173,7 @@ class DatabaseConfig:
 
     @classmethod
     def get_db_path(cls) -> str:
-        """Get the appropriate database path based on configuration
+        """Get the appropriate database path based on configuration.
 
         Returns:
             Database path or connection string
@@ -194,7 +192,7 @@ class DatabaseConfig:
 
     @classmethod
     def validate_config(cls) -> bool:
-        """Validate database configuration
+        """Validate database configuration.
 
         Returns:
             True if configuration is valid
@@ -218,7 +216,7 @@ class DatabaseConfig:
 
 
 class PolicyConfig:
-    """Policy Configuration
+    """Policy Configuration.
 
     Defines default actions for PII and Non-PII columns.
     """
@@ -245,7 +243,7 @@ class PolicyConfig:
 
     @classmethod
     def validate_action(cls, action: str) -> bool:
-        """Validate if an action is available
+        """Validate if an action is available.
 
         Args:
             action: Action type to validate
@@ -257,7 +255,7 @@ class PolicyConfig:
 
     @classmethod
     def get_default_action(cls, is_pii: bool) -> str:
-        """Get default action based on PII classification
+        """Get default action based on PII classification.
 
         Args:
             is_pii: Whether the column is classified as PII
@@ -269,7 +267,7 @@ class PolicyConfig:
 
 
 class RAGConfig:
-    """RAG System Configuration
+    """RAG System Configuration.
 
     Defines parameters for the Retrieval-Augmented Generation system.
     """
@@ -288,8 +286,8 @@ class RAGConfig:
 
     HEURISTICS_ENABLED = os.getenv("HEURISTICS_ENABLED", "true").lower() == "true"
 
-    # Defaults match the configuration reported in the paper. Environment
-    # variables may still override them for a separately documented run.
+    # Environment variables configure retrieval windows and context limits.
+
     CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "128"))
     CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "30"))
     TOP_K_RESULTS = int(os.getenv("TOP_K_RESULTS", "3"))
@@ -298,9 +296,11 @@ class RAGConfig:
     # Feedback document settings for SBERT embedding
 
     # SBERT (all-MiniLM-L6-v2) supports max 256 tokens, ~200 words is safe
-    FEEDBACK_MAX_LENGTH = int(os.getenv("FEEDBACK_MAX_LENGTH", "200"))  # Max characters per feedback doc
+    FEEDBACK_MAX_LENGTH = int(
+        os.getenv("FEEDBACK_MAX_LENGTH", "200")
+    )  # Max characters per feedback doc
 
-    # Retained only for explicitly selected legacy runs and their reproduction.
+    # Used only by the explicitly selected legacy retrieval mode.
 
     DEFAULT_AUTHORITY_WEIGHTS = {
         0: 1.0,  # Approved expert feedback
@@ -311,8 +311,8 @@ class RAGConfig:
 
     @staticmethod
     def _read_unit_interval(
-            env_name: str,
-            default: float,
+        env_name: str,
+        default: float,
     ) -> float:
         """Read and validate a score weight in the closed interval [0, 1]."""
         raw_value = os.getenv(env_name)
@@ -327,9 +327,7 @@ class RAGConfig:
             ) from exc
 
         if not 0.0 <= value <= 1.0:
-            raise ValueError(
-                f"{env_name} must be between 0 and 1; got {value}"
-            )
+            raise ValueError(f"{env_name} must be between 0 and 1; got {value}")
 
         return value
 
@@ -391,7 +389,7 @@ class RAGConfig:
 
     @classmethod
     def get_ranking_config(cls) -> dict:
-        """Describe the retained legacy score. Use get_retrieval_config for the
+        """Describe the legacy retrieval score. Use get_retrieval_config for the.
         active route; source_order does not use these coefficients.
         """
         alpha = cls.get_semantic_similarity_weight()
@@ -403,7 +401,7 @@ class RAGConfig:
 
 
 class Settings:
-    """Main Configuration Class
+    """Main Configuration Class.
 
     Aggregates all configuration settings and provides initialization.
     """
@@ -428,14 +426,14 @@ class Settings:
 
     # Batch Processing Configuration for LLM calls
 
-    LLM_BATCH_SIZE: int = int(os.getenv("LLM_BATCH_SIZE", "4"))  # Number of columns to process in parallel
-    MAX_CONCURRENT_LLM_REQUESTS: int = int(os.getenv("MAX_CONCURRENT_LLM_REQUESTS", "4"))  # Rate limit semaphore
-    LLM_PARSE_MAX_ATTEMPTS: int = max(
-        1, int(os.getenv("LLM_PARSE_MAX_ATTEMPTS", "3"))
-    )
-    STAGE_1_MAX_TOKENS: int = max(
-        1, int(os.getenv("STAGE_1_MAX_TOKENS", "4096"))
-    )
+    LLM_BATCH_SIZE: int = int(
+        os.getenv("LLM_BATCH_SIZE", "4")
+    )  # Number of columns to process in parallel
+    MAX_CONCURRENT_LLM_REQUESTS: int = int(
+        os.getenv("MAX_CONCURRENT_LLM_REQUESTS", "4")
+    )  # Rate limit semaphore
+    LLM_PARSE_MAX_ATTEMPTS: int = max(1, int(os.getenv("LLM_PARSE_MAX_ATTEMPTS", "3")))
+    STAGE_1_MAX_TOKENS: int = max(1, int(os.getenv("STAGE_1_MAX_TOKENS", "4096")))
 
     EMBEDDING_OPENAI_API_KEY = os.getenv("EMBEDDING_OPENAI_API_KEY")
 
@@ -450,7 +448,9 @@ class Settings:
 
     EMBEDDING_PROVIDER = ModelConfig.EMBEDDING_PROVIDER
     LEGAL_EMBEDDING_MODEL = ModelConfig.LEGAL_EMBEDDING_MODEL
-    FEEDBACK_EMBEDDING_MODEL = ModelConfig.FEEDBACK_EMBEDDING_MODEL  # For PII classification similarity search
+    FEEDBACK_EMBEDDING_MODEL = (
+        ModelConfig.FEEDBACK_EMBEDDING_MODEL
+    )  # For PII classification similarity search
     DEFAULT_LLM = ModelConfig.DEFAULT_LLM
     LLM_STAGE_1 = ModelConfig.STAGE_1_LLM
     LLM_STAGE_2 = ModelConfig.STAGE_2_LLM
@@ -477,22 +477,28 @@ class Settings:
 
     @classmethod
     def validate_api_key(cls) -> bool:
-        """Check if OpenAI API key is set
+        """Check if OpenAI API key is set.
 
         Returns:
             True if API key is set, False otherwise
         """
         isTrue = True
         isTrue &= cls.EMBEDDING_OPENAI_API_KEY is not None and cls.EMBEDDING_OPENAI_API_KEY != ""
-        isTrue &= cls.DEFAULT_LLM_OPENAI_API_KEY is not None and cls.DEFAULT_LLM_OPENAI_API_KEY != ""
-        isTrue &= cls.STAGE_1_LLM_OPENAI_API_KEY is not None and cls.STAGE_1_LLM_OPENAI_API_KEY != ""
-        isTrue &= cls.STAGE_2_LLM_OPENAI_API_KEY is not None and cls.STAGE_2_LLM_OPENAI_API_KEY != ""
+        isTrue &= (
+            cls.DEFAULT_LLM_OPENAI_API_KEY is not None and cls.DEFAULT_LLM_OPENAI_API_KEY != ""
+        )
+        isTrue &= (
+            cls.STAGE_1_LLM_OPENAI_API_KEY is not None and cls.STAGE_1_LLM_OPENAI_API_KEY != ""
+        )
+        isTrue &= (
+            cls.STAGE_2_LLM_OPENAI_API_KEY is not None and cls.STAGE_2_LLM_OPENAI_API_KEY != ""
+        )
 
         return isTrue
 
     @staticmethod
     def get_prompt_path(stage: str, prompt_type: str) -> str:
-        """Get prompt file path based on PROMPT_MODE setting
+        """Get prompt file path based on PROMPT_MODE setting.
 
         Args:
             stage: "stage1" or "stage2"
@@ -515,7 +521,7 @@ class Settings:
 
     @classmethod
     def initialize(cls) -> None:
-        """Initialize configuration
+        """Initialize configuration.
 
         Creates necessary directories and validates settings.
         """
@@ -533,11 +539,11 @@ class Settings:
 
 
 class OpenAIClientFactory:
-    """Factory for creating OpenAI client instances"""
+    """Factory for creating OpenAI client instances."""
 
     @staticmethod
     def create_client(model_type: str) -> Optional[OpenAI]:
-        """Create an OpenAI client
+        """Create an OpenAI client.
 
         Args:
             model_type: Client type (EMBEDDING_CLIENT, DEFAULT_LLM_CLIENT, etc.)
@@ -568,7 +574,9 @@ class OpenAIClientFactory:
 
             return OpenAI(
                 api_key=Settings.DEFAULT_LLM_OPENAI_API_KEY,
-                base_url=Settings.DEFAULT_LLM_OPENAI_BASE_URL if Settings.DEFAULT_LLM_OPENAI_BASE_URL else None,
+                base_url=Settings.DEFAULT_LLM_OPENAI_BASE_URL
+                if Settings.DEFAULT_LLM_OPENAI_BASE_URL
+                else None,
                 http_client=httpx.Client(verify=verify),
             )
 
@@ -579,7 +587,9 @@ class OpenAIClientFactory:
 
             return OpenAI(
                 api_key=Settings.STAGE_1_LLM_OPENAI_API_KEY,
-                base_url=Settings.STAGE_1_OPENAI_BASE_URL if Settings.STAGE_1_OPENAI_BASE_URL else None,
+                base_url=Settings.STAGE_1_OPENAI_BASE_URL
+                if Settings.STAGE_1_OPENAI_BASE_URL
+                else None,
                 http_client=httpx.Client(verify=verify),
             )
 
@@ -590,7 +600,9 @@ class OpenAIClientFactory:
 
             return OpenAI(
                 api_key=Settings.STAGE_2_LLM_OPENAI_API_KEY,
-                base_url=Settings.STAGE_2_OPENAI_BASE_URL if Settings.STAGE_2_OPENAI_BASE_URL else None,
+                base_url=Settings.STAGE_2_OPENAI_BASE_URL
+                if Settings.STAGE_2_OPENAI_BASE_URL
+                else None,
                 http_client=httpx.Client(verify=verify),
             )
 

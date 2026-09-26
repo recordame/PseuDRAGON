@@ -1,0 +1,11 @@
+{
+  "name": "pseudragon-formatting",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write web_interface/static/js/app.js web_interface/static/css/main.css web_interface/templates/index.html tests/test_runtime_profile.js .prettierrc.json *.json",
+    "format:check": "prettier --check web_interface/static/js/app.js web_interface/static/css/main.css web_interface/templates/index.html tests/test_runtime_profile.js .prettierrc.json *.json"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}
