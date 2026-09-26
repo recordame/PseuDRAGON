@@ -7,13 +7,3 @@ Column Information: {column_desc}
 Data Type: {data_type}
 
 IMPORTANT: Use schema metadata only. Analyze the column name, data type, and description to determine if this is PII. Do not request or infer from raw record values. The data type can provide valuable hints about the nature of the data (e.g., VARCHAR for text, INTEGER for IDs, DATE for dates).
-
-# 법률 소스 문맥: {context}
-#
-# 작업: 다음 데이터베이스 컬럼이 개인정보(PII)인지 분석하세요.
-#
-# 테이블명: {table_name}
-# 컬럼 정보: {column_desc}
-# 테이터 타입: {data_type}
-#
-# 중요: 스키마 메타데이터만 사용하세요. 원시 레코드 값을 요청하거나 추론하지 말고, 컬럼명, 데이터 타입, 설명을 분석하여 개인정보 여부를 판단하세요. 데이터 타입은 데이터의 성격에 대한 중요한 힌트를 제공합니다 (예: VARCHAR는 텍스트, INTEGER는 ID, DATE는 날짜).
