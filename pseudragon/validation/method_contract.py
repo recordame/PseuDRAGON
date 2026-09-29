@@ -117,6 +117,24 @@ def normalize_method_metadata(selected, column, code_modified=False, declared_co
         mask = f"masked_{column} = str(record[{column!r}])[:-4] + '****' if len(str(record[{column!r}])) > 4 else '****'"
         if tree == _structure(mask):
             recognized = ("MASK", MASK_LAST_FOUR_PARAMETERS)
+    for visible in range(1, 65):
+        keep_suffix = f"lambda x: '*' * (len(str(x)) - {visible}) + str(x)[-{visible}:] if pd.notna(x) and len(str(x)) > {visible} else str(x)"
+        if tree == _structure(keep_suffix):
+            recognized = (
+                "MASK",
+                {"mask_char": "*", "visible_suffix": visible, "short_value": "unchanged"},
+            )
+            break
+    keep_first = "lambda x: str(x)[0] + '*' * (len(str(x)) - 1) if pd.notna(x) and len(str(x)) > 0 else str(x)"
+    if tree == _structure(keep_first):
+        recognized = ("MASK", {"mask_char": "*", "visible_prefix": 1, "empty_value": "unchanged"})
+    from pseudragon.validation.account_mask import account_mask_candidate
+
+    for mode in ("keep_last_four", "mask_last_four", "mask_all"):
+        candidate = account_mask_candidate(mode)
+        if tree == _structure(candidate["code_snippet"]):
+            recognized = ("MASK", candidate["parameters"])
+            break
     declaration = _declared_contract(declared_contract) if declared_contract is not None else None
     if recognized is not None:
         method, parameters = recognized

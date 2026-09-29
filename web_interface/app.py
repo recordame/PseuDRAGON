@@ -1819,6 +1819,40 @@ def get_stage3_data() -> Tuple:
     return jsonify(response_data)
 
 
+@app.route("/api/stage3/account-mask", methods=["POST"])
+def apply_account_mask():
+    from pseudragon.validation.account_mask import account_mask_candidate
+
+    payload = request.get_json(silent=True) or {}
+    target = session_manager.get_session(payload.get("session_id", ""))
+    if target is None or target.current_step != PipelineStep.STAGE3_READY:
+        return jsonify(status="error", message="Start an analysis and open its review first."), 409
+    try:
+        candidate = account_mask_candidate(payload.get("mode"))
+    except (ValueError, TypeError) as exc:
+        return jsonify(status="error", message=str(exc)), 400
+    updated = []
+    for table, columns in target.policy_data.items():
+        for column, policy in columns.items():
+            if column not in {"DPS_ACNO", "WD_ACNO"}:
+                continue
+            if not target.pii_data.get(table, {}).get(column, {}).get("is_pii"):
+                continue
+            methods = policy.get("recommended_methods", [])
+            for index, method in enumerate(methods):
+                if method.get("method", "").upper() == "MASK":
+                    methods[index] = copy.deepcopy(candidate)
+                    updated.append(
+                        {
+                            "table": table,
+                            "column": column,
+                            "index": index,
+                            "candidate": copy.deepcopy(candidate),
+                        }
+                    )
+    return jsonify(status="success", updated=updated)
+
+
 @app.route("/submit_stage3", methods=["POST"])
 def submit_stage3() -> Tuple:
     """API endpoint to submit Stage 3 user selections and execute Stage 4.
@@ -1841,11 +1875,16 @@ def submit_stage3() -> Tuple:
     # Get session-specific state or fall back to global state
 
     session_state = session_manager.get_session(client_session_id) if client_session_id else None
+    if client_session_id and session_state is None:
+        return jsonify(
+            status="error", message="This review session expired. Start a new analysis."
+        ), 409
     target_state = session_state if session_state else state
 
     # Validate all submitted edits before state, audit logs or preferences change.
     # Unsupported custom edits need an explicit declaration; do not guess semantics.
     normalized_selections = {}
+    account_masks = []
     try:
         for key, selection_data in choices.items():
             if not key.startswith("method_"):
@@ -1870,10 +1909,27 @@ def submit_stage3() -> Tuple:
                         f"Invalid selected method for {table_name}.{column_name}."
                     )
                 if methods:
-                    normalized_selections[key] = prepare_method_selection(
-                        methods[index], column_name, selection_data
-                    )
+                    try:
+                        normalized_selections[key] = prepare_method_selection(
+                            methods[index], column_name, selection_data
+                        )
+                        checked = normalized_selections[key]
+                        if (
+                            column_name in {"DPS_ACNO", "WD_ACNO"}
+                            and checked.get("method") == "MASK"
+                        ):
+                            account_masks.append(
+                                (f"{table_name}.{column_name}", checked.get("parameters", {}))
+                            )
+                    except MethodContractError as exc:
+                        raise MethodContractError(f"{table_name}.{column_name}: {exc}") from exc
                 break
+        if account_masks and any(params != account_masks[0][1] for _, params in account_masks[1:]):
+            raise MethodContractError(
+                "Account MASK rules differ for "
+                + ", ".join(name for name, _ in account_masks)
+                + ". Choose a Shared account MASK rule before approval."
+            )
     except (MethodContractError, TypeError, ValueError) as exc:
         return jsonify({"status": "validation_error", "error": str(exc)}), 400
 
@@ -4116,6 +4172,7 @@ def guard_knowledge_updates():
         "/submit_stage3",
         "/change_pii_status",
         "/api/stage3/change_pii_status",
+        "/api/stage3/account-mask",
         "/api/expert_feedback/manage",
     }
     guarded = (
@@ -4130,6 +4187,7 @@ def guard_knowledge_updates():
             "/submit_stage3",
             "/change_pii_status",
             "/api/stage3/change_pii_status",
+            "/api/stage3/account-mask",
         }:
             payload = request.get_json(silent=True) or {}
             target = session_manager.get_session(payload.get("session_id", "")) or state

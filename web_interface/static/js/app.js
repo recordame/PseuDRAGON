@@ -759,6 +759,26 @@ class PseuDRAGONApp {
             <div id="validationResults" class="validation-results"></div>
         `;
         this.elements.stage3Content.appendChild(validationSection);
+        const accounts = Object.entries(data).flatMap(([table, columns]) =>
+            Object.entries(columns)
+                .filter(
+                    ([column, value]) => ["DPS_ACNO", "WD_ACNO"].includes(column) && value.is_pii
+                )
+                .map(([column]) => `${table}.${column}`)
+        );
+        if (accounts.length) {
+            const panel = document.createElement("div");
+            panel.className = "validation-section";
+            panel.innerHTML = `<h3>Shared account MASK rule</h3>
+                <p>Apply one rule to ${accounts.map((x) => this.escapeHtml(x)).join(", ")}. This updates proposals; final approval is still required.</p>
+                <select id="accountMaskMode"><option value="">Choose a rule</option>
+                <option value="keep_last_four">Show last 4 only: ****5678</option>
+                <option value="mask_last_four">Hide last 4: 1234****</option>
+                <option value="mask_all">Hide all: ********</option></select>
+                <button type="button" class="btn btn-secondary">Apply to account fields</button>`;
+            panel.querySelector("button").onclick = () => this.applyAccountMask();
+            this.elements.stage3Content.append(panel);
+        }
 
         for (const [tableName, columns] of Object.entries(data)) {
             const tableSection = this.createTableSection(tableName, columns);
@@ -1012,6 +1032,38 @@ class PseuDRAGONApp {
         });
     }
 
+    async applyAccountMask() {
+        const mode = document.getElementById("accountMaskMode").value;
+        if (!mode) {
+            window.alert("Choose the account masking rule first.");
+            return;
+        }
+        try {
+            const response = await fetch("/api/stage3/account-mask", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: this.state.sessionId, mode }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || "Cannot update account masks");
+            for (const item of result.updated) {
+                const key = `method_${item.table}_${item.column}`;
+                this.state.tableData[item.table][item.column].methods[item.index] = item.candidate;
+                const old = document
+                    .getElementById(`code_${key}_${item.index}`)
+                    ?.closest(".method-option");
+                if (old) old.replaceWith(this.createMethodOption(key, item.candidate, item.index));
+                this.selectMethod(key, item.index);
+            }
+            this.log(
+                `Updated ${result.updated.length} account MASK proposals with one shared rule.`,
+                "info"
+            );
+        } catch (error) {
+            window.alert(error.message);
+        }
+    }
+
     async submitPolicies() {
         /**
          * Submit selected policies and generate code
@@ -1145,8 +1197,11 @@ class PseuDRAGONApp {
             } else {
                 if (data.status === "validation_error") {
                     this.elements.stage3Modal.classList.add("active");
+                    window.alert(
+                        data.error || data.message || "Please review the selected treatment."
+                    );
                 }
-                throw new Error(data.error || "Code generation failed");
+                throw new Error(data.error || data.message || "Code generation failed");
             }
         } catch (error) {
             this.log(`[ERROR] Error: ${error.message}`, "error");
