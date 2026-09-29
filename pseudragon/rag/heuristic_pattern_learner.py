@@ -147,6 +147,7 @@ class HeuristicPatternLearner:
             logger.info(f"  - Manual: {manual_count}, Auto-learned: {auto_count}")
         except Exception as e:
             logger.error(f"Failed to save heuristics: {e}")
+            raise
 
     def _generate_id(self, existing_ids: List[str], prefix: str = "auto") -> str:
         """Generate unique heuristic ID.
@@ -206,7 +207,7 @@ class HeuristicPatternLearner:
         # Process column_exact entries
         for key, entry in feedback.get("column_exact", {}).items():
             column_name = entry.get("column_name", "")
-            pii_type = entry.get("pii_type", "")
+            pii_type = entry.get("classification", entry.get("pii_type", ""))
             column_comment = entry.get("column_comment", "")
             total_selections = entry.get("total_selections", 0)
 
@@ -811,7 +812,7 @@ class HeuristicPatternLearner:
             ("pii_classification", "classification"),
         ):
             for entry in feedback.get(section, {}).values():
-                label = entry.get(label_key)
+                label = entry.get("classification", entry.get(label_key))
                 if label in feedback_columns and entry.get("column_name"):
                     feedback_columns[label].append(entry)
 

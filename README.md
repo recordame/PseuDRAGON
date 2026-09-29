@@ -1,13 +1,13 @@
 # PseuDRAGON
 
-Schema-centric compliance NLP for closed-network financial-data pseudonymization.
+Knowledge-guided local LLMs for financial-data pseudonymization in closed networks.
 
 PseuDRAGON interprets column names, descriptions and table context with a local
 language model. Experts review the proposed field labels, supporting passages
 and treatments. Approved decisions are retained for reuse, while selected
 transformations are assembled into inspectable Python programs.
 
-Release: **2026.09.26**. The default model is **gpt-oss-120b**, served locally
+Release: **2026.09.29**. The default model is **gpt-oss-120b**, served locally
 through an OpenAI-compatible endpoint (`gpt-oss:120b` in Ollama).
 
 ## Workflow
@@ -89,6 +89,37 @@ The runtime profile displays the active mode and source trace.
 experiments. Only those modes use their corresponding ranking parameters;
 they are not the default release workflow. See the optional settings in
 `.env.example`.
+
+## Reviewed knowledge in the web interface
+
+Stage 1 first reuses a label when all active records for the same column name
+agree. Confirmed defaults are included, not only corrections. Unseen names
+continue to learned rules and the existing field-detection path. A conflicting
+exact name bypasses both learned and static rules and requests a fresh model
+judgment. Semantic similarity is not used to transfer a PII label; treatment
+suggestions remain subject to review.
+
+The **Expert Feedback** view provides:
+
+- **Withdraw:** retire the selected stored judgment (including its accumulated
+  selections), keep its record and reason in history, and rebuild automatic rules.
+- **Rebuild rules:** rebuild from active judgments while retaining manual rules.
+- **Start new policy scope:** archive active feedback and all stored rules,
+  including manual rules, and start empty stores. Reapprove knowledge for the
+  new scope rather than automatically carrying it forward. Configured built-in
+  detection patterns and policy documents are separate; review their settings too.
+
+Knowledge changes require a reason and the current store revision. They are
+blocked while analyses run and invalidate pending approvals, which require a
+new analysis. Failed preparation leaves the active stores unchanged. Stored
+history retains withdrawn records; it is not an undo button or tamper-proof log.
+The JSON-backed web service supports a single server process; do not share these
+stores between independent workers or edit them externally while it is running.
+
+The paper's 75-field history-and-rules result and 83-field cache-plus-rules
+comparison describe their respective evaluation configurations. The product
+now uses the latter exact-cache-first behavior; those counts are not guaranteed
+for another institution's data. This change does not rewrite the recorded runs.
 
 ## Treatment contracts
 

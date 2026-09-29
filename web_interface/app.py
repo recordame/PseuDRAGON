@@ -10,7 +10,6 @@ This application provides:
 - Code generation and download
 """
 
-
 import json
 import logging
 import copy
@@ -43,7 +42,7 @@ if sys.platform == "win32":
         print(f"Warning: Could not set UTF-8 encoding: {e}")
 
 
-from flask import Flask, Response, jsonify, render_template, request, send_file
+from flask import Flask, Response, jsonify, render_template, request, send_file, g
 
 
 from config.config import (
@@ -59,6 +58,7 @@ from pseudragon.database.adapters import DatabaseManager
 from pseudragon.rag.heuristic_pattern_learner import HeuristicPatternLearner
 from pseudragon.rag.retriever import RAGSystem
 from pseudragon.rag.expert_preference_manager import ExpertPreferenceManager
+from pseudragon.rag.knowledge_store import KNOWLEDGE_LOCK, revision
 from pseudragon.domain.policy_dsl import ActionType, ColumnPolicy, Policy, PolicyAction
 from pseudragon.heuristics.heuristic_manager import HeuristicManager
 from pseudragon.logging.audit_logger import AuditLogger
@@ -102,8 +102,8 @@ class AppConfig:
     PORT = int(os.getenv("FLASK_PORT", 5001))
     DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     PAPER_TITLE = (
-        "PseuDRAGON: Schema-Centric Compliance NLP for Closed-Network "
-        "Financial-Data Pseudonymization"
+        "PseuDRAGON: Knowledge-Guided Local LLMs for Financial-Data "
+        "Pseudonymization in Closed Networks"
     )
 
 
@@ -922,9 +922,9 @@ def run_pipeline_task(
                                         )
 
                         # Update policy data with reordered methods
-                        session_state.policy_data[table_name][col_name][
-                            "recommended_methods"
-                        ] = reordered_methods
+                        session_state.policy_data[table_name][col_name]["recommended_methods"] = (
+                            reordered_methods
+                        )
                     else:
                         # Non-PII column - reorder methods based on user preference
                         # But preserve ALL LLM-generated methods (don't replace them!)
@@ -1556,6 +1556,9 @@ def start_pipeline() -> Tuple:
     if cleaned > 0:
         logging.getLogger(__name__).debug(f"DEBUG: Cleaned up {cleaned} expired sessions")
 
+    session_state.knowledge_invalidated = False
+    session_state.is_running = True
+
     thread = Thread(
         target=run_pipeline_task, args=(tables, purpose_goal, preferred_method, client_session_id)
     )
@@ -1732,9 +1735,9 @@ def get_stage3_data() -> Tuple:
                         )
 
                         # Update policy_data with regenerated methods
-                        target_state.policy_data[table][col][
-                            "recommended_methods"
-                        ] = non_pii_methods
+                        target_state.policy_data[table][col]["recommended_methods"] = (
+                            non_pii_methods
+                        )
 
                         display_data[table][col] = {
                             "pii_type": "Non-PII",
@@ -2048,6 +2051,7 @@ def submit_stage3() -> Tuple:
                         table_name=table,
                         column_name=col,
                         pii_type=pii_type,
+                        is_pii=True,
                         selected_method=new_action,
                         available_methods=all_methods,
                         selected_index=idx,
@@ -2188,6 +2192,7 @@ def submit_stage3() -> Tuple:
                     table_name=table,
                     column_name=col,
                     pii_type="Non-PII",
+                    is_pii=False,
                     selected_method=method,
                     available_methods=available_methods,
                     selected_index=idx,
@@ -3491,13 +3496,16 @@ def _analyze_column_semantics(
     # === PII-related keywords ===
     # Phone number
     is_phone_by_comment = any(
-        kw in col_comment_upper for kw in ["전화", "핸드폰", "휴대폰", "PHONE", "MOBILE", "TEL", "CONTACT"]
+        kw in col_comment_upper
+        for kw in ["전화", "핸드폰", "휴대폰", "PHONE", "MOBILE", "TEL", "CONTACT"]
     )
     is_phone_by_name = any(kw in col_name_upper for kw in ["PHONE", "TEL", "MOBILE", "CONTACT"])
     is_phone = is_phone_by_comment or is_phone_by_name
 
     # Email
-    is_email_by_comment = any(kw in col_comment_upper for kw in ["이메일", "EMAIL", "E-MAIL", "MAIL"])
+    is_email_by_comment = any(
+        kw in col_comment_upper for kw in ["이메일", "EMAIL", "E-MAIL", "MAIL"]
+    )
     is_email_by_name = any(kw in col_name_upper for kw in ["EMAIL", "MAIL"])
     is_email = is_email_by_comment or is_email_by_name
 
@@ -3510,7 +3518,8 @@ def _analyze_column_semantics(
 
     # ID/identifier
     is_id_by_comment = any(
-        kw in col_comment_upper for kw in ["아이디", "식별자", "ID", "IDENTIFIER", "고유번호", "UNIQUE"]
+        kw in col_comment_upper
+        for kw in ["아이디", "식별자", "ID", "IDENTIFIER", "고유번호", "UNIQUE"]
     )
     is_id_by_name = any(kw in col_name_upper for kw in ["ID", "_ID", "IDENTIFIER", "UNIQUE_ID"])
     is_id = is_id_by_comment or is_id_by_name
@@ -3608,7 +3617,9 @@ def _analyze_column_semantics(
     )
 
     # Age
-    is_age_by_comment = any(kw in col_comment_upper for kw in ["나이", "연령", "AGE", "세", "YEARS OLD"])
+    is_age_by_comment = any(
+        kw in col_comment_upper for kw in ["나이", "연령", "AGE", "세", "YEARS OLD"]
+    )
     is_age_column = is_age_by_comment
 
     # If it's an amount column but data_type is not detected as numeric, treat it as numeric
@@ -4098,6 +4109,76 @@ def _get_default_non_pii_methods(
 # Expert Feedback API Endpoints
 
 
+@app.before_request
+def guard_knowledge_updates():
+    guarded = request.path in {
+        "/start",
+        "/submit_stage3",
+        "/change_pii_status",
+        "/api/stage3/change_pii_status",
+        "/api/expert_feedback/manage",
+    }
+    guarded = (
+        guarded
+        or request.path.startswith("/api/heuristics")
+        or request.path == "/api/expert_feedback"
+    )
+    if guarded:
+        KNOWLEDGE_LOCK.acquire()
+        g.knowledge_locked = True
+        if request.path in {
+            "/submit_stage3",
+            "/change_pii_status",
+            "/api/stage3/change_pii_status",
+        }:
+            payload = request.get_json(silent=True) or {}
+            target = session_manager.get_session(payload.get("session_id", "")) or state
+            if getattr(target, "knowledge_invalidated", False):
+                return jsonify(
+                    status="error",
+                    message="Knowledge changed. Start a new analysis before approval.",
+                ), 409
+
+
+@app.teardown_request
+def release_knowledge_update_lock(error=None):
+    if getattr(g, "knowledge_locked", False):
+        g.knowledge_locked = False
+        KNOWLEDGE_LOCK.release()
+
+
+@app.route("/api/expert_feedback/manage", methods=["POST"])
+def manage_expert_feedback():
+    payload = request.get_json(silent=True) or {}
+    with session_manager._lock:
+        sessions = list(session_manager._sessions.values())
+    if any(item.is_running for item in sessions + [state]):
+        return jsonify(
+            status="error", message="Wait for active analyses to finish before changing knowledge."
+        ), 409
+    manager = session_manager.get_shared_backend()[2] or state.expert_preference_manager
+    if manager is None:
+        manager = ExpertPreferenceManager()
+    try:
+        result = manager.manage_knowledge(
+            payload.get("action"),
+            payload.get("revision"),
+            payload.get("reason"),
+            payload.get("section"),
+            payload.get("key"),
+        )
+    except ValueError as exc:
+        return jsonify(status="error", message=str(exc)), 409
+    except Exception:
+        logging.exception("Knowledge update failed")
+        return jsonify(
+            status="error", message="Knowledge update failed; inspect the server log."
+        ), 500
+    for item in sessions + [state]:
+        item.knowledge_invalidated = True
+    return jsonify(status="success", **result)
+
+
 @app.route("/api/expert_feedback", methods=["GET"])
 def get_expert_feedback() -> Tuple:
     """Get expert feedback data.
@@ -4114,6 +4195,8 @@ def get_expert_feedback() -> Tuple:
         # Get all feedback data
         feedback_data = {
             "status": "success",
+            "revision": revision(expert_pref_manager.preference_file),
+            "history": expert_pref_manager.preferences.get("knowledge_history", []),
             "method_preferences": [],
             "pii_classifications": [],
             "statistics": expert_pref_manager.get_statistics(),
@@ -4130,6 +4213,8 @@ def get_expert_feedback() -> Tuple:
 
             feedback_data["method_preferences"].append(
                 {
+                    "key": key,
+                    "section": "column_exact",
                     "column_name": value.get("column_name", ""),
                     "pii_type": value.get("pii_type", ""),
                     "method_counts": method_counts,
@@ -4143,6 +4228,8 @@ def get_expert_feedback() -> Tuple:
         for key, value in pii_classifications.items():
             feedback_data["pii_classifications"].append(
                 {
+                    "key": key,
+                    "section": "pii_classification",
                     "column_name": value.get("column_name", ""),
                     "classification": value.get("classification", ""),
                     "change_count": value.get("change_count", 0),

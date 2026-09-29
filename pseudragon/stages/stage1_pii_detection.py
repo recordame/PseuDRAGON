@@ -223,6 +223,8 @@ class Stage1PIIDetection:
             Dictionary mapping column names to PII analysis results
         """
         results = {}
+        if hasattr(self, "heuristic_manager"):
+            self.heuristic_manager.load()
 
         # Create or get session for this table
 
@@ -264,13 +266,18 @@ class Stage1PIIDetection:
 
             # Step 0: Check learned PII classification (HIGHEST PRIORITY)
             # Apply the approved correction for this field.
-            # Use similarity search when an exact corrected field is unavailable.
+            # Reuse unanimous approvals; unseen names continue to learned rules.
 
             learned_result = None
             if self.heuristics_enabled and self.expert_preference_manager:
                 learned_result = self.expert_preference_manager.get_learned_pii_classification(
                     column_name=column, column_comment=column_comment, data_type=data_type
                 )
+
+            if learned_result and learned_result.get("match_type") == "conflict":
+                self._log(f"Conflicting approvals for {column}; requesting a fresh judgment.", log_callback)
+                llm_verification_columns.append((column, metadata))
+                continue
 
             if learned_result:
                 learned_classification_count += 1
@@ -311,7 +318,7 @@ class Stage1PIIDetection:
                         "evidence_source": evidence_source,
                         "detection_method": "learned",
                         "confidence": "Very High" if match_type == "exact" else "High",
-                        "rationale": rationale or f"User correction from previous session",
+                        "rationale": rationale or f"Confirmed judgment from a previous session",
                         "column_comment": column_comment,
                     }
                 else:
@@ -331,7 +338,7 @@ class Stage1PIIDetection:
                         "evidence_source": evidence_source,
                         "detection_method": "learned",
                         "confidence": "Very High" if match_type == "exact" else "High",
-                        "rationale": rationale or f"User correction from previous session",
+                        "rationale": rationale or f"Confirmed judgment from a previous session",
                         "column_comment": column_comment,
                     }
                 continue

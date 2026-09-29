@@ -432,7 +432,8 @@ class PseuDRAGONApp {
             }
 
             if (this.elements.hitlRuleGate) {
-                this.elements.hitlRuleGate.textContent = `θ=${data.knowledge_update.minimum_consistent_corrections} · conflict ≤${Math.round(Number(data.knowledge_update.maximum_conflict_rate) * 100)}%`;
+                this.elements.hitlRuleGate.textContent =
+                    "Confirmed names → learned rules; conflicting approvals require a fresh judgment";
             }
 
             if (this.elements.runtimeConfigNote) {
@@ -2446,10 +2447,73 @@ class PseuDRAGONApp {
         }
     }
 
+    async manageKnowledge(action, section = null, key = null) {
+        const descriptions = {
+            withdraw:
+                "Withdraw this stored judgment and its accumulated selections? Derived rules will be rebuilt; the record will remain in history.",
+            rebuild: "Rebuild automatic rules from active judgments? Manual rules will be kept.",
+            reset: "Start a new policy scope? All active judgments and rules, including manual rules, will be archived. New approvals are required.",
+        };
+        if (!window.confirm(descriptions[action])) return;
+        const reason = window.prompt("Reason for this knowledge change:");
+        if (!reason || !reason.trim()) return;
+        try {
+            const response = await fetch("/api/expert_feedback/manage", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action,
+                    section,
+                    key,
+                    reason,
+                    revision: this.knowledgeRevision,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || "Update failed");
+            await this.loadExpertFeedback();
+            window.alert(
+                "Knowledge updated. Start a new analysis before approving pending proposals."
+            );
+        } catch (error) {
+            window.alert(error.message);
+        }
+    }
+
     displayExpertFeedback(data) {
         /**
          * Display expert feedback data
          */
+        this.knowledgeRevision = data.revision;
+        const content = document.getElementById("expertFeedbackContent");
+        let controls = document.getElementById("knowledgeControls");
+        if (!controls) {
+            controls = document.createElement("div");
+            controls.id = "knowledgeControls";
+            controls.style.padding = "20px";
+            content.prepend(controls);
+        }
+        controls.replaceChildren();
+        for (const [action, label] of [
+            ["rebuild", "Rebuild rules"],
+            ["reset", "Start new policy scope"],
+        ]) {
+            const button = document.createElement("button");
+            button.className = "btn btn-secondary";
+            button.textContent = label;
+            button.onclick = () => this.manageKnowledge(action);
+            controls.append(button);
+        }
+        const history = document.createElement("details");
+        const summary = document.createElement("summary");
+        summary.textContent = `Knowledge changes (${(data.history || []).length})`;
+        history.append(summary);
+        for (const event of [...(data.history || [])].reverse()) {
+            const entry = document.createElement("p");
+            entry.textContent = `${event.timestamp}: ${event.action} — ${event.reason}`;
+            history.append(entry);
+        }
+        controls.append(history);
         // Update statistics.
         const stats = data.statistics || {};
         document.getElementById("efTotalSelections").textContent = stats.total_selections || 0;
@@ -2470,7 +2534,7 @@ class PseuDRAGONApp {
                     <div class="empty-icon">📊</div>
                     <h3 class="empty-title">No Method Preferences</h3>
                     <p class="empty-description">
-                        Method preferences will appear here after experts modify default selections in Stage 3.
+                        Reviewed selections, including confirmed defaults, will appear here after Stage 3.
                     </p>
                 </div>
             `;
@@ -2550,6 +2614,27 @@ class PseuDRAGONApp {
 
             piiHtml += "</tbody></table>";
             piiContainer.innerHTML = piiHtml;
+        }
+        for (const [container, records] of [
+            [techContainer, techPrefs],
+            [piiContainer, piiChanges],
+        ]) {
+            container.querySelectorAll("tbody tr").forEach((row, index) => {
+                const cell = document.createElement("td");
+                const button = document.createElement("button");
+                button.textContent = "Withdraw";
+                button.className = "btn btn-secondary";
+                button.onclick = () =>
+                    this.manageKnowledge("withdraw", records[index].section, records[index].key);
+                cell.append(button);
+                row.append(cell);
+            });
+            const header = container.querySelector("thead tr");
+            if (header) {
+                const cell = document.createElement("th");
+                cell.textContent = "Review";
+                header.append(cell);
+            }
         }
     }
 

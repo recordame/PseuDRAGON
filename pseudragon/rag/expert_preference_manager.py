@@ -6,6 +6,11 @@ Also triggers automatic heuristic pattern learning from expert feedback.
 """
 
 import json
+import copy
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from .knowledge_store import atomic_json, current_store, revision
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
@@ -58,6 +63,7 @@ class ExpertPreferenceManager:
         # Initialize RAG-based feedback embeddings if we have feedback data
 
         self._initialize_feedback_embeddings()
+        self._loaded_revision = revision(self.preference_file)
 
     def _initialize_heuristic_learner(self):
         """Initialize heuristic pattern learner."""
@@ -110,19 +116,8 @@ class ExpertPreferenceManager:
 
     def _save_preferences(self):
         """Save expert feedback to file."""
-        try:
-            # Create directory if it doesn't exist
-            # Only create directory if the path contains a directory component
-            dir_name = os.path.dirname(self.preference_file)
-            if dir_name:  # Only create if there's actually a directory path
-                os.makedirs(dir_name, exist_ok=True)
-
-            with open(self.preference_file, "w", encoding="utf-8") as f:
-                json.dump(self.preferences, f, indent=2, ensure_ascii=False)
-
-            logger.info(f"Saved expert feedback to {self.preference_file}")
-        except Exception as e:
-            logger.error(f"Failed to save expert feedback: {e}")
+        atomic_json(self.preference_file, self.preferences)
+        self._loaded_revision = revision(self.preference_file)
 
     def _initialize_feedback_embeddings(self):
         """Initialize embeddings for existing feedback entries to enable semantic search."""
@@ -347,6 +342,7 @@ class ExpertPreferenceManager:
             logger.warning(f"RAG similarity search failed: {e}")
             return None
 
+    @current_store
     def get_preference_from_similar(
         self, column_name: str, pii_type: str, column_comment: str = "", data_type: str = ""
     ) -> Optional[Dict[str, Any]]:
@@ -384,6 +380,8 @@ class ExpertPreferenceManager:
 
         # Then try RAG-based similarity search
 
+        if not self._column_embeddings:
+            self._initialize_feedback_embeddings()
         similar = self.find_similar_column(column_name, pii_type, column_comment, data_type)
         if similar:
             similar_key, similar_column_name, similarity = similar
@@ -413,6 +411,7 @@ class ExpertPreferenceManager:
 
         return None
 
+    @current_store
     def record_selection(
         self,
         table_name: str,
@@ -426,6 +425,7 @@ class ExpertPreferenceManager:
         description: Optional[str] = None,
         description_modified: bool = False,
         column_comment: Optional[str] = None,
+        is_pii: Optional[bool] = None,
     ):
         """Record expert's method selection.
 
@@ -455,6 +455,11 @@ class ExpertPreferenceManager:
                 "method_counts": {},
                 "total_selections": 0,
             }
+
+        if is_pii is not None:
+            self.preferences["column_exact"][exact_key]["classification"] = (
+                "PII" if is_pii else "Non-PII"
+            )
 
         # Increment selection count
         entry = self.preferences["column_exact"][exact_key]
@@ -500,6 +505,7 @@ class ExpertPreferenceManager:
         logger.info(f"Recorded expert feedback: {column_name} ({pii_type}) -> {selected_method}")
         logger.info(f"Total selections for {column_name}: {entry['total_selections']}")
 
+    @current_store
     def get_preferred_method(self, column_name: str, pii_type: str) -> Optional[str]:
         """Get expert's preferred method for a column.
 
@@ -532,6 +538,7 @@ class ExpertPreferenceManager:
 
         return None
 
+    @current_store
     def get_custom_code_snippet(
         self, column_name: str, pii_type: str, method: str
     ) -> Optional[str]:
@@ -615,6 +622,7 @@ class ExpertPreferenceManager:
         stats["pii_classifications"] = len(self.preferences.get("pii_classification", {}))
         return stats
 
+    @current_store
     def record_pii_classification_change(
         self,
         column_name: str,
@@ -700,10 +708,11 @@ class ExpertPreferenceManager:
         if rationale:
             logger.info(f"Rationale: {rationale}")
 
+    @current_store
     def get_learned_pii_classification(
         self, column_name: str, column_comment: str = "", data_type: str = ""
     ) -> Optional[Dict[str, Any]]:
-        """Get learned PII classification for a column with RAG-based similarity search.
+        """Reuse a unanimous exact-name judgment or report conflicting active labels.
 
         Args:
             column_name: Column name
@@ -712,45 +721,117 @@ class ExpertPreferenceManager:
 
         Returns:
             Dict with classification info if learned, None otherwise
-            Returns: {"classification": "PII"/"Non-PII", "match_type": "exact"/"rag_similar",
+            Returns: {"classification": "PII"/"Non-PII", "match_type": "exact",
                       "similar_column": str, "similarity": float, "rationale": str}
         """
         col_key = column_name.lower()
+        entries = [
+            entry
+            for entry in self.preferences.get("column_exact", {}).values()
+            if entry.get("column_name", "").lower() == col_key
+        ]
+        correction = self.preferences.get("pii_classification", {}).get(col_key)
+        labels = {entry.get("classification", entry.get("pii_type")) for entry in entries}
+        if correction:
+            labels.add(correction.get("classification"))
+        labels.discard(None)
+        if not labels:
+            return None
+        if not labels.issubset({"PII", "Non-PII"}) or len(labels) != 1:
+            return {"match_type": "conflict", "reason": "Conflicting active approvals"}
+        return {
+            "classification": next(iter(labels)),
+            "match_type": "exact",
+            "similar_column": column_name,
+            "similarity": 1.0,
+            "rationale": (correction or {}).get("rationale", "Confirmed expert judgment"),
+            "change_count": (correction or {}).get("change_count", 0),
+        }
 
-        # First try exact match
-
-        if col_key in self.preferences["pii_classification"]:
-            entry = self.preferences["pii_classification"][col_key]
-            classification = entry["classification"]
-            change_count = entry["change_count"]
-            rationale = entry.get("rationale", "")
-            stored_comment = entry.get("column_comment", "")
-
-            logger.info(
-                f"Found learned PII classification for {column_name}: {classification} ({change_count} change(s))"
-            )
-            if rationale:
-                logger.info(f"Rationale: {rationale}")
-
-            return {
-                "classification": classification,
-                "match_type": "exact",
-                "similar_column": column_name,
-                "similar_column_comment": stored_comment,
-                "similarity": 1.0,
-                "rationale": rationale,
-                "change_count": change_count,
-            }
-
-        # RAG-based similarity search using general-purpose embedding model
-
-        similar_result = self._find_similar_pii_classification(
-            column_name, column_comment, data_type
+    @current_store
+    def manage_knowledge(self, action, expected_revision, reason, section=None, key=None):
+        """Archive changes and rebuild rules before activating reviewed knowledge."""
+        if expected_revision != revision(self.preference_file):
+            raise ValueError("Knowledge changed. Refresh and review the current records.")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("A reason is required.")
+        if action not in {"withdraw", "rebuild", "reset"}:
+            raise ValueError("Unknown knowledge action.")
+        if self._heuristic_learner is None:
+            raise RuntimeError("Rule learner is unavailable.")
+        if Path(self.preference_file).exists():
+            self.preferences = json.loads(Path(self.preference_file).read_text(encoding="utf-8"))
+        old = copy.deepcopy(self.preferences)
+        updated = copy.deepcopy(old)
+        rules_path = Path(self._heuristic_learner.heuristics_file)
+        old_rules = (
+            json.loads(rules_path.read_text(encoding="utf-8"))
+            if rules_path.exists()
+            else self._heuristic_learner._create_empty_heuristics()
         )
-        if similar_result:
-            return similar_result
+        archived = {}
+        if action == "withdraw":
+            if section not in {"column_exact", "pii_classification"}:
+                raise ValueError("Unknown approval type.")
+            if key not in updated.get(section, {}):
+                raise ValueError("Approval is no longer active.")
+            archived = {section: {key: updated[section].pop(key)}}
+        elif action == "reset":
+            archived = {
+                name: updated.get(name, {})
+                for name in ("column_exact", "pii_classification", "column_patterns")
+            }
+            archived["rules"] = old_rules
+            for name in ("column_exact", "pii_classification", "column_patterns"):
+                updated[name] = {}
+        timestamp = datetime.now(timezone.utc).isoformat()
+        updated.setdefault("knowledge_history", []).append(
+            {
+                "action": action,
+                "reason": reason.strip(),
+                "timestamp": timestamp,
+                "previous_revision": expected_revision,
+                "archived": archived,
+            }
+        )
+        updated["statistics"] = {
+            "total_selections": sum(
+                e.get("total_selections", 0) for e in updated.get("column_exact", {}).values()
+            ),
+            "last_updated": timestamp,
+        }
+        from pseudragon.rag.heuristic_pattern_learner import HeuristicPatternLearner
 
-        return None
+        with tempfile.TemporaryDirectory() as directory:
+            feedback_file = str(Path(directory) / "feedback.json")
+            rules_file = str(Path(directory) / "rules.json")
+            atomic_json(feedback_file, updated)
+            atomic_json(
+                rules_file,
+                self._heuristic_learner._create_empty_heuristics()
+                if action == "reset"
+                else old_rules,
+            )
+            learner = HeuristicPatternLearner(
+                feedback_file=feedback_file, heuristics_file=rules_file
+            )
+            learner.learn_patterns_from_feedback()
+            learner.refine_heuristics()
+            new_rules = json.loads(Path(rules_file).read_text())
+        try:
+            atomic_json(rules_path, new_rules)
+            atomic_json(self.preference_file, updated)
+        except Exception:
+            atomic_json(rules_path, old_rules)
+            atomic_json(self.preference_file, old)
+            raise
+        self.preferences = updated
+        self._column_embeddings.clear()
+        return {
+            "action": action,
+            "revision": revision(self.preference_file),
+            "rules": len(new_rules.get("heuristics", [])),
+        }
 
     def _find_similar_pii_classification(
         self, column_name: str, column_comment: str = "", data_type: str = ""
@@ -917,6 +998,7 @@ class ExpertPreferenceManager:
             logger.warning(f"RAG PII classification search failed: {e}")
             return None
 
+    @current_store
     def trigger_pattern_learning(self):
         """Trigger heuristic pattern learning from current feedback data.
 
