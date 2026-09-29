@@ -368,10 +368,17 @@ class ExpertPreferenceManager:
                 custom_snippet = entry.get("custom_code_snippets", {}).get(preferred_method)
                 custom_description = entry.get("custom_descriptions", {}).get(preferred_method)
                 stored_comment = entry.get("column_comment", "")
+                approved_mask = (
+                    self._read_approved_mask(entry) if preferred_method == "MASK" else None
+                )
+                has_compiled_mask = (
+                    preferred_method == "MASK" and "approved_mask_candidate" in entry
+                )
                 return {
                     "method": preferred_method,
-                    "code_snippet": custom_snippet,
-                    "description": custom_description,
+                    "code_snippet": None if has_compiled_mask else custom_snippet,
+                    "description": None if has_compiled_mask else custom_description,
+                    "approved_mask_candidate": approved_mask,
                     "similar_column": column_name,
                     "similar_column_comment": stored_comment,
                     "similarity": 1.0,
@@ -393,6 +400,9 @@ class ExpertPreferenceManager:
                 custom_snippet = entry.get("custom_code_snippets", {}).get(preferred_method)
                 custom_description = entry.get("custom_descriptions", {}).get(preferred_method)
                 stored_comment = entry.get("column_comment", "")
+                if preferred_method == "MASK" and entry.get("approved_mask_candidate"):
+                    custom_snippet = None
+                    custom_description = None
 
                 logger.info(
                     f"[RAG] Applying preference from similar column {similar_column_name} -> {column_name}"
@@ -426,6 +436,7 @@ class ExpertPreferenceManager:
         description_modified: bool = False,
         column_comment: Optional[str] = None,
         is_pii: Optional[bool] = None,
+        approved_mask_candidate: Optional[Dict[str, Any]] = None,
     ):
         """Record expert's method selection.
 
@@ -441,7 +452,34 @@ class ExpertPreferenceManager:
             description: The method description (original or edited by user)
             description_modified: Whether the user edited the description
             column_comment: Column comment/description from database schema
+            approved_mask_candidate: Complete compiled MASK candidate approved in Stage 3
         """
+        approved_mask = None
+        if approved_mask_candidate is not None:
+            from pseudragon.validation.account_mask import validate_masking_candidate
+            from pseudragon.validation.method_contract import normalize_method_metadata
+
+            if selected_method != "MASK" or not validate_masking_candidate(approved_mask_candidate):
+                raise ValueError("Only a compiled MASK candidate can be stored as a masking rule.")
+            approved_mask = normalize_method_metadata(approved_mask_candidate, column_name)
+            approved_mask = {
+                key: copy.deepcopy(approved_mask[key])
+                for key in (
+                    "method",
+                    "masking_rule",
+                    "parameters",
+                    "code_snippet",
+                    "example_implementation",
+                    "description",
+                    "legal_evidence",
+                    "applicability",
+                    "contract_verification",
+                    "contract_code_sha256",
+                )
+                if key in approved_mask
+            }
+            if code_snippet is not None and code_snippet != approved_mask["code_snippet"]:
+                raise ValueError("The approved masking rule disagrees with the selected program.")
         # Record every selection, including the default option.
 
         # Create preference key based on column name and PII type
@@ -471,6 +509,20 @@ class ExpertPreferenceManager:
         if column_comment:
             entry["column_comment"] = column_comment
 
+        if selected_method == "MASK":
+            prior_mask = entry.pop("approved_mask_candidate", None)
+            if approved_mask is not None:
+                entry["approved_mask_candidate"] = approved_mask
+            if approved_mask is not None or prior_mask is not None:
+                entry.setdefault("mask_approval_history", []).append(
+                    {
+                        "approved_at": datetime.now(timezone.utc).isoformat(),
+                        "table": table_name,
+                        "candidate": copy.deepcopy(approved_mask),
+                        "source": "configured_mask" if approved_mask else "other_mask_selection",
+                    }
+                )
+
         # Save user-edited code snippet if modified
 
         if code_modified and code_snippet:
@@ -489,8 +541,6 @@ class ExpertPreferenceManager:
 
         # Update statistics
         self.preferences["statistics"]["total_selections"] += 1
-        from datetime import datetime
-
         self.preferences["statistics"]["last_updated"] = datetime.now().isoformat()
 
         # Save preferences
@@ -556,6 +606,8 @@ class ExpertPreferenceManager:
 
         if exact_key in self.preferences["column_exact"]:
             entry = self.preferences["column_exact"][exact_key]
+            if method == "MASK" and "approved_mask_candidate" in entry:
+                return None
             custom_snippets = entry.get("custom_code_snippets", {})
 
             if method in custom_snippets:
@@ -564,6 +616,42 @@ class ExpertPreferenceManager:
                 return snippet
 
         return None
+
+    @staticmethod
+    def _read_approved_mask(entry):
+        """Return a detached validated rule; corrupted records never become proposals."""
+        candidate = entry.get("approved_mask_candidate")
+        if not candidate:
+            return None
+        from pseudragon.validation.account_mask import validate_masking_candidate
+
+        try:
+            if validate_masking_candidate(candidate):
+                return copy.deepcopy(candidate)
+        except (ValueError, TypeError):
+            logger.warning("Stored masking rule failed validation; a new review is required.")
+        return None
+
+    @current_store
+    def apply_reviewed_mask_candidate(self, column_name, pii_type, methods):
+        """Restore code and metadata together for the same field and classification."""
+        exact_key = f"{column_name.lower()}:{pii_type}"
+        entry = self.preferences.get("column_exact", {}).get(exact_key, {})
+        candidate = self._read_approved_mask(entry)
+        if candidate is None:
+            return methods
+        result = []
+        inserted = False
+        for method in methods:
+            if method.get("method", method.get("action", "")).upper() == "MASK":
+                if not inserted:
+                    result.append(candidate)
+                    inserted = True
+            else:
+                result.append(copy.deepcopy(method))
+        if not inserted:
+            result.append(candidate)
+        return result
 
     def reorder_methods(
         self, column_name: str, pii_type: str, methods: List[Dict[str, Any]]
@@ -578,6 +666,7 @@ class ExpertPreferenceManager:
         Returns:
             Reordered list of methods (preferred method first)
         """
+        methods = self.apply_reviewed_mask_candidate(column_name, pii_type, methods)
         preferred_method = self.get_preferred_method(column_name, pii_type)
 
         if not preferred_method:

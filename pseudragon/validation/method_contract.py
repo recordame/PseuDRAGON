@@ -58,10 +58,11 @@ def _declared_contract(declaration):
 def normalize_method_metadata(selected, column, code_modified=False, declared_contract=None):
     """Return a detached candidate with a truthful code/metadata contract.
 
-    Supported full-AST forms: the 1,000-wide interval lambda and the
-    generated suffix-four masking assignment for this exact column. Whitespace,
-    comments and quote style are immaterial; extra statements, changed operands,
-    predicates and other columns do not match. The code itself is never changed.
+    Reviewer-selected masking templates are regenerated from their options and
+    checked against the complete AST and parameters. Legacy recognized forms
+    include fixed interval and masking snippets. Whitespace, comments and quote
+    style are immaterial; extra statements, changed operands, predicates and
+    other columns do not match. The code itself is never changed.
 
     Unknown unchanged snippets retain their prior metadata; they are not labeled
     verified. MASK candidates require nonempty parameters before selection.
@@ -72,8 +73,22 @@ def normalize_method_metadata(selected, column, code_modified=False, declared_co
         raise MethodContractError("A method object and nonempty column name are required.")
     result = copy.deepcopy(selected)
     # Template identity verifies execution metadata, not legal appropriateness.
+    from pseudragon.validation.account_mask import validate_masking_candidate
     from pseudragon.validation.display_requirement import validate_display_candidate
 
+    try:
+        compiled_mask = validate_masking_candidate(result)
+    except ValueError as exc:
+        raise MethodContractError(str(exc)) from exc
+    if compiled_mask:
+        declaration = (
+            _declared_contract(declared_contract) if declared_contract is not None else None
+        )
+        if declaration is not None and declaration != ("MASK", result["parameters"]):
+            raise MethodContractError("The declaration disagrees with the selected masking rule.")
+        result["contract_verification"] = "compiled_masking_rule"
+        result["contract_code_sha256"] = hashlib.sha256(result["code_snippet"].encode()).hexdigest()
+        return result
     try:
         compiled_display = validate_display_candidate(result)
     except ValueError as exc:

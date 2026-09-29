@@ -159,6 +159,7 @@ class PipelineState:
         self.model_initial_pii_data: Dict[str, Any] = {}
         self.model_initial_policy_data: Dict[str, Any] = {}
         self.manual_corrections: List[Dict[str, Any]] = []
+        self.pending_mask_edits: Dict[Tuple[str, str, int], Dict[str, Any]] = {}
         self.pipeline_started_at: Optional[str] = None
         self.model_completed_at: Optional[str] = None
         self.hitl_window_opened_at: Optional[str] = None
@@ -184,6 +185,7 @@ class PipelineState:
             self.model_initial_pii_data = {}
             self.model_initial_policy_data = {}
             self.manual_corrections = []
+            self.pending_mask_edits = {}
             self.pipeline_started_at = None
             self.model_completed_at = None
             self.hitl_window_opened_at = None
@@ -960,7 +962,15 @@ def run_pipeline_task(
                                 "recommended_methods", []
                             )
 
-                            if len(existing_methods) > 2:
+                            existing_methods = user_pref_manager.apply_reviewed_mask_candidate(
+                                col_name, "Non-PII", existing_methods
+                            )
+                            session_state.policy_data[table_name][col_name][
+                                "recommended_methods"
+                            ] = existing_methods
+                            if len(existing_methods) > 2 or rag_preference.get(
+                                "approved_mask_candidate"
+                            ):
                                 # LLM generated rich methods - reorder them with user's preferred method first
                                 reordered = user_pref_manager.reorder_methods(
                                     col_name, "Non-PII", existing_methods
@@ -1819,6 +1829,79 @@ def get_stage3_data() -> Tuple:
     return jsonify(response_data)
 
 
+@app.route("/api/stage3/mask", methods=["POST"])
+def configure_field_mask():
+    """Compile a reviewer's mask choice without approving or executing it."""
+    from pseudragon.validation.account_mask import masking_candidate, masking_preview
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(status="error", message="Provide a masking choice."), 400
+    target = session_manager.get_session(payload.get("session_id", ""))
+    if target is None or target.current_step != PipelineStep.STAGE3_READY:
+        return jsonify(status="error", message="Start an analysis and open its review first."), 409
+    table, column, index = payload.get("table"), payload.get("column"), payload.get("index")
+    if not isinstance(table, str) or not isinstance(column, str):
+        return jsonify(status="error", message="Select a field to configure."), 400
+    methods = target.policy_data.get(table, {}).get(column, {}).get("recommended_methods", [])
+    if (
+        type(index) is not int
+        or not 0 <= index < len(methods)
+        or methods[index].get("method", "").upper() != "MASK"
+    ):
+        return jsonify(
+            status="error", message="Select an available MASK option for this field."
+        ), 400
+    options = payload.get("options")
+    if not isinstance(options, dict):
+        return jsonify(status="error", message="Choose a masking pattern and its settings."), 400
+    try:
+        candidate = masking_candidate(**options)
+        previews = masking_preview(candidate, ["1234567890", "AB-1234", "12", ""])
+    except (TypeError, ValueError) as exc:
+        return jsonify(status="error", message=str(exc)), 400
+    matching = payload.get("apply_matching_accounts", False)
+    if type(matching) is not bool:
+        return jsonify(
+            status="error", message="The matching-account option must be true or false."
+        ), 400
+    locations = [(table, column, index)]
+    if matching:
+        if column not in {"DPS_ACNO", "WD_ACNO"}:
+            return jsonify(
+                status="error", message="Shared account rules apply only to account fields."
+            ), 400
+        for table_name, columns in target.policy_data.items():
+            for column_name, policy in columns.items():
+                if column_name not in {"DPS_ACNO", "WD_ACNO"}:
+                    continue
+                for candidate_index, method in enumerate(policy.get("recommended_methods", [])):
+                    location = (table_name, column_name, candidate_index)
+                    if method.get("method", "").upper() == "MASK" and location not in locations:
+                        locations.append(location)
+    updated = []
+    for table_name, column_name, candidate_index in locations:
+        location = (table_name, column_name, candidate_index)
+        target.pending_mask_edits.setdefault(
+            location,
+            copy.deepcopy(
+                target.policy_data[table_name][column_name]["recommended_methods"][candidate_index]
+            ),
+        )
+        target.policy_data[table_name][column_name]["recommended_methods"][candidate_index] = (
+            copy.deepcopy(candidate)
+        )
+        updated.append(
+            dict(
+                table=table_name,
+                column=column_name,
+                index=candidate_index,
+                candidate=copy.deepcopy(candidate),
+            )
+        )
+    return jsonify(status="success", updated=updated, previews=previews)
+
+
 @app.route("/api/stage3/account-mask", methods=["POST"])
 def apply_account_mask():
     from pseudragon.validation.account_mask import account_mask_candidate
@@ -1928,7 +2011,7 @@ def submit_stage3() -> Tuple:
             raise MethodContractError(
                 "Account MASK rules differ for "
                 + ", ".join(name for name, _ in account_masks)
-                + ". Choose a Shared account MASK rule before approval."
+                + ". Apply the same MASK pattern to both account fields before approval (Shared account MASK)."
             )
     except (MethodContractError, TypeError, ValueError) as exc:
         return jsonify({"status": "validation_error", "error": str(exc)}), 400
@@ -1992,14 +2075,24 @@ def submit_stage3() -> Tuple:
         # A non-default method index or explicit code/description edit is a
         # human correction to the model's proposal. Keep this separate from
         # the immutable cold-start output captured at STAGE3_READY.
-        if idx != 0 or code_modified or description_modified:
+        previous_mask = target_state.pending_mask_edits.get((table, col, idx))
+        if idx != 0 or code_modified or description_modified or previous_mask is not None:
             target_state.manual_corrections.append(
                 {
                     "kind": "policy_selection",
                     "table": table,
                     "column": col,
                     "selected_index": idx,
-                    "code_modified": bool(code_modified),
+                    "masking_rule": copy.deepcopy(
+                        normalized_selections.get(key, {}).get("masking_rule")
+                    ),
+                    "previous_parameters": copy.deepcopy(
+                        (previous_mask or {}).get("parameters", {})
+                    ),
+                    "parameters": copy.deepcopy(
+                        normalized_selections.get(key, {}).get("parameters", {})
+                    ),
+                    "code_modified": bool(code_modified or previous_mask is not None),
                     "description_modified": bool(description_modified),
                     "timestamp": datetime.now().isoformat(),
                 }
@@ -2025,7 +2118,11 @@ def submit_stage3() -> Tuple:
             techs = target_state.policy_data[table][col]["recommended_methods"]
             if 0 <= idx < len(techs):
                 # Save old action object BEFORE modifying the list
-                old_action_obj = techs[0].copy() if techs else {}
+                old_action_obj = (
+                    copy.deepcopy(previous_mask)
+                    if previous_mask is not None
+                    else (techs[0].copy() if techs else {})
+                )
                 old_action = old_action_obj.get("method", "UNKNOWN")
 
                 # Get and remove selected method from list
@@ -2116,6 +2213,7 @@ def submit_stage3() -> Tuple:
                         description=final_description,
                         description_modified=description_modified,
                         column_comment=col_comment,
+                        approved_mask_candidate=selected if selected.get("masking_rule") else None,
                     )
 
                 if target_state.audit_logger and not code_modified:
@@ -2257,6 +2355,7 @@ def submit_stage3() -> Tuple:
                     description=final_description,
                     description_modified=description_modified,
                     column_comment=col_comment,
+                    approved_mask_candidate=selected if selected.get("masking_rule") else None,
                 )
 
             # Create or update policy for non-PII column with the actual selected method
@@ -4173,6 +4272,7 @@ def guard_knowledge_updates():
         "/change_pii_status",
         "/api/stage3/change_pii_status",
         "/api/stage3/account-mask",
+        "/api/stage3/mask",
         "/api/expert_feedback/manage",
     }
     guarded = (
@@ -4188,8 +4288,11 @@ def guard_knowledge_updates():
             "/change_pii_status",
             "/api/stage3/change_pii_status",
             "/api/stage3/account-mask",
+            "/api/stage3/mask",
         }:
             payload = request.get_json(silent=True) or {}
+            if not isinstance(payload, dict):
+                return jsonify(status="error", message="Provide a request object."), 400
             target = session_manager.get_session(payload.get("session_id", "")) or state
             if getattr(target, "knowledge_invalidated", False):
                 return jsonify(

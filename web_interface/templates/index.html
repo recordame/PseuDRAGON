@@ -18,21 +18,41 @@
     </head>
 
     <body>
+        <a class="skip-link" href="#workspace">Skip to workspace</a>
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <div class="logo-section" style="cursor: pointer;" onclick="app.handleLogoClick()">
-                    <div class="logo-icon">🐲</div>
+                <div
+                    class="logo-section"
+                    role="button"
+                    tabindex="0"
+                    aria-label="PseuDRAGON home"
+                    onclick="app.handleLogoClick()"
+                    onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); app.handleLogoClick(); }"
+                >
+                    <div class="logo-icon" aria-hidden="true"
+                        ><svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M12 3 20 6v6c0 4-4.5 7.5-8 9-3.5-1.5-8-5-8-9V6l8-3Z"
+                                stroke="currentColor"
+                                stroke-width="1.6"
+                            />
+                            <path
+                                d="m8 12 2.5 2.5L16 9"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            /></svg
+                    ></div>
                     <div class="logo-text">
                         <h1>PseuDRAGON</h1>
-                        <p
-                            >Knowledge-Guided Local LLMs for Financial-Data Pseudonymization in
-                            Closed Networks</p
-                        >
+                        <p>Financial data pseudonymization</p>
                     </div>
                 </div>
-                <div class="header-status">
-                    <div class="status-badge" id="statusBadge">
+                <div class="header-status"
+                    ><span class="workspace-label">Review workspace</span>
+                    <div class="status-badge" id="statusBadge" role="status" aria-live="polite">
                         <span class="status-indicator" id="statusIndicator"></span>
                         <span>IDLE</span>
                     </div>
@@ -45,87 +65,97 @@
             <!-- Top Section: Control Panel + Main Content -->
             <div class="top-section">
                 <!-- Left Panel: Control Panel -->
-                <aside class="control-panel-compact">
-                    <!-- Configuration Card -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-icon">⚙️</span>
-                            <h2 class="card-title">Pipeline Configuration</h2>
-                        </div>
-
+                <aside class="control-panel-compact" aria-label="Analysis setup">
+                    <div class="setup-heading">
+                        <span class="eyebrow">START HERE</span>
+                        <h2>Prepare your analysis</h2>
+                        <p>Select tables and describe how the data will be used.</p>
+                    </div>
+                    <div class="card setup-card">
                         <div class="form-group">
-                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <label class="form-label" for="tableSelect">Database tables</label>
+                            <select
+                                id="tableSelect"
+                                class="form-select"
+                                multiple
+                                aria-describedby="tableSelectHint"
+                            >
+                                <option disabled>Loading tables...</option>
+                            </select>
+                            <small class="form-hint" id="tableSelectHint"
+                                >Hold ⌘ / Ctrl to select several. Double-click to inspect a
+                                schema.</small
+                            >
+                            <div class="table-actions">
                                 <button
                                     type="button"
                                     class="btn btn-sm btn-secondary"
                                     id="addTableBtn"
-                                    style="flex: 1; margin: 0;"
+                                    ><span class="btn-icon" aria-hidden="true">+</span
+                                    ><span>Add table</span></button
                                 >
-                                    <span class="btn-icon">+</span>
-                                    <span>Add Table</span>
-                                </button>
                                 <button
                                     type="button"
                                     class="btn btn-sm btn-danger"
                                     id="dropTableBtn"
-                                    style="flex: 1; margin: 0;"
                                     disabled
+                                    ><span>Drop table</span></button
                                 >
-                                    <span class="btn-icon">-</span>
-                                    <span>Drop Table</span>
-                                </button>
                             </div>
-                            <label class="form-label" for="tableSelect">
-                                📊 Select Database Table(s)
-                            </label>
-                            <select id="tableSelect" class="form-select" multiple>
-                                <option disabled>Loading tables...</option>
-                            </select>
-                            <small class="form-hint">
-                                💡 Hold Ctrl/Cmd to select multiple tables
-                            </small>
-                            <small class="form-hint">
-                                🔍 Double-click a table to view its schema
-                            </small>
                         </div>
-
                         <div class="form-group">
-                            <label class="form-label" for="purposeGoalInput">
-                                🎯 Pseudonymization Purpose
-                            </label>
+                            <label class="form-label" for="purposeGoalInput"
+                                >Data use <span class="optional-label">Optional</span></label
+                            >
                             <input
                                 type="text"
                                 id="purposeGoalInput"
                                 class="form-input"
-                                placeholder="e.g., Statistical analysis, Machine learning, Research, Marketing..."
+                                placeholder="e.g. Transaction trend analysis"
                             />
-                            <small class="form-hint">
-                                💡 Specify the purpose of data pseudonymization (optional)
-                            </small>
+                            <small class="form-hint"
+                                >The purpose helps guide the proposed treatment.</small
+                            >
                         </div>
-
                         <div class="form-group">
-                            <label class="form-label" for="preferredMethodInput">
-                                🛠️ Preferred Method
-                            </label>
+                            <label class="form-label" for="preferredMethodInput"
+                                >Preferred treatment
+                                <span class="optional-label">Optional</span></label
+                            >
                             <input
                                 type="text"
                                 id="preferredMethodInput"
                                 class="form-input"
-                                placeholder="e.g., Hashing, Tokenization, Masking, Generalization, Encryption..."
+                                placeholder="e.g. Masking or hashing"
                             />
-                            <small class="form-hint">
-                                💡 Specify your preferred pseudonymization method (optional)
-                            </small>
+                            <small class="form-hint"
+                                >You can change each field's treatment during review.</small
+                            >
                         </div>
-
+                    </div>
+                    <div class="pipeline-actions">
+                        <button id="startBtn" class="btn btn-primary"
+                            ><span>Start analysis</span><span aria-hidden="true">→</span></button
+                        >
+                        <button id="stopBtn" class="btn btn-danger hidden"
+                            ><span>Stop analysis</span></button
+                        >
+                    </div>
+                    <button id="reopenPolicyBtn" class="btn btn-reopen hidden"
+                        ><span>Continue review</span><span aria-hidden="true">→</span></button
+                    >
+                    <p class="setup-note"
+                        >You review the decisions before treatment code is generated.</p
+                    >
+                    <details class="runtime-details">
+                        <summary>Model &amp; retrieval settings</summary>
                         <div
                             class="form-group runtime-profile"
                             id="runtimeProfile"
                             aria-live="polite"
                         >
                             <div class="runtime-profile-heading">
-                                <span>⚖️ Audited Runtime Profile</span>
+                                <span>Runtime configuration</span>
                                 <span class="runtime-state-badge" id="runtimeModeBadge"
                                     >Loading</span
                                 >
@@ -138,7 +168,7 @@
                                 <strong id="rankingMix">Loading...</strong>
                             </div>
                             <div class="runtime-metric-row">
-                                <span>Operational evidence priority</span>
+                                <span>Source priority</span>
                                 <strong id="authorityHierarchy">Loading...</strong>
                             </div>
                             <div class="runtime-metric-row">
@@ -146,63 +176,83 @@
                                 <strong id="evidenceIndex">Loading...</strong>
                             </div>
                             <div class="runtime-metric-row">
-                                <span>HITL rule gate</span>
+                                <span>Decision reuse</span>
                                 <strong id="hitlRuleGate">Loading...</strong>
                             </div>
                             <small class="form-hint runtime-note" id="runtimeConfigNote">
                                 Values are loaded from the same configuration used by retrieval.
                             </small>
                         </div>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 1rem;">
-                        <button id="startBtn" class="btn btn-primary" style="flex: 1; margin: 0;">
-                            <span class="btn-icon">🚀</span>
-                            <span>Start Pipeline</span>
-                        </button>
-                        <button
-                            id="stopBtn"
-                            class="btn btn-danger hidden"
-                            style="flex: 1; margin: 0;"
-                        >
-                            <span class="btn-icon">⛔</span>
-                            <span>Stop Pipeline</span>
-                        </button>
-                    </div>
-                    <button id="reopenPolicyBtn" class="btn btn-reopen hidden">
-                        <span class="btn-icon">🔄</span>
-                        <span>Reopen Policy Selection</span>
-                    </button>
+                    </details>
                 </aside>
 
                 <!-- Right Panel: Main Content -->
-                <main class="main-content-ide">
+                <main class="main-content-ide" id="workspace" tabindex="-1">
+                    <div class="workspace-heading">
+                        <div
+                            ><span class="eyebrow">PSEUDONYMIZATION WORKFLOW</span
+                            ><h2>From field meaning to reviewed treatment</h2></div
+                        >
+                        <p>Approved decisions become reusable knowledge.</p>
+                    </div>
+                    <nav class="workflow-overview" aria-label="Workflow overview">
+                        <ol>
+                            <li
+                                ><span class="workflow-number">01</span
+                                ><div
+                                    ><strong>Identify</strong><span>Interpret fields</span></div
+                                ></li
+                            >
+                            <li
+                                ><span class="workflow-number">02</span
+                                ><div
+                                    ><strong>Propose</strong
+                                    ><span>Find evidence &amp; treatment</span></div
+                                ></li
+                            >
+                            <li
+                                ><span class="workflow-number">03</span
+                                ><div
+                                    ><strong>Review</strong
+                                    ><span>Confirm &amp; retain decisions</span></div
+                                ></li
+                            >
+                            <li
+                                ><span class="workflow-number">04</span
+                                ><div
+                                    ><strong>Execute</strong
+                                    ><span>Generate treatment code</span></div
+                                ></li
+                            >
+                        </ol>
+                    </nav>
                     <!-- Tab Navigation -->
                     <div class="tabs-container">
-                        <div class="tabs-header" id="tabsContainer">
+                        <div class="tabs-header" id="tabsContainer" aria-label="Workspace views">
                             <button class="tab-btn active tab-nav-btn" data-tab="logs">
-                                📋 Execution Logs
+                                Activity
                             </button>
                             <button class="tab-btn tab-nav-btn" data-tab="reports">
-                                📊 Reports
+                                Reports
                             </button>
                             <button class="tab-btn tab-nav-btn" data-tab="code">
-                                📝 Generated Code
+                                Treatment code
                             </button>
                             <button class="tab-btn tab-nav-btn" data-tab="heuristics">
-                                🔍 Deterministic Rules
+                                Rules
                             </button>
                             <button class="tab-btn tab-nav-btn" data-tab="expert-feedback">
-                                🧠 Approved Feedback
+                                Reviewed decisions
                             </button>
                             <button class="tab-btn tab-nav-btn" data-tab="audit">
-                                📜 Audit Log
+                                Audit trail
                             </button>
                             <button
                                 class="tab-btn tab-nav-btn"
                                 data-tab="sessions"
                                 id="sessionsTabBtn"
                             >
-                                👥 Sessions
+                                Sessions
                                 <span id="sessionCount" class="session-count-badge">0</span>
                             </button>
                         </div>
@@ -210,12 +260,35 @@
                         <!-- Logs Tab Content -->
                         <div id="logsTab" class="main-tab-content active">
                             <div class="empty-state">
-                                <div class="empty-icon">📋</div>
-                                <h3 class="empty-title">Real-time Execution Logs</h3>
-                                <p class="empty-description">
-                                    Pipeline execution logs will appear here in real-time. Start the
-                                    pipeline to see the progress.
-                                </p>
+                                <div class="empty-icon empty-icon-outline" aria-hidden="true"
+                                    ><svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                                        <rect
+                                            x="4"
+                                            y="3"
+                                            width="16"
+                                            height="18"
+                                            rx="3"
+                                            stroke="currentColor"
+                                            stroke-width="1.5"
+                                        />
+                                        <path
+                                            d="M8 8h8M8 12h5M8 16h8"
+                                            stroke="currentColor"
+                                            stroke-width="1.5"
+                                            stroke-linecap="round"
+                                        /></svg
+                                ></div>
+                                <span class="eyebrow">READY WHEN YOU ARE</span>
+                                <h3 class="empty-title">Make each decision reusable.</h3>
+                                <p class="empty-description"
+                                    >Start with a table. Review the sensitive fields and proposed
+                                    treatments, then keep approved decisions for the next run.</p
+                                >
+                                <div class="empty-workflow"
+                                    ><span>Select tables</span><span aria-hidden="true">→</span
+                                    ><span>Start analysis</span><span aria-hidden="true">→</span
+                                    ><span>Review proposals</span></div
+                                >
                             </div>
                             <div id="logsContent" class="terminal-ide" style="display: none;"></div>
                         </div>
@@ -593,15 +666,14 @@
 
         <!-- Stage 3 Modal (HITL Refinement) -->
         <div class="modal-overlay" id="stage3Modal">
-            <div class="modal">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
                 <div class="modal-header">
                     <div class="modal-header-content">
-                        <h2 class="modal-title"
-                            >🔍 Stage 3: HITL Review and Deterministic Knowledge Update</h2
-                        >
+                        <span class="eyebrow">STEP 03 · EXPERT REVIEW</span>
+                        <h2 class="modal-title" id="reviewModalTitle">Review &amp; approve</h2>
                         <p class="modal-subtitle">
-                            Review each PII decision and policy, edit proposed code when needed, and
-                            approve corrections for versioned reuse
+                            Check the field label, choose a treatment, and adjust masking before
+                            approval.
                         </p>
                     </div>
                     <button class="modal-close-btn" id="closeModalBtn" title="Close"> ✕ </button>
@@ -610,9 +682,12 @@
                     <!-- Dynamically populated with policy options -->
                 </div>
                 <div class="modal-footer">
+                    <p class="review-footer-note"
+                        >Approval saves your decisions for reuse and generates the selected
+                        treatments.</p
+                    >
                     <button class="btn btn-primary" id="submitPoliciesBtn">
-                        <span class="btn-icon">✅</span>
-                        <span>Approve Decisions & Generate Code</span>
+                        <span>Approve &amp; generate</span><span aria-hidden="true">→</span>
                     </button>
                 </div>
             </div>
@@ -919,7 +994,7 @@
                         <textarea
                             id="ddlInput"
                             class="form-textarea ddl-input"
-                            placeholder="-- 테이블 생성 예시
+                            placeholder="-- Create a table
 CREATE TABLE example_table (
     id INTEGER PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -927,17 +1002,17 @@ CREATE TABLE example_table (
     phone VARCHAR(20)
 );
 
--- 인덱스 생성 예시
+-- Create an index
 CREATE INDEX idx_example_name ON example_table(name);
 
--- 데이터 삽입 예시
+-- Insert sample records
 INSERT INTO example_table VALUES (1, 'John Doe', 'john@example.com', '010-1234-5678');
 INSERT INTO example_table VALUES (2, 'Jane Smith', 'jane@example.com', '010-9876-5432');"
                             style="flex: 1; resize: none; font-family: 'Fira Code', monospace; font-size: 13px;"
                         ></textarea>
                         <small class="form-hint" style="margin-top: 8px;">
-                            💡 CREATE TABLE, CREATE INDEX, INSERT 문을 지원합니다. SQL 주석(--)도
-                            사용 가능합니다.
+                            Supports CREATE TABLE, CREATE INDEX, and INSERT statements, including
+                            SQL comments.
                         </small>
                     </div>
                     <div

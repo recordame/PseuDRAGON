@@ -83,6 +83,7 @@ class PseuDRAGONApp {
         this.loadRuntimeConfig();
         this.loadTables();
         this.setupEventListeners();
+        this.setupReviewAccessibility();
 
         // Hide reopen policy button and stop button initially.
         // Hide review and stop controls until a pipeline starts.
@@ -94,6 +95,48 @@ class PseuDRAGONApp {
         }
 
         this.log("PseuDRAGON initialized. Ready to start!", "info");
+    }
+
+    setupReviewAccessibility() {
+        const modal = this.elements.stage3Modal;
+        if (!modal) return;
+        let wasOpen = false;
+        let previousFocus = null;
+        const background = document.querySelector(".app-container-ide");
+        const header = document.querySelector(".app-header");
+        new MutationObserver(() => {
+            const open = modal.classList.contains("active");
+            if (open === wasOpen) return;
+            wasOpen = open;
+            if (background) background.inert = open;
+            if (header) header.inert = open;
+            if (open) {
+                previousFocus = document.activeElement;
+                (
+                    document.getElementById("reviewFieldSearch") || this.elements.closeModalBtn
+                )?.focus();
+            } else if (previousFocus?.isConnected) previousFocus.focus();
+        }).observe(modal, { attributes: true, attributeFilter: ["class"] });
+        modal.addEventListener("keydown", (event) => {
+            if (!modal.classList.contains("active")) return;
+            if (event.key === "Escape") {
+                this.elements.closeModalBtn.click();
+                return;
+            }
+            if (event.key !== "Tab") return;
+            const controls = Array.from(
+                modal.querySelectorAll('button, input, select, textarea, summary, [tabindex="0"]')
+            ).filter((el) => !el.disabled && el.getClientRects().length);
+            const first = controls[0],
+                last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
+            }
+        });
     }
 
     validateElements() {
@@ -146,7 +189,7 @@ class PseuDRAGONApp {
 
         document.querySelectorAll(".tab-nav-btn").forEach((btn) => {
             btn.addEventListener("click", (e) => {
-                const tab = e.target.dataset.tab;
+                const tab = e.currentTarget.dataset.tab;
                 this.switchMainTab(tab);
 
                 // Load data when switching to certain tabs.
@@ -747,11 +790,12 @@ class PseuDRAGONApp {
         this.state.selectedChoices = {};
         this.state.tableData = data; // Store table data for PII status changes.
 
-        const validationSection = document.createElement("div");
-        validationSection.className = "validation-section";
+        const validationSection = document.createElement("details");
+        validationSection.className = "validation-section review-checks";
         validationSection.innerHTML = `
+            <summary>Additional review checks</summary>
             <div class="validation-header">
-                <h3>🔍 Policy Validation</h3>
+                <p>Inspect the proposed policies before approval.</p>
                 <button class="btn btn-validate" onclick="app.validatePolicies()">
                     Validate Policies
                 </button>
@@ -759,31 +803,50 @@ class PseuDRAGONApp {
             <div id="validationResults" class="validation-results"></div>
         `;
         this.elements.stage3Content.appendChild(validationSection);
-        const accounts = Object.entries(data).flatMap(([table, columns]) =>
-            Object.entries(columns)
-                .filter(
-                    ([column, value]) => ["DPS_ACNO", "WD_ACNO"].includes(column) && value.is_pii
-                )
-                .map(([column]) => `${table}.${column}`)
-        );
-        if (accounts.length) {
-            const panel = document.createElement("div");
-            panel.className = "validation-section";
-            panel.innerHTML = `<h3>Shared account MASK rule</h3>
-                <p>Apply one rule to ${accounts.map((x) => this.escapeHtml(x)).join(", ")}. This updates proposals; final approval is still required.</p>
-                <select id="accountMaskMode"><option value="">Choose a rule</option>
-                <option value="keep_last_four">Show last 4 only: ****5678</option>
-                <option value="mask_last_four">Hide last 4: 1234****</option>
-                <option value="mask_all">Hide all: ********</option></select>
-                <button type="button" class="btn btn-secondary">Apply to account fields</button>`;
-            panel.querySelector("button").onclick = () => this.applyAccountMask();
-            this.elements.stage3Content.append(panel);
-        }
+        const toolbar = document.createElement("div");
+        toolbar.className = "review-toolbar";
+        toolbar.innerHTML = `<label>Find a field<input type="search" id="reviewFieldSearch" placeholder="Table, field, or description"></label>
+            <label>Show<select id="reviewFieldFilter"><option value="all">All fields</option><option value="pii">Sensitive fields</option><option value="mask">MASK selected</option></select></label>
+            <span id="reviewFieldCount" role="status"></span>`;
+        toolbar.addEventListener("input", () => this.filterReviewFields());
+        this.elements.stage3Content.append(toolbar);
 
         for (const [tableName, columns] of Object.entries(data)) {
             const tableSection = this.createTableSection(tableName, columns);
             this.elements.stage3Content.appendChild(tableSection);
         }
+        this.filterReviewFields();
+    }
+
+    filterReviewFields() {
+        this.elements.stage3Content.scrollTop = 0;
+        const query = (document.getElementById("reviewFieldSearch")?.value || "").toLowerCase();
+        const filter = document.getElementById("reviewFieldFilter")?.value || "all";
+        let visible = 0;
+        const cards = this.elements.stage3Content.querySelectorAll(".column-card");
+        cards.forEach((card) => {
+            const info = this.state.tableData[card.dataset.table][card.dataset.column];
+            const key = `method_${card.dataset.table}_${card.dataset.column}`;
+            const method = info.methods[this.state.selectedChoices[key]];
+            const matches =
+                `${card.dataset.table} ${card.dataset.column} ${info.column_comment || ""}`
+                    .toLowerCase()
+                    .includes(query);
+            card.hidden = !(
+                matches &&
+                (filter === "all" ||
+                    (filter === "pii" && info.is_pii) ||
+                    (filter === "mask" && method?.method === "MASK"))
+            );
+            if (!card.hidden) visible += 1;
+        });
+        this.elements.stage3Content.querySelectorAll(".table-section").forEach((section) => {
+            section.hidden = !Array.from(section.querySelectorAll(".column-card")).some(
+                (card) => !card.hidden
+            );
+        });
+        const count = document.getElementById("reviewFieldCount");
+        if (count) count.textContent = `${visible} of ${cards.length} fields`;
     }
 
     createTableSection(tableName, columns) {
@@ -795,7 +858,7 @@ class PseuDRAGONApp {
 
         const header = document.createElement("div");
         header.className = "table-header";
-        header.innerHTML = `<span>📊</span> <span>Table: ${tableName}</span>`;
+        header.innerHTML = `<span>📊</span> <span>Table: ${this.escapeHtml(tableName)}</span>`;
         section.appendChild(header);
 
         for (const [columnName, info] of Object.entries(columns)) {
@@ -829,7 +892,7 @@ class PseuDRAGONApp {
         header.innerHTML = `
             <div class="column-name">
                 <span>🔐</span>
-                <span>${columnName}</span>
+                <span>${this.escapeHtml(columnName)}</span>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div class="${badgeClass}" data-status="${currentStatus}">
@@ -877,7 +940,7 @@ class PseuDRAGONApp {
                 info.column_comment
                     ? `<div class="meta-item">
                 <span class="meta-label">💬 Description:</span>
-                <span class="meta-value">${info.column_comment}</span>
+                <span class="meta-value">${this.escapeHtml(info.column_comment)}</span>
             </div>`
                     : ""
             }
@@ -885,7 +948,7 @@ class PseuDRAGONApp {
                 showIdentification
                     ? `<div class="meta-item">
                 <span class="meta-label">📋 Identification:</span>
-                <span class="meta-value">${info.id_evidence}</span>
+                <span class="meta-value">${this.escapeHtml(info.id_evidence)}</span>
             </div>`
                     : ""
             }
@@ -916,102 +979,235 @@ class PseuDRAGONApp {
     }
 
     createMethodOption(uniqueKey, method, index) {
-        /**
-         * Create a method option element with radio button
-         */
         const option = document.createElement("div");
-        option.className = `method-option ${index === 0 ? "selected" : ""}`;
-        option.onclick = (e) => {
-            if (!e.target.closest("textarea, select, details")) {
+        const selected = (this.state.selectedChoices[uniqueKey] ?? 0) === index;
+        option.className = `method-option ${selected ? "selected" : ""}`;
+        option.onclick = (event) => {
+            if (!event.target.closest("textarea, select, details, button, .mask-editor, a"))
                 this.selectMethod(uniqueKey, index);
-            }
         };
-
-        const applicabilityClass = method.applicability.toLowerCase();
         const codeInputId = `code_${uniqueKey}_${index}`;
         const descInputId = `desc_${uniqueKey}_${index}`;
-
+        const radioId = `radio_${uniqueKey}_${index}`;
+        const isMask = String(method.method).toUpperCase() === "MASK";
         option.innerHTML = `
-            <input type="radio"
-                   name="${uniqueKey}"
-                   value="${index}"
-                   class="method-radio"
-                   ${index === 0 ? "checked" : ""}>
+            <input type="radio" id="${radioId}" name="${uniqueKey}" value="${index}" class="method-radio" ${selected ? "checked" : ""}>
             <div class="method-content">
-                <div class="method-header">
-                    <span class="method-name">${method.method}</span>
-                    <span class="applicability-badge ${applicabilityClass}">
-                        ${method.applicability}
-                    </span>
-                </div>
-                <div class="method-description-editable">
-                    <div class="desc-label">📝 Description (editable):</div>
-                    <textarea
-                        id="${descInputId}"
-                        class="desc-edit-input"
-                        rows="2"
-                        data-original="${this.escapeHtml(method.description)}"
-                    >${this.escapeHtml(method.description)}</textarea>
-                </div>
-                ${
-                    method.legal_evidence
-                        ? `
-                    <div class="method-legal-source">
-                        <div class="legal-source-label">📄 Legal Source:</div>
-                        <div class="legal-source-content">${this.formatLegalEvidence(method.legal_evidence)}</div>
+                <div class="method-header"><label class="method-name" for="${radioId}">${this.escapeHtml(method.method)}</label></div>
+                <div class="method-details">
+                    <div class="method-description-editable">
+                        <label class="desc-label" for="${descInputId}">Treatment description</label>
+                        <textarea id="${descInputId}" class="desc-edit-input" rows="2" data-original="${this.escapeHtml(method.description || "")}">${this.escapeHtml(method.description || "")}</textarea>
                     </div>
-                `
-                        : ""
-                }
-                ${
-                    method.code_snippet
-                        ? `
-                    <div class="method-code">
-                        <div class="code-label">💻 Code Snippet (editable):</div>
-                        <textarea
-                            id="${codeInputId}"
-                            class="code-edit-input"
-                            rows="3"
-                            data-original="${this.escapeHtml(method.code_snippet)}"
-                        >${this.escapeHtml(method.code_snippet)}</textarea>
-                    </div>
-                    <details class="method-contract">
-                        <summary>Custom-code contract (for unsupported edits)</summary>
-                        <label>Method
-                            <select id="contract_method_${uniqueKey}_${index}">
-                                ${[
-                                    "KEEP",
-                                    "DELETE",
-                                    "HASH",
-                                    "MASK",
-                                    "TOKENIZE",
-                                    "GENERALIZE",
-                                    "ROUND",
-                                    "ENCRYPT",
-                                ]
-                                    .map(
-                                        (name) =>
-                                            `<option value="${name}" ${name === String(method.method).toUpperCase() ? "selected" : ""}>${name}</option>`
-                                    )
-                                    .join("")}
-                            </select>
-                        </label>
-                        <label>Parameters (JSON object)
-                            <textarea id="contract_parameters_${uniqueKey}_${index}" rows="2">${this.escapeHtml(JSON.stringify(method.parameters || {}))}</textarea>
-                        </label>
-                        <label>
-                            <input type="checkbox" id="contract_confirm_${uniqueKey}_${index}">
-                            I confirm that this method and these parameters describe my edited code.
-                            This declaration is recorded without automatic verification of custom code.
-                        </label>
-                    </details>
-                `
-                        : ""
-                }
-            </div>
-        `;
-
+                    ${method.legal_evidence ? `<details class="method-legal-source"><summary>Supporting evidence</summary><div class="legal-source-content">${this.formatLegalEvidence(method.legal_evidence)}</div></details>` : ""}
+                    ${
+                        method.code_snippet || isMask
+                            ? `<details class="advanced-code"><summary>Advanced: source code & contract</summary>
+                        <div class="method-code"><label class="code-label" for="${codeInputId}">Transformation source code</label>
+                            <textarea id="${codeInputId}" class="code-edit-input" rows="3" data-original="${this.escapeHtml(method.code_snippet || "")}">${this.escapeHtml(method.code_snippet || "")}</textarea>
+                        </div>
+                        <details class="method-contract"><summary>Declare an unsupported custom edit</summary>
+                            <label>Method<select id="contract_method_${uniqueKey}_${index}">
+                            ${["KEEP", "DELETE", "HASH", "MASK", "TOKENIZE", "GENERALIZE", "ROUND", "ENCRYPT"].map((name) => `<option value="${name}" ${name === String(method.method).toUpperCase() ? "selected" : ""}>${name}</option>`).join("")}</select></label>
+                            <label>Parameters (JSON object)<textarea id="contract_parameters_${uniqueKey}_${index}" rows="2">${this.escapeHtml(JSON.stringify(method.parameters || {}))}</textarea></label>
+                            <label><input type="checkbox" id="contract_confirm_${uniqueKey}_${index}">I confirm that the method and parameters describe my edited code. Custom declarations are recorded without automatic verification.</label>
+                        </details>
+                    </details>`
+                            : ""
+                    }
+                </div>
+            </div>`;
+        option
+            .querySelector(".method-radio")
+            .addEventListener("change", () => this.selectMethod(uniqueKey, index));
+        if (isMask)
+            option
+                .querySelector(".method-details")
+                .prepend(this.createMaskEditor(uniqueKey, method, index));
         return option;
+    }
+
+    createMaskEditor(uniqueKey, method, index) {
+        const editor = document.createElement("div");
+        editor.className = "mask-editor";
+        editor.dataset.dirty = "false";
+        const id = `mask_${uniqueKey}_${index}`;
+        const field = this.findReviewField(uniqueKey);
+        const isAccount = ["DPS_ACNO", "WD_ACNO"].includes(field?.column);
+        editor.innerHTML = `<div class="mask-controls">
+            <label for="${id}_mode">Masking pattern<select id="${id}_mode" data-mask="mode">
+                <option value="">Choose a pattern</option><option value="keep_last">Show last characters</option>
+                <option value="keep_first">Show first characters</option><option value="mask_last">Hide last characters</option>
+                <option value="mask_first">Hide first characters</option><option value="keep_edges">Show beginning and end</option><option value="mask_all">Hide everything</option>
+            </select></label>
+            <label data-mask-field="count" for="${id}_count">Character count<input id="${id}_count" data-mask="count" type="number" min="1" max="64" value="4"></label>
+            <label data-mask-field="prefix_count" for="${id}_prefix">Visible at start<input id="${id}_prefix" data-mask="prefix_count" type="number" min="0" max="64" value="1"></label>
+            <label data-mask-field="suffix_count" for="${id}_suffix">Visible at end<input id="${id}_suffix" data-mask="suffix_count" type="number" min="0" max="64" value="4"></label>
+            <label for="${id}_char">Mask character<select id="${id}_char" data-mask="mask_char"><option value="*">*</option><option value="#">#</option><option value="•">•</option></select></label>
+        </div>
+        <div class="mask-preview" aria-live="polite"><span>Example · synthetic value</span><div><code>1234567890</code><span aria-hidden="true"> → </span><code data-mask-output>Choose a pattern</code></div><small>Missing values stay missing. Short values are fully masked if the visible part would reveal the whole value.</small></div>
+        ${isAccount ? '<label class="mask-shared"><input type="checkbox" data-mask="shared" checked> Apply the same pattern to DPS_ACNO and WD_ACNO account fields in this review</label>' : ""}
+        <div class="mask-actions"><button type="button" class="btn btn-secondary" data-mask-apply>Apply pattern</button><span class="mask-status" role="status"></span></div>
+        <p class="mask-error" role="alert" hidden></p>`;
+        const config = method.masking_rule;
+        if (config) {
+            for (const name of ["mode", "count", "prefix_count", "suffix_count", "mask_char"]) {
+                if (config[name] !== undefined) {
+                    const control = editor.querySelector(`[data-mask="${name}"]`);
+                    if (
+                        name === "mask_char" &&
+                        !Array.from(control.options).some((x) => x.value === config[name])
+                    )
+                        control.add(new Option(config[name], config[name]));
+                    control.value = config[name];
+                }
+            }
+        }
+        editor.querySelector(".mask-status").textContent = config
+            ? "Pattern applied · pending approval"
+            : "Current proposal retained until you apply a pattern";
+        const update = (event) => {
+            if (event) {
+                editor.dataset.dirty = "true";
+                editor.querySelector(".mask-status").textContent = "Unapplied changes";
+            }
+            this.previewMaskEditor(editor);
+        };
+        editor.addEventListener("input", update);
+        editor.querySelector("[data-mask-apply]").onclick = () =>
+            this.applyMaskPattern(uniqueKey, index, editor);
+        update();
+        return editor;
+    }
+
+    findReviewField(uniqueKey) {
+        for (const [table, columns] of Object.entries(this.state.tableData || {})) {
+            for (const column of Object.keys(columns))
+                if (`method_${table}_${column}` === uniqueKey) return { table, column };
+        }
+        return null;
+    }
+
+    readMaskOptions(editor) {
+        const value = (name) => editor.querySelector(`[data-mask="${name}"]`).value;
+        return {
+            mode: value("mode"),
+            count: Number(value("count")),
+            prefix_count: Number(value("prefix_count")),
+            suffix_count: Number(value("suffix_count")),
+            mask_char: value("mask_char"),
+        };
+    }
+
+    previewMaskEditor(editor) {
+        const settings = this.readMaskOptions(editor);
+        const edges = settings.mode === "keep_edges";
+        editor.querySelector('[data-mask-field="count"]').hidden =
+            edges || settings.mode === "mask_all" || !settings.mode;
+        editor.querySelector('[data-mask-field="prefix_count"]').hidden = !edges;
+        editor.querySelector('[data-mask-field="suffix_count"]').hidden = !edges;
+        const output = editor.querySelector("[data-mask-output]");
+        const error = editor.querySelector(".mask-error");
+        error.hidden = true;
+        const chars = Array.from("1234567890"),
+            n = chars.length,
+            c = settings.count,
+            m = settings.mask_char;
+        const minimum = settings.mode.startsWith("keep_") ? 0 : 1;
+        editor.querySelector('[data-mask="count"]').min = minimum;
+        if (!settings.mode) {
+            output.textContent = "Choose a pattern";
+            return;
+        }
+        const counts = edges
+            ? [settings.prefix_count, settings.suffix_count]
+            : settings.mode === "mask_all"
+              ? []
+              : [c];
+        if (counts.some((x) => !Number.isInteger(x) || x < (edges ? 0 : minimum) || x > 64)) {
+            output.textContent = "Enter a valid count";
+            return;
+        }
+        let masked;
+        if (settings.mode === "mask_all") masked = m.repeat(n);
+        if (settings.mode === "keep_last")
+            masked = n <= c || c === 0 ? m.repeat(n) : m.repeat(n - c) + chars.slice(-c).join("");
+        if (settings.mode === "keep_first")
+            masked = n <= c || c === 0 ? m.repeat(n) : chars.slice(0, c).join("") + m.repeat(n - c);
+        if (settings.mode === "mask_last")
+            masked = chars.slice(0, Math.max(0, n - c)).join("") + m.repeat(Math.min(n, c));
+        if (settings.mode === "mask_first")
+            masked = m.repeat(Math.min(n, c)) + chars.slice(c).join("");
+        if (edges) {
+            const a = settings.prefix_count,
+                b = settings.suffix_count;
+            masked =
+                n <= a + b
+                    ? m.repeat(n)
+                    : chars.slice(0, a).join("") +
+                      m.repeat(n - a - b) +
+                      (b ? chars.slice(-b).join("") : "");
+        }
+        output.textContent = masked || "";
+    }
+
+    async applyMaskPattern(uniqueKey, index, editor) {
+        if (this.state.isApplyingMask) return;
+        this.state.isApplyingMask = true;
+        const field = this.findReviewField(uniqueKey);
+        const error = editor.querySelector(".mask-error"),
+            button = editor.querySelector("[data-mask-apply]");
+        const controls = Array.from(
+            this.elements.stage3Content.querySelectorAll(
+                ".mask-editor input, .mask-editor select, .mask-editor button"
+            )
+        );
+        controls.forEach((control) => {
+            control.disabled = true;
+        });
+        error.hidden = true;
+        button.disabled = true;
+        editor.dataset.pending = "true";
+        try {
+            const response = await fetch("/api/stage3/mask", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    session_id: this.state.sessionId,
+                    ...field,
+                    index,
+                    options: this.readMaskOptions(editor),
+                    apply_matching_accounts:
+                        !!editor.querySelector('[data-mask="shared"]')?.checked,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || "Could not apply the pattern.");
+            for (const item of result.updated) {
+                const key = `method_${item.table}_${item.column}`;
+                this.state.tableData[item.table][item.column].methods[item.index] = item.candidate;
+                const old = document
+                    .getElementById(`code_${key}_${item.index}`)
+                    ?.closest(".method-option");
+                if (old) old.replaceWith(this.createMethodOption(key, item.candidate, item.index));
+                this.selectMethod(key, item.index);
+            }
+            document.getElementById(`radio_${uniqueKey}_${index}`)?.focus();
+            this.log(
+                `Applied one MASK pattern to ${result.updated.length} proposal(s). Final approval is still required.`,
+                "info"
+            );
+        } catch (failure) {
+            error.textContent = failure.message;
+            error.hidden = false;
+        } finally {
+            controls.forEach((control) => {
+                control.disabled = false;
+            });
+            button.disabled = false;
+            editor.dataset.pending = "false";
+            this.state.isApplyingMask = false;
+        }
     }
 
     selectMethod(uniqueKey, index) {
@@ -1032,43 +1228,34 @@ class PseuDRAGONApp {
         });
     }
 
-    async applyAccountMask() {
-        const mode = document.getElementById("accountMaskMode").value;
-        if (!mode) {
-            window.alert("Choose the account masking rule first.");
-            return;
-        }
-        try {
-            const response = await fetch("/api/stage3/account-mask", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ session_id: this.state.sessionId, mode }),
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || "Cannot update account masks");
-            for (const item of result.updated) {
-                const key = `method_${item.table}_${item.column}`;
-                this.state.tableData[item.table][item.column].methods[item.index] = item.candidate;
-                const old = document
-                    .getElementById(`code_${key}_${item.index}`)
-                    ?.closest(".method-option");
-                if (old) old.replaceWith(this.createMethodOption(key, item.candidate, item.index));
-                this.selectMethod(key, item.index);
-            }
-            this.log(
-                `Updated ${result.updated.length} account MASK proposals with one shared rule.`,
-                "info"
-            );
-        } catch (error) {
-            window.alert(error.message);
-        }
-    }
-
     async submitPolicies() {
         /**
          * Submit selected policies and generate code
          */
 
+        if (this.state.isApplyingMask) {
+            this.log("Wait for the masking pattern to finish applying before approval.", "warning");
+            return;
+        }
+        for (const [key, index] of Object.entries(this.state.selectedChoices)) {
+            const editor = document
+                .getElementById(`code_${key}_${index}`)
+                ?.closest(".method-option")
+                ?.querySelector(".mask-editor");
+            if (editor && (editor.dataset.dirty === "true" || editor.dataset.pending === "true")) {
+                const error = editor.querySelector(".mask-error");
+                error.textContent = "Apply this masking pattern before approving the review.";
+                error.hidden = false;
+                const card = editor.closest(".column-card");
+                if (card) {
+                    card.hidden = false;
+                    card.closest(".table-section").hidden = false;
+                }
+                editor.scrollIntoView?.({ block: "center", behavior: "smooth" });
+                editor.querySelector("[data-mask-apply]").focus();
+                return;
+            }
+        }
         this.elements.stage3Modal.classList.remove("active");
         this.log("[Update] Submitting selected policies...", "info");
         this.log("[Processing] Generating pseudonymization code...", "info");
