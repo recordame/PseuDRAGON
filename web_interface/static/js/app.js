@@ -1448,7 +1448,21 @@ class PseuDRAGONApp {
                 continue;
             }
 
-            const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
+            if (/^ {0,3}>/.test(line)) {
+                closeList();
+                const quoteLines = [];
+                while (index < lines.length && /^ {0,3}>/.test(lines[index])) {
+                    quoteLines.push(lines[index].replace(/^ {0,3}> ?/, ""));
+                    index += 1;
+                }
+                output.push(
+                    `<blockquote>${this.renderMarkdown(quoteLines.join("\n"))}</blockquote>`
+                );
+                index -= 1;
+                continue;
+            }
+
+            const headingMatch = line.match(/^ {0,3}(#{1,6})\s+(.+)$/);
             if (headingMatch) {
                 closeList();
                 const level = headingMatch[1].length;

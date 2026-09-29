@@ -778,6 +778,27 @@ body {
     color: var(--text-primary);
 }
 
+.report-content h4,
+.report-content h5,
+.report-content h6 {
+    color: var(--text-primary, #111827);
+    margin: 1.25rem 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.report-content blockquote {
+    margin: 0.75rem 0 1rem;
+    padding: 0.25rem 1rem;
+    border-left: 3px solid #c7d2fe;
+    color: var(--text-secondary, #4b5563);
+    background: #f8fafc;
+}
+
+.report-content blockquote p:last-child {
+    margin-bottom: 0;
+}
+
 .report-content p {
     margin-bottom: 1rem;
     color: var(--text-secondary);
