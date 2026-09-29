@@ -262,8 +262,10 @@ class HeuristicPatternLearner:
         pii_patterns = self._extract_patterns(pii_columns, "PII")
         non_pii_patterns = self._extract_patterns(non_pii_columns, "Non-PII")
 
-        # Resolve conflicts (same pattern appearing in both PII and Non-PII)
-        pii_patterns, non_pii_patterns = self._resolve_conflicts(pii_patterns, non_pii_patterns)
+        # Check candidates against all matching feedback.
+        pii_patterns, non_pii_patterns = self._resolve_conflicts(
+            pii_patterns, non_pii_patterns, pii_columns, non_pii_columns
+        )
 
         # Convert patterns to heuristic entries
         existing_ids = [h.get("id", "") for h in heuristics["heuristics"]]
@@ -328,6 +330,12 @@ class HeuristicPatternLearner:
                 pattern = f"^{col_upper}$"
             else:
                 pattern = f"^{col_upper}$"
+
+            if (
+                self._pattern_conflict_rate(pattern, pii_type, pii_columns, non_pii_columns)
+                > self.MAX_CONFLICT_RATE
+            ):
+                return
 
             # Check if pattern already exists
             if pattern in existing_pattern_map or pattern in newly_added_patterns:
@@ -630,72 +638,55 @@ class HeuristicPatternLearner:
 
         return patterns
 
+    def _pattern_conflict_rate(
+        self,
+        pattern: str,
+        label: str,
+        pii_columns: List[Dict[str, Any]],
+        non_pii_columns: List[Dict[str, Any]],
+    ) -> float:
+        """Count opposite labels among all feedback entries matched by a rule."""
+        pii_count = sum(
+            bool(re.search(pattern, column["column_name"], re.IGNORECASE)) for column in pii_columns
+        )
+        non_pii_count = sum(
+            bool(re.search(pattern, column["column_name"], re.IGNORECASE))
+            for column in non_pii_columns
+        )
+        total_count = pii_count + non_pii_count
+        opposite_count = non_pii_count if label == "PII" else pii_count
+        return opposite_count / total_count if total_count else 1.0
+
     def _resolve_conflicts(
-        self, pii_patterns: Dict[str, Dict[str, Any]], non_pii_patterns: Dict[str, Dict[str, Any]]
+        self,
+        pii_patterns: Dict[str, Dict[str, Any]],
+        non_pii_patterns: Dict[str, Dict[str, Any]],
+        pii_columns: List[Dict[str, Any]],
+        non_pii_columns: List[Dict[str, Any]],
     ) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
-        """Resolve conflicts when same pattern appears in both PII and Non-PII.
-
-        Strategy:
-        1. Compute minority-label count / total count for each shared pattern.
-        2. Remove the pattern from both classes if the conflict rate exceeds
-           MAX_CONFLICT_RATE.
-        3. Otherwise keep only the majority-label version.
-
-        Args:
-            pii_patterns: PII patterns dictionary
-            non_pii_patterns: Non-PII patterns dictionary
-
-        Returns:
-            Tuple of resolved (pii_patterns, non_pii_patterns)
-        """
-        for pattern_type in ["suffix", "prefix", "keyword"]:
-            pii_set = set(pii_patterns.get(pattern_type, {}).keys())
-            non_pii_set = set(non_pii_patterns.get(pattern_type, {}).keys())
-            conflicts = pii_set & non_pii_set
-
-            for pattern in conflicts:
-                pii_data = pii_patterns[pattern_type][pattern]
-                non_pii_data = non_pii_patterns[pattern_type][pattern]
-                pii_count = int(pii_data.get("count", 0))
-                non_pii_count = int(non_pii_data.get("count", 0))
-                total_count = pii_count + non_pii_count
-                conflict_rate = (
-                    min(pii_count, non_pii_count) / total_count if total_count > 0 else 1.0
-                )
-
-                if conflict_rate > self.MAX_CONFLICT_RATE:
-                    del pii_patterns[pattern_type][pattern]
-                    del non_pii_patterns[pattern_type][pattern]
-                    logger.info(
-                        "Conflict filter removed %s '%s' (rate %.3f > %.3f)",
-                        pattern_type,
-                        pattern,
-                        conflict_rate,
-                        self.MAX_CONFLICT_RATE,
+        """Check candidate rules against all matching feedback, including rare labels."""
+        for pattern_type in ("suffix", "prefix", "keyword"):
+            positive = pii_patterns.get(pattern_type, {})
+            negative = non_pii_patterns.get(pattern_type, {})
+            for pattern in sorted(set(positive) | set(negative)):
+                # Rare counterexamples count even without an opposite-class candidate.
+                for candidates, label in ((positive, "PII"), (negative, "Non-PII")):
+                    if pattern not in candidates:
+                        continue
+                    conflict_rate = self._pattern_conflict_rate(
+                        pattern, label, pii_columns, non_pii_columns
                     )
-                elif pii_count >= non_pii_count:
-                    pii_data["conflict_rate"] = round(conflict_rate, 3)
-                    del non_pii_patterns[pattern_type][pattern]
-                    logger.info(
-                        "Conflict resolved: %s '%s' kept as PII " "(counts %d vs %d, rate %.3f)",
-                        pattern_type,
-                        pattern,
-                        pii_count,
-                        non_pii_count,
-                        conflict_rate,
-                    )
-                else:
-                    non_pii_data["conflict_rate"] = round(conflict_rate, 3)
-                    del pii_patterns[pattern_type][pattern]
-                    logger.info(
-                        "Conflict resolved: %s '%s' kept as Non-PII "
-                        "(counts %d vs %d, rate %.3f)",
-                        pattern_type,
-                        pattern,
-                        non_pii_count,
-                        pii_count,
-                        conflict_rate,
-                    )
+                    if conflict_rate > self.MAX_CONFLICT_RATE:
+                        del candidates[pattern]
+                        logger.info(
+                            "Conflict filter removed %s '%s' (rate %.3f > %.3f)",
+                            pattern_type,
+                            pattern,
+                            conflict_rate,
+                            self.MAX_CONFLICT_RATE,
+                        )
+                    else:
+                        candidates[pattern]["conflict_rate"] = round(conflict_rate, 3)
 
         return pii_patterns, non_pii_patterns
 
@@ -807,6 +798,31 @@ class HeuristicPatternLearner:
         heuristics = self._load_heuristics()
         now = datetime.now().isoformat()
 
+        try:
+            with open(self.feedback_file, "r", encoding="utf-8") as stream:
+                feedback = json.load(stream)
+        except (OSError, ValueError):
+            logger.warning("Skipping refinement: feedback cannot be checked.")
+            return heuristics
+
+        feedback_columns = {"PII": [], "Non-PII": []}
+        for section, label_key in (
+            ("column_exact", "pii_type"),
+            ("pii_classification", "classification"),
+        ):
+            for entry in feedback.get(section, {}).values():
+                label = entry.get(label_key)
+                if label in feedback_columns and entry.get("column_name"):
+                    feedback_columns[label].append(entry)
+
+        def accepts_refinement(pattern: str, label: str) -> bool:
+            return (
+                self._pattern_conflict_rate(
+                    pattern, label, feedback_columns["PII"], feedback_columns["Non-PII"]
+                )
+                <= self.MAX_CONFLICT_RATE
+            )
+
         # Get existing IDs for new pattern generation
         existing_ids = [h.get("id", "") for h in heuristics["heuristics"]]
 
@@ -820,7 +836,11 @@ class HeuristicPatternLearner:
         column_to_exact_pattern = {}
 
         for h in heuristics["heuristics"]:
-            if h.get("pattern_type") == "exact" and h.get("enabled", True):
+            if (
+                h.get("pattern_type") == "exact"
+                and h.get("enabled", True)
+                and h.get("source") == "auto_learned"
+            ):
                 pii_type = h.get("pii_type", "PII")
                 sample_cols = h.get("sample_columns", [])
                 if sample_cols:
@@ -851,12 +871,16 @@ class HeuristicPatternLearner:
             # Find suffixes with MIN_PATTERN_OCCURRENCES or more columns
             for suffix, matched_cols in suffix_groups.items():
                 if len(matched_cols) >= self.MIN_PATTERN_OCCURRENCES:
+                    if not accepts_refinement(suffix, pii_type):
+                        continue
                     # Check if this suffix already exists
                     existing_pattern = next(
                         (
                             h2
                             for h2 in heuristics["heuristics"]
-                            if h2.get("regex") == suffix and h2.get("pii_type") == pii_type
+                            if h2.get("regex") == suffix
+                            and h2.get("pii_type") == pii_type
+                            and h2.get("source") == "auto_learned"
                         ),
                         None,
                     )
@@ -930,6 +954,8 @@ class HeuristicPatternLearner:
 
         # Process each suffix heuristic for refinement
         for h in heuristics["heuristics"]:
+            if h.get("source") != "auto_learned":
+                continue
             if h.get("pattern_type") not in ("suffix", "exact"):
                 continue
             if not h.get("enabled", True):
@@ -965,12 +991,16 @@ class HeuristicPatternLearner:
             refined_patterns = {}
             for suffix, columns in suffix_groups.items():
                 if len(columns) >= self.MIN_PATTERN_OCCURRENCES:
+                    if not accepts_refinement(suffix, pii_type):
+                        continue
                     # Check if this suffix already exists
                     existing_pattern = next(
                         (
                             h2
                             for h2 in heuristics["heuristics"]
-                            if h2.get("regex") == suffix and h2.get("pii_type") == pii_type
+                            if h2.get("regex") == suffix
+                            and h2.get("pii_type") == pii_type
+                            and h2.get("source") == "auto_learned"
                         ),
                         None,
                     )
