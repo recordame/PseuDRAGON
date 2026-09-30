@@ -29,6 +29,23 @@ Relevance does not establish legal applicability. The interface retains the
 source trace and leaves treatment approval to the reviewer. Empty retrieval
 preserves an empty traceable result rather than forcing a non-PII label.
 
+## Web interface
+
+Select tables and follow the four-stage workflow from field identification to
+reviewed treatment.
+
+![PseuDRAGON workspace with table selection and the four-stage workflow](docs/images/workspace.png)
+
+During review, choose a MASK pattern, set the character counts and mask character,
+and inspect the preview before approval. The six patterns show or hide the first
+or last characters, show both ends, or mask the whole value. Matching account
+fields can share one rule; approved rules are retained for subsequent review.
+
+![Expert review with configurable masking, a synthetic preview, and a shared account rule](docs/images/masking-review.png)
+
+Screenshots show the running interface. The review example uses synthetic
+demonstration fields and remains pending final approval.
+
 ## Install
 
 Use Python 3.10 or newer, preferably in a virtual environment:
@@ -99,7 +116,7 @@ exact name bypasses both learned and static rules and requests a fresh model
 judgment. Semantic similarity is not used to transfer a PII label; treatment
 suggestions remain subject to review.
 
-The **Expert Feedback** view provides:
+The **Reviewed decisions** view provides:
 
 - **Withdraw:** retire the selected stored judgment (including its accumulated
   selections), keep its record and reason in history, and rebuild automatic rules.
