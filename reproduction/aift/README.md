@@ -47,6 +47,10 @@ The versioned learner has SHA256 `93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3
 
 The public run checks generated raw-route/store-snapshot hashes against the original recorded hashes and compares every result field except the relocated protocol hash. Repeat execution compares all normalized route/metric outputs; only the original runners' timestamp normalization is used. Independent arithmetic/routing checks do not import the production learner. These are executable consistency checks, not independent new reference annotation.
 
+## Serving environment
+
+The deployment operator confirmed that institutional, source-ordered, and paired-timing inference used `gpt-oss:120b` in the same institutional network and NVIDIA H100 (80 GB) serving environment. Staff-facing aliases identify internally served model access. The timing result measures automated Stage 1 wall time; recorded timings and request counts were independently recomputed. `serving_environment.json` records this clarification. Frozen request identifiers and protocols retain their original bytes.
+
 ## Scope of the public material
 
 The package excludes institutional policy bodies, customer records, author-specific filesystem paths, deployment logs, model request transcripts, and credentials. It does not reproduce practitioner measurements, initial/live model calls, retrieval-context histories, or the reported 82.95% automated live timing reduction. Those results belong to their separately described experiments. Compiled-output and historical-route checks are explicitly distinguished from fresh execution above.

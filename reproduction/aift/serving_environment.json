@@ -1,0 +1,20 @@
+{
+  "recorded_date": "2026-10-05",
+  "record_type": "serving environment clarification",
+  "model_name": "gpt-oss:120b",
+  "serving_network": "institutional internal network",
+  "hardware": "NVIDIA H100 (80 GB)",
+  "service_relationship": "Institutional runs and follow-up source-ordered and paired-timing runs use the same model, institutional internal network and H100 hardware configuration. Staff-facing aliases refer to internally served model access.",
+  "information_source": "Deployment operator clarification supplied on 2026-10-05",
+  "timing_scope": "Automated Stage 1 wall time on the internal H100 serving environment, including lookup, retrieval, generation, parsing and audit writes.",
+  "timing_verification": "Independent recomputation of the recorded paired durations and request counts; the hardware assignment is confirmed by the deployment operator.",
+  "excluded_timing_scope": [
+    "initialization",
+    "store building",
+    "human review",
+    "treatment selection"
+  ],
+  "provenance_handling": "Historical request identifiers, response identifiers and frozen protocols remain unchanged. This clarification supplements their serving-environment provenance.",
+  "new_inference_calls": 0,
+  "new_hardware_measurements": 0
+}

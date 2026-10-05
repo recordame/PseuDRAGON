@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 8817,
-      "sha256": "8a847cd5f9a4b275befc79ddea07a2c6ac78527419e60663de39bdb06d9f3934"
+      "bytes": 9349,
+      "sha256": "0bdc5a75fff8e3a034fa8107cb56193b8aacd3c2fa4a9b6ccfd51ea4379735d0"
     },
     {
       "path": "coverage.json",
@@ -358,6 +358,11 @@
       "sha256": "5ee7d38896582b9e8684d0a99a1979459ab2796ff835fb08591ea961d2bfe97a"
     },
     {
+      "path": "rq1/studies.json",
+      "bytes": 2325,
+      "sha256": "1263df903a99ac2bca881319b81bdb96e92984be684c84a36306d9ce51a674ab"
+    },
+    {
       "path": "rq1/studies/equal_maintenance/expected/output_hashes.json",
       "bytes": 305,
       "sha256": "b84aae101f9baf18100d7ae9cfce86dec288ef29724ab2990569ba13f33d7aec"
@@ -603,11 +608,6 @@
       "sha256": "ba2699b173845d8e63405f67dfe42265d0e41d0460927cce3f212c1c8a2c85a5"
     },
     {
-      "path": "rq1/studies.json",
-      "bytes": 2325,
-      "sha256": "1263df903a99ac2bca881319b81bdb96e92984be684c84a36306d9ce51a674ab"
-    },
-    {
       "path": "rq1/verify.py",
       "bytes": 11038,
       "sha256": "d5f205f50ca1908406df78c7440690bf5d5fc46940d13638cf4eb5f620721e67"
@@ -616,6 +616,11 @@
       "path": "run.py",
       "bytes": 10113,
       "sha256": "3019e7d29989cbfe8dcf4ad8d562bac19073b90f0adca9cbff3386ca095baa66"
+    },
+    {
+      "path": "serving_environment.json",
+      "bytes": 1249,
+      "sha256": "2285914514f1373f9e71d5432438d3dc74d482f16f3de5faad2fc638858ab5a7"
     },
     {
       "path": "verification_record.json",
