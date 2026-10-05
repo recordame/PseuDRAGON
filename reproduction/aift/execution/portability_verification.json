@@ -1,0 +1,19 @@
+{
+  "status": "pass",
+  "python_versions_checked": [
+    "3.11.15",
+    "3.12.1"
+  ],
+  "pandas": "2.3.3",
+  "numpy": "2.4.2",
+  "relocated_copy_complete_suite_passed": true,
+  "relocated_copy_invoked_from_unrelated_working_directory": true,
+  "raw_rows_and_summaries_identical_across_locations_and_python_versions": true,
+  "linked_records_identical_across_locations_and_python_versions": true,
+  "scientific_result_summary_identical": true,
+  "original_sources_rehashed_unchanged": 43,
+  "compiled_MASK_fresh_execution": false,
+  "compiled_MASK_fresh_source_contract_validation": false,
+  "new_database_standalone_runs": 0,
+  "runtime_representation_change": "Portable linked AST hash canonicalizes empty/None fields; original AST hashes retained in source binding."
+}

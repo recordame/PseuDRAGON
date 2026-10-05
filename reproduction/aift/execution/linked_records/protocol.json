@@ -1,0 +1,42 @@
+{
+  "frozen_utc": "2026-10-05T06:06:05.480950+00:00",
+  "status_at_freeze": "Portable packaging amendment: original first/first-v2 outcomes already known; source and fixture bytes remain unchanged.",
+  "authored_after_review": true,
+  "purpose": "Check equality-based linked summaries on authored synthetic records; separate from the original 92,000-cell execution study.",
+  "units": {
+    "selected_functions": 2,
+    "fictitious_customers": 12,
+    "CD_rows": 36,
+    "HF_rows": 48,
+    "expected_join_row_pairs": 144
+  },
+  "inputs": "Only the selected customer identifier and withdrawal amount plus a synthetic row identifier. No original records, institutional ledger, or participant judgments are copied.",
+  "execution": "Compile only packaged pseudonymize_data FunctionDef AST, with executable identity to originals checked locally before packaging. No module initialization, main, SQL, database, or file-output code.",
+  "positive": [
+    "Identifiers transformed for all 84 rows",
+    "Unchanged row identifiers, amounts, and source frames",
+    "All input/output customer equality pairs agree",
+    "Exact 144 raw row-pair identities preserved",
+    "Customer withdrawal counts and sums preserved"
+  ],
+  "independent_reference": "Raw row-pair identities and raw customer counts/amount sums. No expected SHA-256 outputs are computed.",
+  "negative_control": "In a copy of the HF output, replace its first customer's first pseudonym with the second existing customer's pseudonym. Both source customers have three CD rows, so the join count remains 144; exact row-pair identity and grouped summaries must detect the wrong link.",
+  "repeat": "Run the identical finite suite twice. Results exclude timestamps and must be byte-identical.",
+  "scope": "Finite output-utility property check of two selected functions, not model inference, human validation, a new institution, measured analytic benefit, privacy certification, or verification of masked/generalized join keys.",
+  "frozen_files": {
+    "inputs.json": "1e28284129130e2d5e325ea6becf85821405f2977368a4637e0fb8d87cdc9db5",
+    "source_binding.json": "57f5b4c62ce46514ae80587a2953fa7abdd3a9fa90bd84c5a24f0ddb72eebda9",
+    "source_audit.json": "a8cc689b7d0366f2b469b38010d6baf46abea11dbee8ed3791ad188edbd7b017",
+    "functions/CD_TRNS_TRAN.py": "8956c5004250f0a60e66a0edbc45f0365d2ccd0b65eb3f3b021600af0e720d10",
+    "functions/HF_TRNS_TRAN.py": "50a00de1f5f5a1f5f81764d6c4beb930e52c3a4d805315370dcd5a2c7b5aaff5",
+    "run_check.py": "31287e52e836ec66f3c243b44c4de4cdeb9c7bf08894ff2c6c3c62bdcb38e31f"
+  },
+  "packaging_amendment": {
+    "original_protocol_sha256": "68042e01e0def98d1fe6c60cc7f7da09af1b528e1cb3c6c09d9c67066ed40cc4",
+    "serialization_amendment_sha256": "763e27422d9c036f90e951a5e2f1d246bc8d5f6a4517c85035c7c41ea023742b",
+    "original_inputs_sha256": "1e28284129130e2d5e325ea6becf85821405f2977368a4637e0fb8d87cdc9db5",
+    "original_first_v2_sha256": "4d8c01020eba8a7f943a576289a4ba3ca0ddf60c6841df750b7dacb841c3c6b6",
+    "changes": "Package-relative dependencies only; operational journal omitted; selected functions, synthetic inputs, metrics and negative control unchanged. AST digests use a version-independent canonical representation; original recorded AST hashes remain separately retained.",
+    "original_repository_required": false
+  }
+}

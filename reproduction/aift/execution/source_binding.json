@@ -1,0 +1,334 @@
+{
+  "scope": "Local packaging source audit; public replay checks supplied fixtures/functions and retained historical records. Original repository is not required.",
+  "bindings": [
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/inputs.json",
+      "source_sha256": "a5fac2d86b2fd19c005297f0b8ab41e00b071bbfc5dc5940e75581e99d015965",
+      "packaged": "mask/inputs.json",
+      "packaged_sha256": "a5fac2d86b2fd19c005297f0b8ab41e00b071bbfc5dc5940e75581e99d015965",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/protocol.json",
+      "source_sha256": "f8c51b06d88c3f0e37c3081d2399b068dce06d8b880d846fc5c63d45cd96b0a4",
+      "packaged": "mask/protocol.json",
+      "packaged_sha256": "f8c51b06d88c3f0e37c3081d2399b068dce06d8b880d846fc5c63d45cd96b0a4",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/raw_ast_guard.py",
+      "source_sha256": "ee44c51cd418ffc3505c91e838bdfdc2bef5ddb6b015ea9ecce1bb38a9f8f46d",
+      "packaged": "mask/raw_ast_guard.py",
+      "packaged_sha256": "ee44c51cd418ffc3505c91e838bdfdc2bef5ddb6b015ea9ecce1bb38a9f8f46d",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/original_fixtures.py",
+      "source_sha256": "9ae929b9867fb0a06161e0f7b3c1246f19d45e9d6afdc9cad0552cbcd06e4223",
+      "packaged": "mask/original_fixtures.py",
+      "packaged_sha256": "9ae929b9867fb0a06161e0f7b3c1246f19d45e9d6afdc9cad0552cbcd06e4223",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/reviewed_raw_hashes.json",
+      "source_sha256": "061b20668722a3886dd5035c74369c48f27232097545bd8958e925be09e4d444",
+      "packaged": "mask/reviewed_raw_hashes.json",
+      "packaged_sha256": "061b20668722a3886dd5035c74369c48f27232097545bd8958e925be09e4d444",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/source_binding_summary.json",
+      "source_sha256": "73b0101446a5747dc1f7d8b72c2f42525647c4e06d1087e8212a763465c0f6f9",
+      "packaged": "mask/source_binding_summary.json",
+      "packaged_sha256": "73b0101446a5747dc1f7d8b72c2f42525647c4e06d1087e8212a763465c0f6f9",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/run_raw.py",
+      "source_sha256": "098d08f6203c03dc002a535aa3e26499705f026bcfe890f513cb9ea710c1ce54",
+      "packaged": "mask/run_raw.py",
+      "packaged_sha256": "3eb4963383f67c1c1c74a81cebb4568640e7dac1661374fb577a98fe84a1077f",
+      "transformation": "Remove unused repository-depth expression and operational journal append; scoring/execution unchanged"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_raw_mask_matched_inputs/verification/independent_check.py",
+      "source_sha256": "0f96831c144c80b3463345fff60b73dd4b8a1161f8677c33defb2b3b7fa5295f",
+      "packaged": "mask/verification/independent_check.py",
+      "packaged_sha256": "6157508850be32f8045cd4ceccfa086b3ef54fbc2d8d049255e9ef4de8840680",
+      "transformation": "Comments/docstrings omitted; executable AST unchanged"
+    },
+    {
+      "source": "src/pseudragon/validation/method_contract.py",
+      "source_sha256": "733b9743dfc03f071fc08931fda36d546e0a0af01ba958d6c3361680c40318fa",
+      "packaged": "mask/contract/pseudragon/validation/method_contract.py",
+      "packaged_sha256": "259f3ef7360d8ab0522e903907d3c8a1b77e811b23480f28f2fcc95e7ccb8d00",
+      "transformation": "Comments/docstrings omitted; executable AST unchanged"
+    },
+    {
+      "source": "src/pseudragon/validation/display_requirement.py",
+      "source_sha256": "98fc6a03ffb277351b00eefea113c2aee69967be3edd07c6aa36b7882ad32842",
+      "packaged": "mask/contract/pseudragon/validation/display_requirement.py",
+      "packaged_sha256": "e491fca688ad33813e8d9fca7952b620751fa98f10d69f804c0e7e3e5b6a24bf",
+      "transformation": "Comments/docstrings omitted; executable AST unchanged"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/inputs.json",
+      "source_sha256": "1e28284129130e2d5e325ea6becf85821405f2977368a4637e0fb8d87cdc9db5",
+      "packaged": "linked_records/inputs.json",
+      "packaged_sha256": "1e28284129130e2d5e325ea6becf85821405f2977368a4637e0fb8d87cdc9db5",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/source_binding.json",
+      "source_sha256": "2d8f3686a73fa1897c7286347a0180b47e8b0477400f06cdb97418d0508ca047",
+      "packaged": "linked_records/source_binding.json",
+      "packaged_sha256": "57f5b4c62ce46514ae80587a2953fa7abdd3a9fa90bd84c5a24f0ddb72eebda9",
+      "transformation": "Retain original source/function byte hashes and original AST hashes; add version-independent canonical AST hashes and definition."
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/source_audit.json",
+      "source_sha256": "a8cc689b7d0366f2b469b38010d6baf46abea11dbee8ed3791ad188edbd7b017",
+      "packaged": "linked_records/source_audit.json",
+      "packaged_sha256": "a8cc689b7d0366f2b469b38010d6baf46abea11dbee8ed3791ad188edbd7b017",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/functions/CD_TRNS_TRAN.py",
+      "source_sha256": "8956c5004250f0a60e66a0edbc45f0365d2ccd0b65eb3f3b021600af0e720d10",
+      "packaged": "linked_records/functions/CD_TRNS_TRAN.py",
+      "packaged_sha256": "8956c5004250f0a60e66a0edbc45f0365d2ccd0b65eb3f3b021600af0e720d10",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/functions/HF_TRNS_TRAN.py",
+      "source_sha256": "50a00de1f5f5a1f5f81764d6c4beb930e52c3a4d805315370dcd5a2c7b5aaff5",
+      "packaged": "linked_records/functions/HF_TRNS_TRAN.py",
+      "packaged_sha256": "50a00de1f5f5a1f5f81764d6c4beb930e52c3a4d805315370dcd5a2c7b5aaff5",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/run_check.py",
+      "source_sha256": "4c0190f4d875646c8745804e7d775d2440e3cf999af9dca86bec62d49ecaf91a",
+      "packaged": "linked_records/run_check.py",
+      "packaged_sha256": "31287e52e836ec66f3c243b44c4de4cdeb9c7bf08894ff2c6c3c62bdcb38e31f",
+      "transformation": "Remove operational journal append; calculations and function execution unchanged"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/verification/independent_check.py",
+      "source_sha256": "5840d51c7753066ebdad8fb7bafe496c5234355c1760e4b22431cb4c5cb7f4f5",
+      "packaged": "linked_records/verification/independent_check.py",
+      "packaged_sha256": "5dca7350188851e054b14826d95f4bac430a466035fcfa4952c5afdb862c9b35",
+      "transformation": "Comments/docstrings omitted; declared portability changes"
+    },
+    {
+      "source": "paper/experiments/rq3/20261005_hash_linked_records/portable/protocol.json",
+      "source_sha256": "16b7b0d27d3322a86797bf145cdb510ace4297a784c87f955fab85799c9e3f59",
+      "packaged": "linked_records/protocol.json",
+      "packaged_sha256": "628d8d410b546e5e5d19631f24fe6e0de2df3d5189965c88d3a2403f169258dc",
+      "transformation": "Refresh package runtime hashes; remove README and dependency-file runtime coupling"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/CD_TRNS_TRAN.json",
+      "source_sha256": "1f3c551a4b3764b091e0b2f44ceef75999f2e521ffac5804e64463fc899f40ed",
+      "packaged": "cells/data/execution/inputs/CD_TRNS_TRAN.json",
+      "packaged_sha256": "1f3c551a4b3764b091e0b2f44ceef75999f2e521ffac5804e64463fc899f40ed",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/CMS_REQ_TRAN.json",
+      "source_sha256": "daf149f16a6eb4950c92c2f27b63f2de1faba99da9799db1ed661d1631db625f",
+      "packaged": "cells/data/execution/inputs/CMS_REQ_TRAN.json",
+      "packaged_sha256": "daf149f16a6eb4950c92c2f27b63f2de1faba99da9799db1ed661d1631db625f",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/CMS_RES_TRAN.json",
+      "source_sha256": "adb28a7cf6f0492d2648268a719cf81e1c6c22f2c1d20b309cbbc75245b4e6a8",
+      "packaged": "cells/data/execution/inputs/CMS_RES_TRAN.json",
+      "packaged_sha256": "adb28a7cf6f0492d2648268a719cf81e1c6c22f2c1d20b309cbbc75245b4e6a8",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/GR_JC_TRAN.json",
+      "source_sha256": "f463f4c2855870044ee6327c57d1645dbc03e0ec8ee64a9c032e08a5ac3c4ac5",
+      "packaged": "cells/data/execution/inputs/GR_JC_TRAN.json",
+      "packaged_sha256": "f463f4c2855870044ee6327c57d1645dbc03e0ec8ee64a9c032e08a5ac3c4ac5",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/GR_NJ_TRAN.json",
+      "source_sha256": "d78d80ebe4e27281de2f96e024de97fe7187d74bc018da1aa0b3d1be5cce2ac7",
+      "packaged": "cells/data/execution/inputs/GR_NJ_TRAN.json",
+      "packaged_sha256": "d78d80ebe4e27281de2f96e024de97fe7187d74bc018da1aa0b3d1be5cce2ac7",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/HF_TRNS_TRAN.json",
+      "source_sha256": "b5d026dcb9ef938d5806453a7b7ddea358b921fc07508460886318e9b59bed30",
+      "packaged": "cells/data/execution/inputs/HF_TRNS_TRAN.json",
+      "packaged_sha256": "b5d026dcb9ef938d5806453a7b7ddea358b921fc07508460886318e9b59bed30",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/OB_INQR_TRAN.json",
+      "source_sha256": "4a4fb5fc62781d9844b0d93b44e5ab52cbf24a5e8752b534f2924e6e07ded0ba",
+      "packaged": "cells/data/execution/inputs/OB_INQR_TRAN.json",
+      "packaged_sha256": "4a4fb5fc62781d9844b0d93b44e5ab52cbf24a5e8752b534f2924e6e07ded0ba",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/OB_TRNS_TRAN.json",
+      "source_sha256": "630685753c72fd9f5ecbf2d77410676ea42be2df61509d5fecca0ad08af6f700",
+      "packaged": "cells/data/execution/inputs/OB_TRNS_TRAN.json",
+      "packaged_sha256": "630685753c72fd9f5ecbf2d77410676ea42be2df61509d5fecca0ad08af6f700",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/inputs/PI_WD_LEDG.json",
+      "source_sha256": "9be74110824efc51b314da32ce68d4039a93a65dba544cd02ffe01dc6d3d8d64",
+      "packaged": "cells/data/execution/inputs/PI_WD_LEDG.json",
+      "packaged_sha256": "9be74110824efc51b314da32ce68d4039a93a65dba544cd02ffe01dc6d3d8d64",
+      "transformation": "byte-identical"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/repaired_policy_manifest.json",
+      "source_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+      "packaged": "cells/data/execution/repaired_policy_manifest.json",
+      "packaged_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539",
+      "transformation": "Retain only exact action/parameters/code_snippet per column and historical run ID; remove rationale and legal metadata"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/protocol.json",
+      "source_sha256": "e7208ff29d48d215a6f7609587865f5bfac2ed9126e4fd2ca60d591cd4026d5b",
+      "packaged": "cells/data/execution/protocol.json",
+      "packaged_sha256": "4763a9c048572c852ce7314be05450dc5450aeef9d77ae8432f1282d026dfd4f",
+      "transformation": "Retain only the exact 14 boundary fixtures."
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/summary.json",
+      "source_sha256": "59a903152252a83a8e5db58e08349767baefe1ad5f825531fa31f2f38413b6b6",
+      "packaged": "cells/data/execution/summary.json",
+      "packaged_sha256": "059fd76eba406e8f40906431c89b06a1c2bbf6a0f71f734dceccfb12937142cd",
+      "transformation": "Retain historical run ID, completion time and method counts."
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/repair_results/standalone_runs.json",
+      "source_sha256": "6f486ae6cc30e25a9f556b9d9cd28b2c603bc3f8171857ce522090c23a4d5c84",
+      "packaged": "cells/data/execution/repair_results/standalone_runs.json",
+      "packaged_sha256": "74de401304eb62452f41b3beab533b14e5c73f702413a04c07df6f992b5f5ac2",
+      "transformation": "Retain per-run dimensions, outcomes and hashes; omit timing and operational streams."
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/repair_results/selection_code_output_links.json",
+      "source_sha256": "62dcccc6deae535d14d3d91f938608df04739428c8a8500f2a799eb89b904d27",
+      "packaged": "cells/data/execution/repair_results/selection_code_output_links.json",
+      "packaged_sha256": "4ef4ae67987b3b2530c198732541930975dbbd37c5380b47154419221efa3832",
+      "transformation": "Retain original source/output links and add separately named packaged function and metadata hashes."
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/CD_TRNS_TRAN.py",
+      "source_sha256": "460e446fb5be674388bf0b6adcd040d77c6e444302f25c9f1ac119a91a1ceca6",
+      "packaged": "cells/data/execution/replayed_programs/CD_TRNS_TRAN.py",
+      "packaged_sha256": "8956c5004250f0a60e66a0edbc45f0365d2ccd0b65eb3f3b021600af0e720d10",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "9a9f64a20c119122f62e7a9566231762314d2a05dd47131306f8ad1da356ff99"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/CMS_REQ_TRAN.py",
+      "source_sha256": "aec3f9658c9cc828d6bea0eda6f807fcac386053184f59ddea0bf840d9a375f4",
+      "packaged": "cells/data/execution/replayed_programs/CMS_REQ_TRAN.py",
+      "packaged_sha256": "87c50ba56d0226480e1e58e7ac9529f50e6b35eccc93febe7afeecda7815c681",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "3a3a3787b0fc673b8332a3e90aab822d543b5aa6cb7cee4e1685f722f2e8211c"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/CMS_RES_TRAN.py",
+      "source_sha256": "4ca1d3d84aac86f38d5b9c86fc0ec6f1433bd7e7063e20f9334dd69b118785ad",
+      "packaged": "cells/data/execution/replayed_programs/CMS_RES_TRAN.py",
+      "packaged_sha256": "87c50ba56d0226480e1e58e7ac9529f50e6b35eccc93febe7afeecda7815c681",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "3a3a3787b0fc673b8332a3e90aab822d543b5aa6cb7cee4e1685f722f2e8211c"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/GR_JC_TRAN.py",
+      "source_sha256": "4c36e56676e97b17e09353c71eefbed333ea5e0ce7826046e55d7746367ae99c",
+      "packaged": "cells/data/execution/replayed_programs/GR_JC_TRAN.py",
+      "packaged_sha256": "1363d154516ddb042aae99ea2ceff294231fb15b646223ae44ca9bd79b01ba19",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "46fb072e1f3c1e1a4d8563711c768cfb9648ccb6a83e29ddbd4c33e44b75cefd"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/GR_NJ_TRAN.py",
+      "source_sha256": "70c131dd3dff8785e439a5f0010bab1c60f0ebfd75409c2a5cc97dca2fa88e1d",
+      "packaged": "cells/data/execution/replayed_programs/GR_NJ_TRAN.py",
+      "packaged_sha256": "1363d154516ddb042aae99ea2ceff294231fb15b646223ae44ca9bd79b01ba19",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "46fb072e1f3c1e1a4d8563711c768cfb9648ccb6a83e29ddbd4c33e44b75cefd"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/HF_TRNS_TRAN.py",
+      "source_sha256": "8c78554a932fd01c879613714f61d4c245a9977381952c4e8c181cd1eb7abb27",
+      "packaged": "cells/data/execution/replayed_programs/HF_TRNS_TRAN.py",
+      "packaged_sha256": "50a00de1f5f5a1f5f81764d6c4beb930e52c3a4d805315370dcd5a2c7b5aaff5",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "bc2280e4779dcee55ce4bff99855e31b563d38c60012a7bc034a091d68b0512c"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/OB_INQR_TRAN.py",
+      "source_sha256": "36483da7b5b3f0255bef6f02ea32a5df3eac41ce18b158e00e5512c3d3006853",
+      "packaged": "cells/data/execution/replayed_programs/OB_INQR_TRAN.py",
+      "packaged_sha256": "3d4151e9ef2e3bd3d38dd087e6da87b2db2b640203a8ef2a053110390b2ec7f5",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "93e8b5e9de99cd6d8c9a094ff1261252a1791d82f37cb4ec36e3f24308f6f9fd"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/OB_TRNS_TRAN.py",
+      "source_sha256": "1824511b4ebab92e8a60487959b7f1c1adc608ffab96715fc9a6370bd1988c17",
+      "packaged": "cells/data/execution/replayed_programs/OB_TRNS_TRAN.py",
+      "packaged_sha256": "46add203c289d9fb6ac73169e230e449f6e6314a59cb724275b0a09c601b0480",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "9d6c5c0281a0ae135a66a8c458509376c3e40c38304f45efd5910ccb93d7b8b1"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/data/execution/replayed_programs/PI_WD_LEDG.py",
+      "source_sha256": "3715d2be504ec06e3ce31de2403faf76d2ab02f6524e90c410a32d60e3bc70fe",
+      "packaged": "cells/data/execution/replayed_programs/PI_WD_LEDG.py",
+      "packaged_sha256": "b0c090e9682077b5bc8927393dc041e75c1c20004a5704a974d34f0a2acd9623",
+      "transformation": "Exact executable pseudonymize_data AST; omit module/main/imports/comments/docstrings",
+      "executable_ast_sha256": "e9eaf0a98df4a4b66d46b1ca1c168d5490331373aa13581b8ff0a21aad6c7364"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/checks/verify_execution.py",
+      "source_sha256": "d2e4e44533cf33fa2b1fbb41382751a49dfafcf15d1506e2bd4e66195b916a90",
+      "packaged": "cells/verify_execution.py",
+      "packaged_sha256": "b47340623d907c0e0353b1591bf506cef871634d4688e261b48d83e621ce66e6",
+      "transformation": "Comments/docstrings omitted; declared portability changes"
+    },
+    {
+      "source": "paper/experiments/releases/20260921-r1/PROVENANCE.json",
+      "source_sha256": "1d7aab962d3da2cc74ee8c62b0281ef481ed02515820a8c4cfff822561647157",
+      "packaged": "cells/synthetic_input_provenance.json",
+      "packaged_sha256": "09da69fa4cebcdc3f79e2e4642aaf75afae2d7f412abb5bfc876fd8a2ff3f4c0",
+      "transformation": "Only the nine synthetic-input export provenance entries"
+    }
+  ],
+  "excluded": [
+    "Institutional corpus and source text",
+    "Full production policy records",
+    "Operational logs and provider envelopes",
+    "Database and application initialization",
+    "Private or user absolute paths"
+  ],
+  "contract_scope": {
+    "raw": "Fresh original normalize_method_metadata invocation using supplied unchanged code and parameters",
+    "compiled": "Historical contract evidence only; exact source-linked revalidation requires private source text and is excluded"
+  },
+  "packaging_changes": [
+    "Raw MASK runner: remove unused repository-depth expression and operational journal append.",
+    "All code: omit comments/docstrings without changing executable AST.",
+    "Synthetic cells: original selected metadata reduced to action/parameters/code; exact executable functions extracted; original link hashes preserved and explicit packaged hashes added.",
+    "Cell checker: verify packaged function/metadata hashes in new fields; historical hashes retained separately.",
+    "Linked check: replace Python-version-dependent ast.dump hash with canonical AST JSON, retaining original AST hashes; omit operational journal; refresh immutable runtime manifests."
+  ],
+  "original_source_hashes_verified_after_execution": true
+}

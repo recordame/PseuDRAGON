@@ -1,0 +1,31 @@
+{
+  "groups": {
+    "g00": [
+      "CD_TRNS_TRAN",
+      "HF_TRNS_TRAN"
+    ],
+    "g01": [
+      "CMS_REQ_TRAN",
+      "CMS_RES_TRAN"
+    ],
+    "g02": [
+      "GR_JC_TRAN",
+      "GR_NJ_TRAN"
+    ],
+    "g03": [
+      "OB_INQR_TRAN",
+      "OB_TRNS_TRAN"
+    ],
+    "g04": [
+      "PI_WD_LEDG"
+    ]
+  },
+  "prediction_sets": [
+    1,
+    2,
+    3
+  ],
+  "packaging": "Post-result portable packaging. Original runner and learner bytes are retained; only runtime paths and input hash manifests are reconstructed. This is not a new preregistration.",
+  "original_protocol_sha256": "b4e6ddb7d1b3be1d1c6de69189d1e52a6b4f62a3797efd8886c98edae32dc4b2",
+  "original_protocol_path": "paper/experiments/rq1/20261004_equal_maintenance_cache/protocol.json"
+}

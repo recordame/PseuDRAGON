@@ -1,0 +1,30 @@
+{
+  "bindings": [
+    {
+      "table": "CD_TRNS_TRAN",
+      "source": "paper/experiments/rq3/20260919_contract_repair/replayed_programs/CD_TRNS_TRAN.py",
+      "source_sha256": "460e446fb5be674388bf0b6adcd040d77c6e444302f25c9f1ac119a91a1ceca6",
+      "portable": "functions/CD_TRNS_TRAN.py",
+      "portable_sha256": "8956c5004250f0a60e66a0edbc45f0365d2ccd0b65eb3f3b021600af0e720d10",
+      "executable_ast_sha256": "c692d1ad90601b81e983b109dd9d2d5a9b30618b96b7f172cb1975c174c5803e",
+      "removed": "Comments and the function docstring only; no executable AST change.",
+      "original_executable_ast_sha256": "9a9f64a20c119122f62e7a9566231762314d2a05dd47131306f8ad1da356ff99"
+    },
+    {
+      "table": "HF_TRNS_TRAN",
+      "source": "paper/experiments/rq3/20260919_contract_repair/replayed_programs/HF_TRNS_TRAN.py",
+      "source_sha256": "8c78554a932fd01c879613714f61d4c245a9977381952c4e8c181cd1eb7abb27",
+      "portable": "functions/HF_TRNS_TRAN.py",
+      "portable_sha256": "50a00de1f5f5a1f5f81764d6c4beb930e52c3a4d805315370dcd5a2c7b5aaff5",
+      "executable_ast_sha256": "176781e49324c0d368c07a6f5036159fa9e60de75bde125b71cbe311550cbf19",
+      "removed": "Comments and the function docstring only; no executable AST change.",
+      "original_executable_ast_sha256": "bc2280e4779dcee55ce4bff99855e31b563d38c60012a7bc034a091d68b0512c"
+    }
+  ],
+  "selected_operation": "CUST_ID HASH; WD_MN KEEP",
+  "operation_counts_source": "paper/experiments/rq3/20260919_contract_repair/summary.json",
+  "operation_counts_source_sha256": "59a903152252a83a8e5db58e08349767baefe1ad5f825531fa31f2f38413b6b6",
+  "policy_manifest_source": "paper/experiments/rq3/20260919_contract_repair/repaired_policy_manifest.json",
+  "policy_manifest_source_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+  "portable_ast_hash_definition": "UTF-8 canonical JSON with sorted keys and compact separators; AST node type plus fields, excluding None and empty-list fields; recursive values; attributes excluded."
+}

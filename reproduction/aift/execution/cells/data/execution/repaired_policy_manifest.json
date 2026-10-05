@@ -1,0 +1,769 @@
+{
+  "run_id": "contract-repair-20260919T001357Z",
+  "policies": {
+    "CD_TRNS_TRAN": {
+      "columns": {
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_DTIME": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "RCMS_BSWR_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_MED_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "FEE": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DPS_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DPSTR_NM": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_DPSTR_NM = hashlib.sha256(str(record['DPSTR_NM']).encode()).hexdigest()"
+          }
+        },
+        "CUST_ID": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CUST_ID = hashlib.sha256(str(record['CUST_ID']).encode()).hexdigest()"
+          }
+        },
+        "DPS_ACNO": {
+          "action": {
+            "action": "MASK",
+            "parameters": {
+              "mask_char": "*",
+              "mask_last": 4,
+              "short_value_mask_length": 4
+            },
+            "code_snippet": "masked_DPS_ACNO = str(record['DPS_ACNO'])[:-4] + '****' if len(str(record['DPS_ACNO'])) > 4 else '****'"
+          }
+        },
+        "WD_ACNO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_WD_ACNO = hashlib.sha256(str(record['WD_ACNO']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "CMS_REQ_TRAN": {
+      "columns": {
+        "WD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CRNO": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CMS_NO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CMS_NO = hashlib.sha256(str(record['CMS_NO']).encode()).hexdigest()"
+          }
+        },
+        "WD_ACNO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_WD_ACNO = hashlib.sha256(str(record['WD_ACNO']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "CMS_RES_TRAN": {
+      "columns": {
+        "WD_RSLT_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CRNO": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CMS_NO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CMS_NO = hashlib.sha256(str(record['CMS_NO']).encode()).hexdigest()"
+          }
+        },
+        "WD_ACNO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_WD_ACNO = hashlib.sha256(str(record['WD_ACNO']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "GR_JC_TRAN": {
+      "columns": {
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "REQ_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DEALCO_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CRNO": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CMS_NO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CMS_NO = hashlib.sha256(str(record['CMS_NO']).encode()).hexdigest()"
+          }
+        },
+        "DPSTR_NM": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_DPSTR_NM = hashlib.sha256(str(record['DPSTR_NM']).encode()).hexdigest()"
+          }
+        },
+        "WD_ACNO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_WD_ACNO = hashlib.sha256(str(record['WD_ACNO']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "GR_NJ_TRAN": {
+      "columns": {
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_DTIME": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CRNO": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DEALCO_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CMS_NO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CMS_NO = hashlib.sha256(str(record['CMS_NO']).encode()).hexdigest()"
+          }
+        },
+        "DPSTR_NM": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_DPSTR_NM = hashlib.sha256(str(record['DPSTR_NM']).encode()).hexdigest()"
+          }
+        },
+        "WD_ACNO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_WD_ACNO = hashlib.sha256(str(record['WD_ACNO']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "HF_TRNS_TRAN": {
+      "columns": {
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_DTIME": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "RCMS_BSWR_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_MED_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "CRNO": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "FEE": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DPS_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_ACNO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_WD_ACNO = hashlib.sha256(str(record['WD_ACNO']).encode()).hexdigest()"
+          }
+        },
+        "DPS_ACNO": {
+          "action": {
+            "action": "MASK",
+            "parameters": {
+              "mask_char": "*",
+              "mask_last": 4,
+              "short_value_mask_length": 4
+            },
+            "code_snippet": "masked_DPS_ACNO = str(record['DPS_ACNO'])[:-4] + '****' if len(str(record['DPS_ACNO'])) > 4 else '****'"
+          }
+        },
+        "CUST_ID": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CUST_ID = hashlib.sha256(str(record['CUST_ID']).encode()).hexdigest()"
+          }
+        },
+        "DPSTR_NM": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_DPSTR_NM = hashlib.sha256(str(record['DPSTR_NM']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "OB_INQR_TRAN": {
+      "columns": {
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "INQR_DTIME": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "INQR_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "BLNC": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "FIN_INTT_SVC_NO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_FIN_INTT_SVC_NO = hashlib.sha256(str(record['FIN_INTT_SVC_NO']).encode()).hexdigest()"
+          }
+        },
+        "USER_SEQ_NO": {
+          "action": {
+            "action": "GENERALIZE",
+            "parameters": {
+              "strategy": "integer_interval",
+              "interval_width": 1000,
+              "interval_origin": 0,
+              "separator": "~",
+              "non_numeric": "stringify"
+            },
+            "code_snippet": "lambda x: f\"{(int(x)//1000)*1000}~{(int(x)//1000)*1000+999}\" if pd.notna(x) and str(x).isdigit() else str(x)"
+          }
+        },
+        "CI": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CI = hashlib.sha256(str(record['CI']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "OB_TRNS_TRAN": {
+      "columns": {
+        "DPS_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "RCMS_BSWR_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_DTIME": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DPS_ACNO": {
+          "action": {
+            "action": "MASK",
+            "parameters": {
+              "mask_char": "*",
+              "mask_last": 4,
+              "short_value_mask_length": 4
+            },
+            "code_snippet": "masked_DPS_ACNO = str(record['DPS_ACNO'])[:-4] + '****' if len(str(record['DPS_ACNO'])) > 4 else '****'"
+          }
+        },
+        "CI": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CI = hashlib.sha256(str(record['CI']).encode()).hexdigest()"
+          }
+        },
+        "DPSTR_NM": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_DPSTR_NM = hashlib.sha256(str(record['DPSTR_NM']).encode()).hexdigest()"
+          }
+        },
+        "USER_SEQ_NO": {
+          "action": {
+            "action": "GENERALIZE",
+            "parameters": {
+              "strategy": "integer_interval",
+              "interval_width": 1000,
+              "interval_origin": 0,
+              "separator": "~",
+              "non_numeric": "stringify"
+            },
+            "code_snippet": "lambda x: f\"{(int(x)//1000)*1000}~{(int(x)//1000)*1000+999}\" if pd.notna(x) and str(x).isdigit() else str(x)"
+          }
+        },
+        "FIN_INTT_SVC_NO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_FIN_INTT_SVC_NO = hashlib.sha256(str(record['FIN_INTT_SVC_NO']).encode()).hexdigest()"
+          }
+        }
+      }
+    },
+    "PI_WD_LEDG": {
+      "columns": {
+        "STD_DT": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "TRNS_DTIME": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_MN": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "RCMS_BSWR_CL_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "WD_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DPS_BANK_CD": {
+          "action": {
+            "action": "KEEP",
+            "parameters": {},
+            "code_snippet": ""
+          }
+        },
+        "DPS_ACNO": {
+          "action": {
+            "action": "MASK",
+            "parameters": {
+              "mask_char": "*",
+              "mask_last": 4,
+              "short_value_mask_length": 4
+            },
+            "code_snippet": "masked_DPS_ACNO = str(record['DPS_ACNO'])[:-4] + '****' if len(str(record['DPS_ACNO'])) > 4 else '****'"
+          }
+        },
+        "USER_SEQ_NO": {
+          "action": {
+            "action": "GENERALIZE",
+            "parameters": {
+              "strategy": "integer_interval",
+              "interval_width": 1000,
+              "interval_origin": 0,
+              "separator": "~",
+              "non_numeric": "stringify"
+            },
+            "code_snippet": "lambda x: f\"{(int(x)//1000)*1000}~{(int(x)//1000)*1000+999}\" if pd.notna(x) and str(x).isdigit() else str(x)"
+          }
+        },
+        "DPSTR_NM": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_DPSTR_NM = hashlib.sha256(str(record['DPSTR_NM']).encode()).hexdigest()"
+          }
+        },
+        "CMS_NO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CMS_NO = hashlib.sha256(str(record['CMS_NO']).encode()).hexdigest()"
+          }
+        },
+        "CI": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_CI = hashlib.sha256(str(record['CI']).encode()).hexdigest()"
+          }
+        },
+        "WD_ACNO": {
+          "action": {
+            "action": "HASH",
+            "parameters": {
+              "algorithm": "SHA-256"
+            },
+            "code_snippet": "import hashlib\nhashed_WD_ACNO = hashlib.sha256(str(record['WD_ACNO']).encode()).hexdigest()"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "source": "paper/experiments/releases/20260921-r1/PROVENANCE.json",
+  "source_sha256": "1d7aab962d3da2cc74ee8c62b0281ef481ed02515820a8c4cfff822561647157",
+  "scope": "Retained upstream export provenance for synthetic tables; no fresh database export or new source authentication.",
+  "files": [
+    {
+      "file": "data/execution/inputs/CD_TRNS_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/CMS_REQ_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/CMS_RES_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/GR_JC_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/GR_NJ_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/HF_TRNS_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/OB_INQR_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/OB_TRNS_TRAN.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    },
+    {
+      "file": "data/execution/inputs/PI_WD_LEDG.json",
+      "source": "reconstructed synthetic database",
+      "source_sha256": "d05dd21be5242cb606ef4ae4e4991405022667be587af80837429c063f45fce5",
+      "transformation": "read-only SQL table -> pandas table JSON; no institutional real rows"
+    }
+  ]
+}

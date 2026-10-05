@@ -1,0 +1,101 @@
+{
+  "status": "pass",
+  "verification": "Complete execution suite rerun after formatting only two new wrappers; executable AST and results identical.",
+  "formatter": {
+    "tool": "Black",
+    "version": "22.8.0",
+    "line_length": 100,
+    "string_normalization": "double quotes",
+    "files": {
+      "run.py": "d81861aed00461d6da9406ea4ba8a5eae9597d94f14fdd293e35dba69db4ce9b",
+      "mask/check_contract.py": "cee0c924a0b5ea6c19a04e1df09cfaafb75b75fc29de48f69d55f0a6d534a2d4"
+    }
+  },
+  "frozen_sources_inputs_and_original_fixtures_unchanged": true,
+  "report": {
+    "status": "pass",
+    "runtime": {
+      "python": "3.12.1"
+    },
+    "table8": {
+      "fresh_raw_output_execution": {
+        "candidates": 33,
+        "three_primary_pass": 32,
+        "all_seventeen_pass": 0
+      },
+      "fresh_raw_contract_validation": {
+        "accepted": 0,
+        "candidates": 33
+      },
+      "compiled_archived_output_rescoring": {
+        "candidates": 66,
+        "three_primary_pass": 66,
+        "all_seventeen_pass": 66
+      },
+      "compiled_archived_contract_records": {
+        "accepted_and_executed_records": 66,
+        "candidates": 66
+      },
+      "compiled_fresh_execution": false,
+      "compiled_fresh_contract_validation": false,
+      "fixture_definition": {
+        "primary_case_indices": [
+          0,
+          1,
+          2
+        ],
+        "all_cases": 17,
+        "digit_bearing": 12,
+        "zero_digit_preservation": 2,
+        "missing_preservation": 3
+      },
+      "independent_checker_status": "pass",
+      "first_repeat_byte_identical": true
+    },
+    "synthetic_cells": {
+      "programs": 9,
+      "policy_columns": 92,
+      "method_counts": {
+        "KEEP": 60,
+        "HASH": 25,
+        "MASK": 4,
+        "GENERALIZE": 3
+      },
+      "boundary_declared_cells": 1288,
+      "expanded_missing_declared_cells": 276,
+      "boundary_sentinel_cells": 126,
+      "missing_sentinel_cells": 27,
+      "original_input_cells": 92000,
+      "original_inputs": "PASS",
+      "input_frames_unchanged": true
+    },
+    "historical_standalone_records": {
+      "recorded_run_id": "contract-repair-20260919T001357Z",
+      "recorded_completed_at_utc": "2026-09-19T00:14:06.525506+00:00",
+      "records_checked": 27,
+      "recorded_unique_original_cells": 92000,
+      "recorded_cell_comparisons_including_repeats": 276000,
+      "csv_hashes_independently_recomputed": 27,
+      "fresh_standalone_executions": 0,
+      "database_execution_hashes_recomputed": false
+    },
+    "linked_records": {
+      "status": "pass",
+      "method": "Bound selected-function execution; raw row-set, equality and group-sum invariants; no reference hash implementation",
+      "packaged_functions_match_bound_AST": true,
+      "original_source_binding_audit_reperformed": false,
+      "records": 84,
+      "customer_groups": 12,
+      "exact_join_pairs": 144,
+      "equality_comparisons": 3486,
+      "wrong_and_missing_control_pairs": [
+        3,
+        3
+      ],
+      "output_records_match_both_runs": true,
+      "first_repeat_byte_identical": true,
+      "immutable_artifact_hashes_verified": true
+    },
+    "scope": "Fresh raw MASK, raw contract, retained synthetic dataframe functions, and linked-record functions; archived compiled MASK outputs and historical standalone runs are record checks."
+  }
+}

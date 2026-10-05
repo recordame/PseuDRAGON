@@ -1,0 +1,114 @@
+{
+  "groups": {
+    "g00": [
+      "CD_TRNS_TRAN",
+      "HF_TRNS_TRAN"
+    ],
+    "g01": [
+      "CMS_REQ_TRAN",
+      "CMS_RES_TRAN"
+    ],
+    "g02": [
+      "GR_JC_TRAN",
+      "GR_NJ_TRAN"
+    ],
+    "g03": [
+      "OB_INQR_TRAN",
+      "OB_TRNS_TRAN"
+    ],
+    "g04": [
+      "PI_WD_LEDG"
+    ]
+  },
+  "stages": {
+    "25": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "100": [
+      0
+    ]
+  },
+  "repetitions": [
+    1,
+    2,
+    3
+  ],
+  "configs": [
+    {
+      "id": "default",
+      "support": 2,
+      "score": 0.8,
+      "conflict": 0.1
+    },
+    {
+      "id": "s2-q0.7-c0.0",
+      "support": 2,
+      "score": 0.7,
+      "conflict": 0.0
+    },
+    {
+      "id": "s2-q0.7-c0.2",
+      "support": 2,
+      "score": 0.7,
+      "conflict": 0.2
+    },
+    {
+      "id": "s2-q0.9-c0.0",
+      "support": 2,
+      "score": 0.9,
+      "conflict": 0.0
+    },
+    {
+      "id": "s2-q0.9-c0.2",
+      "support": 2,
+      "score": 0.9,
+      "conflict": 0.2
+    },
+    {
+      "id": "s3-q0.7-c0.0",
+      "support": 3,
+      "score": 0.7,
+      "conflict": 0.0
+    },
+    {
+      "id": "s3-q0.7-c0.2",
+      "support": 3,
+      "score": 0.7,
+      "conflict": 0.2
+    },
+    {
+      "id": "s3-q0.9-c0.0",
+      "support": 3,
+      "score": 0.9,
+      "conflict": 0.0
+    },
+    {
+      "id": "s3-q0.9-c0.2",
+      "support": 3,
+      "score": 0.9,
+      "conflict": 0.2
+    }
+  ],
+  "packaging": "Post-result portable packaging. Original runner and learner bytes are retained; only runtime paths and input hash manifests are reconstructed. This is not a new preregistration.",
+  "original_protocol_sha256": "3012133682237ace502f1f15c0c94ab554031a97f0aacceb3132e8d935534b25",
+  "original_protocol_path": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/protocol.json"
+}

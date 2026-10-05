@@ -1,0 +1,26 @@
+{
+  "groups": {
+    "g00": [
+      "CD_TRNS_TRAN",
+      "HF_TRNS_TRAN"
+    ],
+    "g01": [
+      "CMS_REQ_TRAN",
+      "CMS_RES_TRAN"
+    ],
+    "g02": [
+      "GR_JC_TRAN",
+      "GR_NJ_TRAN"
+    ],
+    "g03": [
+      "OB_INQR_TRAN",
+      "OB_TRNS_TRAN"
+    ],
+    "g04": [
+      "PI_WD_LEDG"
+    ]
+  },
+  "packaging": "Post-result portable packaging. Original runner and learner bytes are retained; only runtime paths and input hash manifests are reconstructed. This is not a new preregistration.",
+  "original_protocol_sha256": "d7504c39b6903dc3e6ee6e9721f3ea3d6ccda9daba25692a31aa27601a12a774",
+  "original_protocol_path": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/protocol.json"
+}

@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "files_scanned": 124,
+  "gzip_payloads_scanned": 50,
+  "personal_absolute_paths": 0,
+  "credential_assignment_matches": 0,
+  "writing_history_disclosure_matches": 0,
+  "scope": "Automated text checks plus human-readable review of included minimal data; no restricted policy corpus, deployment logs or model request transcripts are included. Synthetic metadata and schema comments are retained as declared.",
+  "excluded_generated_directories": [
+    "validation",
+    "isolation-copy",
+    "packaging-validation"
+  ]
+}

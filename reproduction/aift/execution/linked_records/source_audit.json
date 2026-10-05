@@ -1,0 +1,28 @@
+{
+  "audited_utc": "2026-10-05T06:06:05.480435+00:00",
+  "method": "Local read-only original-source hash and executable AST audit. Original modules/policies are not required at replay time.",
+  "tables": [
+    {
+      "table": "CD_TRNS_TRAN",
+      "original_source_hash_verified": true,
+      "portable_function_hash_verified": true,
+      "executable_AST_identity_verified": true,
+      "executable_AST_sha256": "9a9f64a20c119122f62e7a9566231762314d2a05dd47131306f8ad1da356ff99"
+    },
+    {
+      "table": "HF_TRNS_TRAN",
+      "original_source_hash_verified": true,
+      "portable_function_hash_verified": true,
+      "executable_AST_identity_verified": true,
+      "executable_AST_sha256": "bc2280e4779dcee55ce4bff99855e31b563d38c60012a7bc034a091d68b0512c"
+    }
+  ],
+  "original_operation_counts": {
+    "KEEP": 60,
+    "HASH": 25,
+    "MASK": 4,
+    "GENERALIZE": 3
+  },
+  "original_cell_comparisons": 276000,
+  "original_artifacts_unchanged": true
+}

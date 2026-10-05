@@ -1,0 +1,41 @@
+{
+  "status": "pass",
+  "audit_kind": "Trusted local source-binding audit conducted before public package minimization; public reruns verify the retained hash-bound statement and supplied inputs, not access to the original private sources.",
+  "created_utc": "2026-10-05T05:51:31.849364+00:00",
+  "original_source_hashes_verified": {
+    "paper/experiments/rq2/20260925_source_order_integrated/production_policies.json": "24f5b895b22a8096ab5b04770b37ccc5607b47e8fc6e72212f0d73e753d6092a",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_code_review.json": "6e0ef2d5b5f88c9125d587a8e32615e28844625a9602b225ff551d36b280bc44",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_output_checks.py": "73c06424ac6a92c1bd2be06e0b323deeceb13c375ad472863a10b18d1175159d",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_output_checks.json": "d71302a74331ee027c9f202ac9e98449a3d0f35482e71233790d88029d3815f7",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_contract_checks.json": "4798225dc3a3be2a8edae2b04716497091766144c4404b0bdb24e22053c7319c",
+    "paper/experiments/rq2/20260925_source_order_integrated/compiled_execution.json": "faa53b9090b7709b4e24fab3afeb8f4c0d9d40b088c4660f67aec639a6a6e153",
+    "paper/experiments/rq2/20260925_source_order_integrated/execute_candidates.py": "b97c29080bce7caa9d6cdf88e305ff05e998514fab41c48641abb2d503bde068",
+    "paper/experiments/rq2/20260925_source_order_integrated/verify_treatment_outputs.py": "3514087d9ae490df6bae3f417e205b52eb2a885dc22a5446c66d56084d658304",
+    "paper/experiments/rq2/20260925_source_order_integrated/independent_treatment_verification.json": "e6041bdcff44f793291047206422cd65fec8bd90608e6c549f75c66a3b70a939",
+    "paper/experiments/rq2/20260925_source_order_integrated/corpus.json": "e7edd0be4816597fff26bb1b728d30ef6c770a77aa3afa798a58a49593c912ef",
+    "paper/experiments/rq2/20260925_source_order_integrated/protocol.json": "474ff0a4ee4abcbd7fff7f47b1248a57612a84fb146b8b132005169834f39db4"
+  },
+  "inputs_sha256": "a5fac2d86b2fd19c005297f0b8ab41e00b071bbfc5dc5940e75581e99d015965",
+  "canonical_json_definition": "UTF-8 JSON, ensure_ascii=False, sort_keys=True, separators comma/colon, no trailing newline",
+  "raw_candidates_canonical_sha256": "86cf7fb0ca3d98309b3edd0151c753e1559c7541523b14869059f4fc4078c22f",
+  "compiled_recorded_rows_canonical_sha256": "d12957c494fec1134db53ba8db068ba1c37e5c7051c392ccbfcf55b215919451",
+  "fixtures_canonical_sha256": "d6e42a6e1b49a7a8fb301de9e99dfa71a7fa929a961a3022629da15b7abb5643",
+  "raw_candidate_count": 33,
+  "distinct_raw_code_count": 8,
+  "compiled_recorded_candidate_count": 66,
+  "fixture_count": 17,
+  "raw_code_parameters_identity_match_original": true,
+  "raw_code_hashes_match_original_review": true,
+  "compiled_rows_match_original": true,
+  "fixtures_match_original_VALUES_AST": true,
+  "original_source_files_changed": false,
+  "minimal_validator_exact_source_extraction": true,
+  "minimal_VALUES_exact_source_extraction": true,
+  "reviewed_hash_list_exact_match": true,
+  "minimal_runtime_hashes": {
+    "inputs.json": "a5fac2d86b2fd19c005297f0b8ab41e00b071bbfc5dc5940e75581e99d015965",
+    "raw_ast_guard.py": "ee44c51cd418ffc3505c91e838bdfdc2bef5ddb6b015ea9ecce1bb38a9f8f46d",
+    "original_fixtures.py": "9ae929b9867fb0a06161e0f7b3c1246f19d45e9d6afdc9cad0552cbcd06e4223",
+    "reviewed_raw_hashes.json": "061b20668722a3886dd5035c74369c48f27232097545bd8958e925be09e4d444"
+  }
+}

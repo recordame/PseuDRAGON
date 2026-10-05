@@ -166,6 +166,20 @@ method/parameter validation, display-rule provenance and missing-value
 preservation. Install Node.js to include the JavaScript rendering check;
 without it, that check is explicitly skipped. Tests do not call a model API.
 
+## Offline paper checks
+
+The [reproduction package](reproduction/aift/README.md) contains reconstructed
+schema inputs, fixed label predictions, frozen study code and synthetic
+transformation fixtures. It reruns family withholding, same-name exclusion,
+approval maintenance, knowledge growth and parameter checks. It also checks
+recorded candidate outputs and the conservative non-PII reuse comparison.
+
+These checks do not need a model server or institutional policy documents.
+The package distinguishes freshly rerun offline code from calculations on
+recorded outputs. It does not recreate the original inference runs or timings.
+Its source manifest identifies the frozen versions; the current application
+is kept separate from those evaluation snapshots.
+
 ## Code style
 
 Python follows Black with four-space indentation, double-quoted strings and a
@@ -190,9 +204,10 @@ npm run format:check
 ## Included and excluded files
 
 This repository contains runtime code, prompt templates, synthetic sample-data
-generators, generic regression fixtures and configuration examples. It excludes
-production records, internal policy documents, evaluation responses, learned
-decision stores, local databases, audit logs, credentials and manuscript files.
+generators, generic regression fixtures, configuration examples and the offline
+paper checks described above. It excludes production records, internal policy
+documents, deployment decision stores, local databases, operational audit logs,
+credentials and manuscript files.
 Runtime audit records can contain supplied metadata and model output; keep
 them inside the deployment environment.
 

@@ -1,0 +1,58 @@
+{
+  "created_utc": "2026-10-05T05:41:25.035973+00:00",
+  "study": "Unchanged archived raw MASK candidates on the existing 17 compiled-treatment fixtures",
+  "status_at_freeze": "Existing 3-primary results known; expanded raw17 outcomes not yet executed. Same source data and no new inference or human approval.",
+  "inputs_sha256": "a5fac2d86b2fd19c005297f0b8ab41e00b071bbfc5dc5940e75581e99d015965",
+  "source_hashes": {
+    "paper/experiments/rq2/20260925_source_order_integrated/production_policies.json": "24f5b895b22a8096ab5b04770b37ccc5607b47e8fc6e72212f0d73e753d6092a",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_code_review.json": "6e0ef2d5b5f88c9125d587a8e32615e28844625a9602b225ff551d36b280bc44",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_output_checks.py": "73c06424ac6a92c1bd2be06e0b323deeceb13c375ad472863a10b18d1175159d",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_output_checks.json": "d71302a74331ee027c9f202ac9e98449a3d0f35482e71233790d88029d3815f7",
+    "paper/experiments/rq2/20260925_source_order_integrated/raw_contract_checks.json": "4798225dc3a3be2a8edae2b04716497091766144c4404b0bdb24e22053c7319c",
+    "paper/experiments/rq2/20260925_source_order_integrated/compiled_execution.json": "faa53b9090b7709b4e24fab3afeb8f4c0d9d40b088c4660f67aec639a6a6e153",
+    "paper/experiments/rq2/20260925_source_order_integrated/execute_candidates.py": "b97c29080bce7caa9d6cdf88e305ff05e998514fab41c48641abb2d503bde068",
+    "paper/experiments/rq2/20260925_source_order_integrated/verify_treatment_outputs.py": "3514087d9ae490df6bae3f417e205b52eb2a885dc22a5446c66d56084d658304",
+    "paper/experiments/rq2/20260925_source_order_integrated/independent_treatment_verification.json": "e6041bdcff44f793291047206422cd65fec8bd90608e6c549f75c66a3b70a939",
+    "paper/experiments/rq2/20260925_source_order_integrated/corpus.json": "e7edd0be4816597fff26bb1b728d30ef6c770a77aa3afa798a58a49593c912ef",
+    "paper/experiments/rq2/20260925_source_order_integrated/protocol.json": "474ff0a4ee4abcbd7fff7f47b1248a57612a84fb146b8b132005169834f39db4"
+  },
+  "candidate_population": {
+    "raw_candidates": 33,
+    "distinct_raw_snippets": 8,
+    "compiled_candidates": 66,
+    "unique_account_fields": 11,
+    "repetitions": 3
+  },
+  "execution": "Original raw lambda code executed unchanged with real pandas, including NaN and pd.NA; no Stage4 or null-preserving wrapper, no normalization. Prior raw run used None-only notna stub. Only the 8 previously reviewed exact hashes and the existing AST validator can execute.",
+  "scoring": {
+    "nonmissing_denominator": "14 per candidate: 12 strings containing digits plus empty string and abc. Also report the 12 digit-bearing strings separately.",
+    "missing_denominator": "3 per candidate (None,float NaN,pd.NA); success means output remains missing, not literal string or mask. Compiled saved null only establishes semantic missingness, not exact subtype.",
+    "digit_positions": "Unicode str.isdigit positions, including fullwidth digits; separators are not digits.",
+    "protection": "If input contains digits, allow complete nonempty suppression using the original mask alphabet *#Xx●•. Otherwise output must be same length and each character unchanged or replaced by a mask character; conceal the last min(3,n) numeric positions OR, when n>3, the three numeric positions immediately preceding the final digit. No digit-bearing input is accepted unchanged.",
+    "zero_digit_policy": "Empty and no-digit strings must remain unchanged; this is the existing compiled boundary behavior, a separate preservation contract rather than a legal masking obligation.",
+    "parameter_contract": "Record missing/empty parameters independently of output quality; output success is not human approval or legal applicability."
+  },
+  "runtime": {
+    "python": "Python interpreter with pandas 3.0.6; exact tested version in result runtime",
+    "pandas": "3.0.6"
+  },
+  "reproduction": "Run first and repeat with deterministic JSON outputs, then independent checker with no imports of this runner or product.",
+  "limits": "Only existing candidates and17authoredinputs; no LLM, participants, legal certification, product/manuscript/git mutations.",
+  "packaging": {
+    "packaged_utc": "2026-10-05T05:48:15.443630+00:00",
+    "status": "Post-result portable packaging of an already completed frozen protocol. This is not a new preregistration.",
+    "original_protocol_sha256": "7bcc558ba8ca6a5f3d8cf444158584cd034e5bc78acd46473c1f2d9e317f54e1",
+    "original_inputs_sha256": "a5fac2d86b2fd19c005297f0b8ab41e00b071bbfc5dc5940e75581e99d015965",
+    "original_first_sha256": "92a2f9477e2106d1e90db4c9ccc5b110a86543e5be34795ebd3191fda47690a4",
+    "original_repeat_sha256": "92a2f9477e2106d1e90db4c9ccc5b110a86543e5be34795ebd3191fda47690a4",
+    "changes": "Source locations made repository-relative; interpreter location made environment-independent. Candidate code, fixtures and scoring are unchanged.",
+    "source_resolution": "source_hashes are original repository-relative provenance only; runtime_hashes address files relative to this package.",
+    "restricted_source_handling": "Full policy corpus and production records are not distributed or required at runtime. Only source hashes remain as provenance; source_binding_summary.json records local independent binding before publication. Minimal AST validator and fixture definition are exact source extractions."
+  },
+  "runtime_hashes": {
+    "inputs.json": "a5fac2d86b2fd19c005297f0b8ab41e00b071bbfc5dc5940e75581e99d015965",
+    "raw_ast_guard.py": "ee44c51cd418ffc3505c91e838bdfdc2bef5ddb6b015ea9ecce1bb38a9f8f46d",
+    "original_fixtures.py": "9ae929b9867fb0a06161e0f7b3c1246f19d45e9d6afdc9cad0552cbcd06e4223",
+    "reviewed_raw_hashes.json": "061b20668722a3886dd5035c74369c48f27232097545bd8958e925be09e4d444"
+  }
+}

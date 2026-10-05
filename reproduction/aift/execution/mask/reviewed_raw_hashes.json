@@ -1,0 +1,14 @@
+{
+  "approved_sha256": [
+    "04b0a934f7b5780394795b7ba9a3527a5497b26beb350a274fcef6fdfab04542",
+    "5b53accc096521ca8354e044fd5f4670efe446697891c3bccddb78f4900ba540",
+    "89f3e341e33a96688f31b30ec7e7882997dab4040a72aa9402642727b19ba43b",
+    "b4fabb625bcfb09b3d6fb03103b5dec7e7de74fb0c16ff980d9a1f8c639ef263",
+    "51598f2328e7ad948b9f4558b56d2152e60619ffe1bcf042ca22a5101e245a13",
+    "94c7f64cc79c24680b8a6ce91844c7352ff8d91719ee7ef4ce154da124e63597",
+    "7d15e4c431fe58bda4538fc4913fcd02481e4c33fa11917ba49db73319aab267",
+    "4ca7c5832debff5f1d28cbaed47a36a5bee4ce50628af6e79daa602f81704d5e"
+  ],
+  "original_review_sha256": "6e0ef2d5b5f88c9125d587a8e32615e28844625a9602b225ff551d36b280bc44",
+  "scope": "Original exact-code safety review for bounded synthetic execution; not human treatment approval."
+}

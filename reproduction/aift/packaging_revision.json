@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-05",
+  "reason": "Preserve frozen Python payloads under repository formatting and whitespace checks.",
+  "deterministic_gzip_mtime": 0,
+  "frozen_python_payloads": [
+    {
+      "path": "rq1/studies/family_name_exclusion/run_study.py.gz",
+      "payload_sha256": "5260ac999feb897caaa23b5ad8d7afd01aa78dc00a00f171a0ab770d52c8c138"
+    },
+    {
+      "path": "rq1/studies/family_name_exclusion/replay_helpers.py.gz",
+      "payload_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac"
+    },
+    {
+      "path": "rq1/studies/family_name_exclusion/sources/expert_preference_manager.py.gz",
+      "payload_sha256": "47ef0f77f9e601786a29fd43324d2cdec61442cdbb553ecf423384cc93eb4935"
+    },
+    {
+      "path": "rq1/studies/family_name_exclusion/sources/heuristic_pattern_learner.py.gz",
+      "payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10"
+    },
+    {
+      "path": "rq1/studies/family_name_exclusion/sources/canonical_pure_lookup.py.gz",
+      "payload_sha256": "25eb3ce761d88ce7d05dab96d75117fac48436772fb481fca86aca4226852fd0"
+    },
+    {
+      "path": "rq1/studies/equal_maintenance/run_experiment.py.gz",
+      "payload_sha256": "395d4a5ab2e2724d584932e11e4cd5e083a5b3fcf06e1b1a41cf889523d7c285"
+    },
+    {
+      "path": "rq1/studies/equal_maintenance/sources/guarded_expert_preference_manager.py.gz",
+      "payload_sha256": "47ef0f77f9e601786a29fd43324d2cdec61442cdbb553ecf423384cc93eb4935"
+    },
+    {
+      "path": "rq1/studies/equal_maintenance/sources/heuristic_pattern_learner.py.gz",
+      "payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10"
+    },
+    {
+      "path": "rq1/studies/equal_maintenance/sources/canonical_pure_lookup.py.gz",
+      "payload_sha256": "25eb3ce761d88ce7d05dab96d75117fac48436772fb481fca86aca4226852fd0"
+    },
+    {
+      "path": "rq1/studies/growth/run_growth.py.gz",
+      "payload_sha256": "fd1ab16bc0d994612b8914f465b513c71d85d864b573fd8cf6d8e151d27b76a2"
+    },
+    {
+      "path": "rq1/studies/growth/replay_helpers.py.gz",
+      "payload_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac"
+    },
+    {
+      "path": "rq1/studies/growth/verify_independent.py.gz",
+      "payload_sha256": "9ac8a40b68a54bacdec7b1ffa0d90f51ddc307522f03ba4b546677f704d8af55"
+    },
+    {
+      "path": "rq1/studies/growth/sources/expert_preference_manager.py.gz",
+      "payload_sha256": "2cb7856c88793fd15ca59a22a16653cc3826d373779e285bdcf5e96c134db11f"
+    },
+    {
+      "path": "rq1/studies/growth/sources/heuristic_pattern_learner.py.gz",
+      "payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10"
+    },
+    {
+      "path": "rq1/studies/sensitivity/run_sensitivity.py.gz",
+      "payload_sha256": "d240ffd28e75f0c6bc4e84075f9732173e07aabc25968ff03db99e1452cd58e1"
+    },
+    {
+      "path": "rq1/studies/sensitivity/replay_helpers.py.gz",
+      "payload_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac"
+    },
+    {
+      "path": "rq1/studies/sensitivity/verify_sensitivity.py.gz",
+      "payload_sha256": "d75adc819450047a23009232dd657780a95886a868c716ad06b0a6528a8bfe62"
+    },
+    {
+      "path": "rq1/studies/sensitivity/sources/expert_preference_manager.py.gz",
+      "payload_sha256": "2cb7856c88793fd15ca59a22a16653cc3826d373779e285bdcf5e96c134db11f"
+    },
+    {
+      "path": "rq1/studies/sensitivity/sources/heuristic_pattern_learner.py.gz",
+      "payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10"
+    },
+    {
+      "path": "rq1/conservative_gate/run_replay.py.gz",
+      "payload_sha256": "8ae63c7c2c4a8ae6e93fa2ef5b0e45dee828855f2d348b372ee798658d88b6b7"
+    },
+    {
+      "path": "rq1/conservative_gate/verify_and_report.py.gz",
+      "payload_sha256": "486414bc314de56fb5beaa9d9a2d2a344ce75bcc7f784da0e2b83debb1953b0d"
+    },
+    {
+      "path": "rq1/audit_common.py.gz",
+      "payload_sha256": "10d96187ef5e9534716905f4810d111008a5d35f4b6cad5f689d7bbedb253423"
+    }
+  ],
+  "all_uncompressed_payload_hashes_unchanged": true,
+  "read_only_public_staged_check_before_replacement": {
+    "command": "git diff --cached --check",
+    "exit_code": 2,
+    "files": [
+      "reproduction/aift/rq1/studies/equal_maintenance/sources/guarded_expert_preference_manager.py",
+      "reproduction/aift/rq1/studies/equal_maintenance/sources/heuristic_pattern_learner.py",
+      "reproduction/aift/rq1/studies/family_name_exclusion/sources/expert_preference_manager.py",
+      "reproduction/aift/rq1/studies/family_name_exclusion/sources/heuristic_pattern_learner.py",
+      "reproduction/aift/rq1/studies/growth/sources/expert_preference_manager.py",
+      "reproduction/aift/rq1/studies/growth/sources/heuristic_pattern_learner.py",
+      "reproduction/aift/rq1/studies/sensitivity/sources/expert_preference_manager.py",
+      "reproduction/aift/rq1/studies/sensitivity/sources/heuristic_pattern_learner.py"
+    ],
+    "other_runner_files_reported": false
+  },
+  "new_runtime_handling": "Unpack Python snapshots only into new copied study/gate directories; the frozen arithmetic helper loads from gzip bytes in memory.",
+  "post_compression_family_exercise": {
+    "status": "PASS",
+    "source_binding_files": 50,
+    "raw_output_comparison": {
+      "raw_derived_output_hashes_match": {
+        "runs/first/snapshots.json": "b466d00b0c80e767d5e2660f0dcf019a93c70c92f388ed7baf2060a28e9aec91",
+        "runs/first/routes.json": "6239d739ced2f9e928b6cb6182fb38642095066baadfc87a3e6f6121ad425ee3",
+        "runs/first/control_verification.json": "38169219f6a1ea24478dd96c0f6403f4780e244619833add5a62525d73e893b6"
+      },
+      "all_result_fields_match_except_portable_protocol_hash": true,
+      "fresh_frozen_learner_execution": true,
+      "repeat_run": false
+    },
+    "independent": {
+      "status": "PASS",
+      "freshly_reconstructed_routes": 2208,
+      "stores": 256,
+      "family_and_query_name_exclusion_checked": true
+    },
+    "new_full_suite_run": false
+  },
+  "independent_packaging_review": {
+    "status": "PASS",
+    "frozen_python_payloads_equal_original": 22,
+    "all_bound_payload_hashes_verified": 50,
+    "uncompressed_python_whitespace_issues": 0
+  }
+}

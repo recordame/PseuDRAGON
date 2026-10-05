@@ -1,0 +1,197 @@
+{
+  "package_scope": "Tables 4\u20138 and specified supporting offline checks",
+  "new_model_calls": 0,
+  "new_participants": 0,
+  "evidence": [
+    {
+      "table": "4",
+      "rows": "Both family-holdout methods and both family-plus-query-name-exclusion methods",
+      "mode": "fresh frozen learner/store reconstruction",
+      "study": "family_name_exclusion",
+      "primary_prediction_sets": 3,
+      "separate_secondary_prediction_sets": 1,
+      "source": "rq1/studies/family_name_exclusion/",
+      "checks": [
+        "full derived-route hashes",
+        "all summary fields except portable protocol hash",
+        "repeat equality",
+        "independent routing, split exclusion, field/name arithmetic"
+      ],
+      "key_counts": {
+        "family_exact_cache": 75,
+        "family_exact_plus_rules": 83,
+        "excluded_name_cache": 0,
+        "excluded_name_rules": 39,
+        "excluded_positive": 8,
+        "excluded_negative": 31,
+        "excluded_reused_names": 12
+      }
+    },
+    {
+      "table": "5",
+      "rows": "Equal-maintenance exact cache, guarded history/rules, guarded cache/rules and lifecycle paragraph",
+      "mode": "fresh frozen manager/learner lifecycle reconstruction",
+      "study": "equal_maintenance",
+      "source": "rq1/studies/equal_maintenance/",
+      "key_counts": {
+        "cases_total": 1104,
+        "positions_per_prediction_set": 368,
+        "clean_reuse": [
+          75,
+          75,
+          83
+        ],
+        "wrong_approval_cases_per_set": 2,
+        "wrong_reuse_events_per_set": 4
+      },
+      "checks": [
+        "full raw route/case hashes",
+        "all summary fields except portable protocol hash",
+        "repeat equality",
+        "independent full prediction-vector equality including fallbacks",
+        "each method withdrawal-to-fresh and restored-to-clean route identity"
+      ]
+    },
+    {
+      "table": "5",
+      "rows": "Earlier history-first/no-guard, guarded, and cache-blocker ablations",
+      "mode": "archived raw-route arithmetic; no fresh historical learner run",
+      "source": "rq1/historical/",
+      "key_counts_per_prediction_set": {
+        "history_first_wrong_cases": 208,
+        "history_first_wrong_reuse_events": 322,
+        "guarded_wrong_cases": 2,
+        "guarded_wrong_reuse_events": 4,
+        "blocker_disabled_wrong_cases": 48,
+        "blocker_disabled_wrong_reuse_events": 75,
+        "after_removal_and_rebuild_wrong_reuse_events": 0
+      },
+      "checks": [
+        "preserved raw route payload hashes",
+        "independent reference-label tally from all three sets"
+      ]
+    },
+    {
+      "table": "6",
+      "rows": "All five fractions and three reuse methods",
+      "mode": "fresh frozen learner/store reconstruction",
+      "study": "growth",
+      "source": "rq1/studies/growth/",
+      "key_counts": {
+        "orders": 20,
+        "fractions": 5,
+        "prediction_sets": 3,
+        "stores": 1500,
+        "routing_records": 82800
+      },
+      "checks": [
+        "full snapshot hash",
+        "all result fields except portable protocol hash",
+        "repeat equality",
+        "independent route reconstruction, arithmetic, transitions and endpoints"
+      ]
+    },
+    {
+      "table": "7",
+      "rows": "Default and eight fixed factor combinations",
+      "mode": "fresh frozen learner/store reconstruction",
+      "study": "sensitivity",
+      "source": "rq1/studies/sensitivity/",
+      "checks": [
+        "full snapshot hash",
+        "all result fields except portable protocol hash",
+        "repeat equality",
+        "independent route reconstruction, arithmetic, candidate counts and conflict bounds"
+      ]
+    },
+    {
+      "table": "6 supporting paragraph",
+      "rows": "Conservative unseen-name Non-PII deferral",
+      "mode": "unchanged routing intervention replay over freshly reconstructed growth snapshots",
+      "study": "conservative_gate",
+      "source": "rq1/conservative_gate/",
+      "key_counts": {
+        "default_25_percent_reuse": 62.2,
+        "candidate_25_percent_reuse": 51.35,
+        "default_25_percent_added_FN": 0.2,
+        "candidate_25_percent_added_FN": 0,
+        "default_full_reuse": 83,
+        "candidate_full_reuse": 77
+      },
+      "checks": [
+        "27600 original default route bindings",
+        "all paired route byte hashes",
+        "all result fields except portable protocol hash",
+        "repeat equality",
+        "separate intervention/arithmetic checker"
+      ]
+    },
+    {
+      "table": "8",
+      "rows": "Raw three-input and raw seventeen-input rows",
+      "mode": "fresh execution of unchanged saved raw snippets and raw contracts",
+      "source": "execution/mask/",
+      "key_counts": {
+        "candidates": 33,
+        "distinct_snippets": 8,
+        "primary_inputs": 3,
+        "all_inputs": 17,
+        "primary_all_pass": 32,
+        "seventeen_all_pass": 0,
+        "contract_accepted": 0
+      },
+      "checks": [
+        "input and original code hashes",
+        "separate execution/checker",
+        "repeat equality"
+      ]
+    },
+    {
+      "table": "8",
+      "rows": "Compiled seventeen-input row",
+      "mode": "archived outputs re-scored; archived accepted/executed contract records tallied",
+      "source": "execution/mask/",
+      "key_counts": {
+        "candidates": 66,
+        "inputs": 17,
+        "all_pass": 66,
+        "accepted_executed_records": 66
+      },
+      "fresh_compiler_execution": false,
+      "fresh_source_linked_contract_validation": false,
+      "omitted_dependency": "restricted exact institutional source text"
+    },
+    {
+      "table": "Execution paragraph",
+      "rows": "92000 cells / 276000 repeated original cells / 144 links",
+      "mode": "fresh retained-function execution and archived standalone output-hash comparison",
+      "source": "execution/",
+      "fresh_database_backed_standalone_runs": 0,
+      "key_counts": {
+        "fresh_cells": 92000,
+        "fresh_boundary_cells": 1288,
+        "fresh_missing_cells": 276,
+        "historical_standalone_runs": 27,
+        "historical_cell_comparisons_including_repeats": 276000,
+        "linked_rows": 84,
+        "fictitious_customers": 12,
+        "matching_row_pairs": 144
+      }
+    }
+  ],
+  "not_reproduced": [
+    "Live model inference or the initial/fresh model request process",
+    "Practitioner assessments and original human adjudication",
+    "The 82.95% live automated timing measurement",
+    "Original retrieval contexts and institutional policy retrieval",
+    "Compiler generation and full source-linked validation for 66 compiled MASK records"
+  ],
+  "privacy_exclusions": [
+    "institution policy text",
+    "real customer values",
+    "personal absolute paths",
+    "deployment logs",
+    "credentials",
+    "model request transcripts"
+  ]
+}

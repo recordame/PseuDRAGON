@@ -1,0 +1,94 @@
+{
+  "family_name_exclusion": {
+    "original": "paper/experiments/rq1/20261004_family_name_exclusion",
+    "runner": "run_study.py",
+    "inputs": [
+      "records.json",
+      "groups.json",
+      "initial_fallbacks.json",
+      "prior_fresh_routes.json",
+      "prior_guard_routes.json",
+      "prior_initial_routes.json"
+    ],
+    "sources": [
+      "expert_preference_manager.py",
+      "heuristic_pattern_learner.py",
+      "canonical_pure_lookup.py"
+    ],
+    "expected_results": [
+      "runs/first/results.json"
+    ],
+    "expected_hashes": [
+      "runs/first/snapshots.json",
+      "runs/first/routes.json",
+      "runs/first/control_verification.json"
+    ],
+    "verifier": null
+  },
+  "equal_maintenance": {
+    "original": "paper/experiments/rq1/20261004_equal_maintenance_cache",
+    "runner": "run_experiment.py",
+    "inputs": [
+      "records.json",
+      "groups.json",
+      "clean_stores.json",
+      "case_stores.jsonl"
+    ],
+    "sources": [
+      "guarded_expert_preference_manager.py",
+      "heuristic_pattern_learner.py",
+      "canonical_pure_lookup.py"
+    ],
+    "expected_results": [
+      "runs/first/summary.json"
+    ],
+    "expected_hashes": [
+      "runs/first/baseline_routes.json",
+      "runs/first/case_routes.jsonl",
+      "runs/first/cases.json"
+    ],
+    "verifier": null
+  },
+  "growth": {
+    "original": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2",
+    "runner": "run_growth.py",
+    "inputs": [
+      "records.json",
+      "groups.json",
+      "schedules.json",
+      "previous_results.json"
+    ],
+    "sources": [
+      "expert_preference_manager.py",
+      "heuristic_pattern_learner.py"
+    ],
+    "expected_results": [
+      "results.json"
+    ],
+    "expected_hashes": [
+      "snapshots.jsonl"
+    ],
+    "verifier": "verify_independent.py"
+  },
+  "sensitivity": {
+    "original": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity",
+    "runner": "run_sensitivity.py",
+    "inputs": [
+      "records.json",
+      "groups.json",
+      "schedules.json",
+      "default_growth.json"
+    ],
+    "sources": [
+      "expert_preference_manager.py",
+      "heuristic_pattern_learner.py"
+    ],
+    "expected_results": [
+      "results.json"
+    ],
+    "expected_hashes": [
+      "snapshots.jsonl"
+    ],
+    "verifier": "verify_sensitivity.py"
+  }
+}

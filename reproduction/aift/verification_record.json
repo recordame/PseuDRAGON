@@ -1,0 +1,1023 @@
+{
+  "status": "PASS",
+  "date": "2026-10-05",
+  "runtime": {
+    "python": "3.12.1",
+    "numpy": "2.4.2",
+    "pandas": "2.3.3"
+  },
+  "complete_initial_suite_passed": true,
+  "isolated_relocated_components_all_passed": true,
+  "isolated_working_directory_unrelated_to_package": true,
+  "rq1_first_repeat": true,
+  "isolated_copy_issue_and_resolution": "The initial copy filter omitted a Python directory also named validation. The full execution component was recopied without the filter, and the failed execution component was rerun successfully. All RQ1 studies, gate, repeats and independent checks had already passed. No experiment source or scientific result changed.",
+  "original_rq1_source_payloads_rehashed_unchanged": 50,
+  "public_metadata_conversion": "Only 1104 unused provenance_directory fields were converted to repository-relative paths. Every other JSON field was compared equal. The isolated lifecycle replay retained exact original route/case output hashes.",
+  "new_wrapper_formatting": "Black22.8.0, line length100, default double quotes; parsed AST unchanged. Frozen archived sources retain their original bytes.",
+  "new_model_calls": 0,
+  "new_human_decisions": 0,
+  "checks": {
+    "family_name_exclusion": {
+      "raw_derived_output_hashes_match": {
+        "runs/first/snapshots.json": "b466d00b0c80e767d5e2660f0dcf019a93c70c92f388ed7baf2060a28e9aec91",
+        "runs/first/routes.json": "6239d739ced2f9e928b6cb6182fb38642095066baadfc87a3e6f6121ad425ee3",
+        "runs/first/control_verification.json": "38169219f6a1ea24478dd96c0f6403f4780e244619833add5a62525d73e893b6"
+      },
+      "all_result_fields_match_except_portable_protocol_hash": true,
+      "repeat_report": {
+        "passed": true,
+        "comparisons": {
+          "snapshots.json": {
+            "first_sha256": "b466d00b0c80e767d5e2660f0dcf019a93c70c92f388ed7baf2060a28e9aec91",
+            "repeat_sha256": "b466d00b0c80e767d5e2660f0dcf019a93c70c92f388ed7baf2060a28e9aec91",
+            "identical": true
+          },
+          "routes.json": {
+            "first_sha256": "6239d739ced2f9e928b6cb6182fb38642095066baadfc87a3e6f6121ad425ee3",
+            "repeat_sha256": "6239d739ced2f9e928b6cb6182fb38642095066baadfc87a3e6f6121ad425ee3",
+            "identical": true
+          },
+          "results.json": {
+            "first_sha256": "249d41075384821ac171441528b5c29373cc2ed27110693aa475a3fee44bb420",
+            "repeat_sha256": "249d41075384821ac171441528b5c29373cc2ed27110693aa475a3fee44bb420",
+            "identical": true
+          },
+          "control_verification.json": {
+            "first_sha256": "38169219f6a1ea24478dd96c0f6403f4780e244619833add5a62525d73e893b6",
+            "repeat_sha256": "38169219f6a1ea24478dd96c0f6403f4780e244619833add5a62525d73e893b6",
+            "identical": true
+          }
+        },
+        "normalization": "Only source-generated timestamps removed from snapshots; routes, metrics, train/support IDs and rule contents unchanged."
+      },
+      "independent": {
+        "status": "PASS",
+        "freshly_reconstructed_routes": 2208,
+        "stores": 256,
+        "family_and_query_name_exclusion_checked": true
+      }
+    },
+    "equal_maintenance": {
+      "raw_derived_output_hashes_match": {
+        "runs/first/baseline_routes.json": "9bf25c4292e0e040fa579093221dcb506171b9d03acb8017cd2a35c555e2c1d0",
+        "runs/first/case_routes.jsonl": "bd3769cafe0bc9f0004779049762023babde08c48681d794219706536a7d3caa",
+        "runs/first/cases.json": "1a132a64a516242f6fd1db315343de2e54b6bbb21937004c30a4bbe285c8ad90"
+      },
+      "all_result_fields_match_except_portable_protocol_hash": true,
+      "repeat_report": {
+        "protocol_sha256": "2182e53eca63fafb44693a270a99d2c9f92127bf34d6a8fce28b61c8dedfe22d",
+        "files_equal": {
+          "baseline_routes.json": true,
+          "cases.json": true,
+          "case_routes.jsonl": true,
+          "summary.json": true
+        },
+        "all_equal": true,
+        "normalization": "Only actual-rule runtime timestamps were removed before saving semantic outputs; every route, support, label, metric, and rule decision field is compared."
+      },
+      "independent": {
+        "status": "PASS",
+        "cases": 1104,
+        "all_heldout_label_vectors_including_fallback_equal_across_arms": true,
+        "each_arm_withdrawal_and_restoration_route_identities": {
+          "exact_cache": 1104,
+          "guarded_history_rules": 1104,
+          "guarded_cache_rules": 1104
+        },
+        "clean": [
+          {
+            "rep": 1,
+            "arm": "exact_cache",
+            "reused": 75,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 1,
+            "arm": "guarded_cache_rules",
+            "reused": 83,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 1,
+            "arm": "guarded_history_rules",
+            "reused": 75,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 2,
+            "arm": "exact_cache",
+            "reused": 75,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 2,
+            "arm": "guarded_cache_rules",
+            "reused": 83,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 2,
+            "arm": "guarded_history_rules",
+            "reused": 75,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 3,
+            "arm": "exact_cache",
+            "reused": 75,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 3,
+            "arm": "guarded_cache_rules",
+            "reused": 83,
+            "wrong_reuse": 0
+          },
+          {
+            "rep": 3,
+            "arm": "guarded_history_rules",
+            "reused": 75,
+            "wrong_reuse": 0
+          }
+        ],
+        "per_prediction_set": [
+          {
+            "rep": 1,
+            "stage": "clean",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "clean",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "clean",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "corrected_rebuilt",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "corrected_rebuilt",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "corrected_rebuilt",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "withdrawn_rebuilt",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "withdrawn_rebuilt",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "withdrawn_rebuilt",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 1,
+            "stage": "wrong_approval",
+            "arm": "exact_cache",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 1,
+            "stage": "wrong_approval",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 1,
+            "stage": "wrong_approval",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 2,
+            "stage": "clean",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "clean",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "clean",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "corrected_rebuilt",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "corrected_rebuilt",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "corrected_rebuilt",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "withdrawn_rebuilt",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "withdrawn_rebuilt",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "withdrawn_rebuilt",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 2,
+            "stage": "wrong_approval",
+            "arm": "exact_cache",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 2,
+            "stage": "wrong_approval",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 2,
+            "stage": "wrong_approval",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 3,
+            "stage": "clean",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "clean",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "clean",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "corrected_rebuilt",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "corrected_rebuilt",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "corrected_rebuilt",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "withdrawn_rebuilt",
+            "arm": "exact_cache",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "withdrawn_rebuilt",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "withdrawn_rebuilt",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 0,
+            "wrong_reuse_events": 0
+          },
+          {
+            "rep": 3,
+            "stage": "wrong_approval",
+            "arm": "exact_cache",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 3,
+            "stage": "wrong_approval",
+            "arm": "guarded_cache_rules",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          },
+          {
+            "rep": 3,
+            "stage": "wrong_approval",
+            "arm": "guarded_history_rules",
+            "wrong_cases": 2,
+            "wrong_reuse_events": 4
+          }
+        ]
+      }
+    },
+    "growth": {
+      "raw_derived_output_hashes_match": {
+        "snapshots.jsonl": "52c0b9212649a80c4b6f6d2abe96667532eee8f6072ba9cb2891c01da0d6eb56"
+      },
+      "all_result_fields_match_except_portable_protocol_hash": true,
+      "repeat_byte_equal": true,
+      "independent_report": {
+        "status": "PASS",
+        "unique_fields": 92,
+        "production_code_imported_by_verifier": false,
+        "new_model_calls": 0,
+        "store_snapshots": 1500,
+        "independently_reconstructed_routes": 82800,
+        "metric_groups": 900,
+        "summary_groups": 15,
+        "adjacent_transitions": 720,
+        "full_data_endpoint_checks": 180
+      }
+    },
+    "sensitivity": {
+      "raw_derived_output_hashes_match": {
+        "snapshots.jsonl": "7efb49d4cd6f5cf93004bc0a86889eaccf05ecd971e39f273b42dfce2d025267"
+      },
+      "all_result_fields_match_except_portable_protocol_hash": true,
+      "repeat_byte_equal": true,
+      "independent_report": {
+        "status": "PASS",
+        "independent_of_runner_and_production_imports": true,
+        "unique_fields": 92,
+        "store_snapshots": 2835,
+        "reconstructed_routes": 156492,
+        "metric_groups": 1701,
+        "rule_conflict_bound_checks": 26088,
+        "summary_groups": 54
+      }
+    },
+    "historical_table5": {
+      "status": "PASS",
+      "mode": "Archived raw-route arithmetic, not a fresh learner execution",
+      "table5": [
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "damaged",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "damaged",
+          "arm": "current_history_rules",
+          "wrong_cases": 208,
+          "wrong_reuse_events": 322
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "damaged",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "feedback_only_stale",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "feedback_only_stale",
+          "arm": "current_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "feedback_only_stale",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "full_corrected",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "full_corrected",
+          "arm": "current_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "full_corrected",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "removed_and_rebuilt",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "removed_and_rebuilt",
+          "arm": "current_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 1,
+          "stage": "removed_and_rebuilt",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "damaged",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "damaged",
+          "arm": "current_history_rules",
+          "wrong_cases": 208,
+          "wrong_reuse_events": 322
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "damaged",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "feedback_only_stale",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "feedback_only_stale",
+          "arm": "current_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "feedback_only_stale",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "full_corrected",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "full_corrected",
+          "arm": "current_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "full_corrected",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "removed_and_rebuilt",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "removed_and_rebuilt",
+          "arm": "current_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 2,
+          "stage": "removed_and_rebuilt",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "damaged",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "damaged",
+          "arm": "current_history_rules",
+          "wrong_cases": 208,
+          "wrong_reuse_events": 322
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "damaged",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "feedback_only_stale",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "feedback_only_stale",
+          "arm": "current_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "feedback_only_stale",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "full_corrected",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "full_corrected",
+          "arm": "current_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "full_corrected",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "removed_and_rebuilt",
+          "arm": "canonical_lookup_archived_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "removed_and_rebuilt",
+          "arm": "current_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "history_guard",
+          "rep": 3,
+          "stage": "removed_and_rebuilt",
+          "arm": "guarded_history_rules",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "damaged",
+          "arm": "blocker_off_last",
+          "wrong_cases": 48,
+          "wrong_reuse_events": 75
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "damaged",
+          "arm": "blocker_on",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "feedback_only_stale",
+          "arm": "blocker_off_last",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "feedback_only_stale",
+          "arm": "blocker_on",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "full_corrected",
+          "arm": "blocker_off_last",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "full_corrected",
+          "arm": "blocker_on",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "removed_and_rebuilt",
+          "arm": "blocker_off_last",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 1,
+          "stage": "removed_and_rebuilt",
+          "arm": "blocker_on",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "damaged",
+          "arm": "blocker_off_last",
+          "wrong_cases": 48,
+          "wrong_reuse_events": 75
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "damaged",
+          "arm": "blocker_on",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "feedback_only_stale",
+          "arm": "blocker_off_last",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "feedback_only_stale",
+          "arm": "blocker_on",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "full_corrected",
+          "arm": "blocker_off_last",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "full_corrected",
+          "arm": "blocker_on",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "removed_and_rebuilt",
+          "arm": "blocker_off_last",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 2,
+          "stage": "removed_and_rebuilt",
+          "arm": "blocker_on",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "damaged",
+          "arm": "blocker_off_last",
+          "wrong_cases": 48,
+          "wrong_reuse_events": 75
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "damaged",
+          "arm": "blocker_on",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "feedback_only_stale",
+          "arm": "blocker_off_last",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "feedback_only_stale",
+          "arm": "blocker_on",
+          "wrong_cases": 2,
+          "wrong_reuse_events": 4
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "full_corrected",
+          "arm": "blocker_off_last",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "full_corrected",
+          "arm": "blocker_on",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "removed_and_rebuilt",
+          "arm": "blocker_off_last",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        },
+        {
+          "source": "cache_blocker",
+          "rep": 3,
+          "stage": "removed_and_rebuilt",
+          "arm": "blocker_on",
+          "wrong_cases": 0,
+          "wrong_reuse_events": 0
+        }
+      ]
+    },
+    "conservative_gate": {
+      "status": "pass",
+      "archived_route_bindings": 27600,
+      "intervention_decisions_verified": 55200,
+      "metric_groups_verified": 600,
+      "exact_name_cache_preserved": true,
+      "immutable_source_hashes_preserved": true,
+      "first_repeat_identical": true,
+      "verification_type": "Separate calculation and archived-row intervention audit; same author, not external independent review.",
+      "first_results_sha256": "57bc2d6b7e82ffb26acf2bfc31234b87465e5ee14474088a2df2471af7a7ccdf",
+      "first_routes_sha256": "56abd1ecc7246c91175647584480f9f8bf1811e69ddb70cf71c0bf9b0785ae8c"
+    },
+    "execution": {
+      "status": "pass",
+      "runtime": {
+        "python": "3.12.1"
+      },
+      "table8": {
+        "fresh_raw_output_execution": {
+          "candidates": 33,
+          "three_primary_pass": 32,
+          "all_seventeen_pass": 0
+        },
+        "fresh_raw_contract_validation": {
+          "accepted": 0,
+          "candidates": 33
+        },
+        "compiled_archived_output_rescoring": {
+          "candidates": 66,
+          "three_primary_pass": 66,
+          "all_seventeen_pass": 66
+        },
+        "compiled_archived_contract_records": {
+          "accepted_and_executed_records": 66,
+          "candidates": 66
+        },
+        "compiled_fresh_execution": false,
+        "compiled_fresh_contract_validation": false,
+        "fixture_definition": {
+          "primary_case_indices": [
+            0,
+            1,
+            2
+          ],
+          "all_cases": 17,
+          "digit_bearing": 12,
+          "zero_digit_preservation": 2,
+          "missing_preservation": 3
+        },
+        "independent_checker_status": "pass",
+        "first_repeat_byte_identical": true
+      },
+      "synthetic_cells": {
+        "programs": 9,
+        "policy_columns": 92,
+        "method_counts": {
+          "KEEP": 60,
+          "HASH": 25,
+          "MASK": 4,
+          "GENERALIZE": 3
+        },
+        "boundary_declared_cells": 1288,
+        "expanded_missing_declared_cells": 276,
+        "boundary_sentinel_cells": 126,
+        "missing_sentinel_cells": 27,
+        "original_input_cells": 92000,
+        "original_inputs": "PASS",
+        "input_frames_unchanged": true
+      },
+      "historical_standalone_records": {
+        "recorded_run_id": "contract-repair-20260919T001357Z",
+        "recorded_completed_at_utc": "2026-09-19T00:14:06.525506+00:00",
+        "records_checked": 27,
+        "recorded_unique_original_cells": 92000,
+        "recorded_cell_comparisons_including_repeats": 276000,
+        "csv_hashes_independently_recomputed": 27,
+        "fresh_standalone_executions": 0,
+        "database_execution_hashes_recomputed": false
+      },
+      "linked_records": {
+        "status": "pass",
+        "method": "Bound selected-function execution; raw row-set, equality and group-sum invariants; no reference hash implementation",
+        "packaged_functions_match_bound_AST": true,
+        "original_source_binding_audit_reperformed": false,
+        "records": 84,
+        "customer_groups": 12,
+        "exact_join_pairs": 144,
+        "equality_comparisons": 3486,
+        "wrong_and_missing_control_pairs": [
+          3,
+          3
+        ],
+        "output_records_match_both_runs": true,
+        "first_repeat_byte_identical": true,
+        "immutable_artifact_hashes_verified": true
+      },
+      "scope": "Fresh raw MASK, raw contract, retained synthetic dataframe functions, and linked-record functions; archived compiled MASK outputs and historical standalone runs are record checks."
+    }
+  },
+  "validation_storage": "Only this summary and distributed source/expected-output hashes are retained. Generated learned stores, replay logs and temporary package copies are excluded.",
+  "post_validation_packaging_revision": "packaging_revision.json",
+  "post_compression_family_exercise": "PASS: all original route/snapshot/control hashes and all result fields except portable protocol hash matched; independent reconstruction passed."
+}

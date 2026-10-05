@@ -1,0 +1,164 @@
+[
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "CD_TRNS_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "460e446fb5be674388bf0b6adcd040d77c6e444302f25c9f1ac119a91a1ceca6",
+    "output_sha256_by_repeat": [
+      "e9a93da06e4207cd845bb1a5014e65c7e68508930b2ec1e2654874099c97642e",
+      "e9a93da06e4207cd845bb1a5014e65c7e68508930b2ec1e2654874099c97642e",
+      "e9a93da06e4207cd845bb1a5014e65c7e68508930b2ec1e2654874099c97642e"
+    ],
+    "oracle_csv_sha256": "e9a93da06e4207cd845bb1a5014e65c7e68508930b2ec1e2654874099c97642e",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "8956c5004250f0a60e66a0edbc45f0365d2ccd0b65eb3f3b021600af0e720d10",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "CMS_REQ_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "aec3f9658c9cc828d6bea0eda6f807fcac386053184f59ddea0bf840d9a375f4",
+    "output_sha256_by_repeat": [
+      "239e41adf04b7e49ca9d9e4d801dac327dcb74298f0aee410605d4b82b9461d4",
+      "239e41adf04b7e49ca9d9e4d801dac327dcb74298f0aee410605d4b82b9461d4",
+      "239e41adf04b7e49ca9d9e4d801dac327dcb74298f0aee410605d4b82b9461d4"
+    ],
+    "oracle_csv_sha256": "239e41adf04b7e49ca9d9e4d801dac327dcb74298f0aee410605d4b82b9461d4",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "87c50ba56d0226480e1e58e7ac9529f50e6b35eccc93febe7afeecda7815c681",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "CMS_RES_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "4ca1d3d84aac86f38d5b9c86fc0ec6f1433bd7e7063e20f9334dd69b118785ad",
+    "output_sha256_by_repeat": [
+      "08abb787519f92292704a6ffbe4ed61a626b1c505e5f0498206c612c87713ecf",
+      "08abb787519f92292704a6ffbe4ed61a626b1c505e5f0498206c612c87713ecf",
+      "08abb787519f92292704a6ffbe4ed61a626b1c505e5f0498206c612c87713ecf"
+    ],
+    "oracle_csv_sha256": "08abb787519f92292704a6ffbe4ed61a626b1c505e5f0498206c612c87713ecf",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "87c50ba56d0226480e1e58e7ac9529f50e6b35eccc93febe7afeecda7815c681",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "GR_JC_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "4c36e56676e97b17e09353c71eefbed333ea5e0ce7826046e55d7746367ae99c",
+    "output_sha256_by_repeat": [
+      "d4bf5796ee900d075ddef47b475e8079c44e39186e9d52d92bfad992c777c640",
+      "d4bf5796ee900d075ddef47b475e8079c44e39186e9d52d92bfad992c777c640",
+      "d4bf5796ee900d075ddef47b475e8079c44e39186e9d52d92bfad992c777c640"
+    ],
+    "oracle_csv_sha256": "d4bf5796ee900d075ddef47b475e8079c44e39186e9d52d92bfad992c777c640",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "1363d154516ddb042aae99ea2ceff294231fb15b646223ae44ca9bd79b01ba19",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "GR_NJ_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "70c131dd3dff8785e439a5f0010bab1c60f0ebfd75409c2a5cc97dca2fa88e1d",
+    "output_sha256_by_repeat": [
+      "3aa2a8aeb77a115486757022c4085b6bb4d6d751b10ca7a8a399d09b9d967130",
+      "3aa2a8aeb77a115486757022c4085b6bb4d6d751b10ca7a8a399d09b9d967130",
+      "3aa2a8aeb77a115486757022c4085b6bb4d6d751b10ca7a8a399d09b9d967130"
+    ],
+    "oracle_csv_sha256": "3aa2a8aeb77a115486757022c4085b6bb4d6d751b10ca7a8a399d09b9d967130",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "1363d154516ddb042aae99ea2ceff294231fb15b646223ae44ca9bd79b01ba19",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "HF_TRNS_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "8c78554a932fd01c879613714f61d4c245a9977381952c4e8c181cd1eb7abb27",
+    "output_sha256_by_repeat": [
+      "12f57f687bddda4e034ea97cc72db0929c52eecfb29c3584cac47d58b831cfc7",
+      "12f57f687bddda4e034ea97cc72db0929c52eecfb29c3584cac47d58b831cfc7",
+      "12f57f687bddda4e034ea97cc72db0929c52eecfb29c3584cac47d58b831cfc7"
+    ],
+    "oracle_csv_sha256": "12f57f687bddda4e034ea97cc72db0929c52eecfb29c3584cac47d58b831cfc7",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "50a00de1f5f5a1f5f81764d6c4beb930e52c3a4d805315370dcd5a2c7b5aaff5",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "OB_INQR_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "36483da7b5b3f0255bef6f02ea32a5df3eac41ce18b158e00e5512c3d3006853",
+    "output_sha256_by_repeat": [
+      "68f02b779d9d1bb9fabb8e7148c5ff088651ed3cb571d7ea0380db7b12e5e5bd",
+      "68f02b779d9d1bb9fabb8e7148c5ff088651ed3cb571d7ea0380db7b12e5e5bd",
+      "68f02b779d9d1bb9fabb8e7148c5ff088651ed3cb571d7ea0380db7b12e5e5bd"
+    ],
+    "oracle_csv_sha256": "68f02b779d9d1bb9fabb8e7148c5ff088651ed3cb571d7ea0380db7b12e5e5bd",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "3d4151e9ef2e3bd3d38dd087e6da87b2db2b640203a8ef2a053110390b2ec7f5",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "OB_TRNS_TRAN",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "1824511b4ebab92e8a60487959b7f1c1adc608ffab96715fc9a6370bd1988c17",
+    "output_sha256_by_repeat": [
+      "de4fd59ff5dbef3dc95b6c34a00525985af6d65896bd24bb9e6e77cef49b4611",
+      "de4fd59ff5dbef3dc95b6c34a00525985af6d65896bd24bb9e6e77cef49b4611",
+      "de4fd59ff5dbef3dc95b6c34a00525985af6d65896bd24bb9e6e77cef49b4611"
+    ],
+    "oracle_csv_sha256": "de4fd59ff5dbef3dc95b6c34a00525985af6d65896bd24bb9e6e77cef49b4611",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "46add203c289d9fb6ac73169e230e449f6e6314a59cb724275b0a09c601b0480",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  },
+  {
+    "run_id": "contract-repair-20260919T001357Z",
+    "table": "PI_WD_LEDG",
+    "repaired_policy_manifest_sha256": "345adf9477951ca6b6d89663c41fca5179aec5b76047318562fa0cee5021872c",
+    "original_selection_sha256": "fc6a9fc468ac32f85766f82625e14799422aed295e16ae28d9f7a3178d5bb055",
+    "normalizer_sha256": "3f46e83d66cadc2b31db5ae8eb63a7fa35742f404a60df02258a737c11fc0f54",
+    "stage4_sha256": "c2e3ce3d48f5680e38f1c68857d7cf62a97b4e2594a86ad8aca0b83a2b6aeb77",
+    "generated_program_sha256": "3715d2be504ec06e3ce31de2403faf76d2ab02f6524e90c410a32d60e3bc70fe",
+    "output_sha256_by_repeat": [
+      "b20e3fb920315968bb9e1a51e97a47eb2fa8e412a6f22e36986f209785be821d",
+      "b20e3fb920315968bb9e1a51e97a47eb2fa8e412a6f22e36986f209785be821d",
+      "b20e3fb920315968bb9e1a51e97a47eb2fa8e412a6f22e36986f209785be821d"
+    ],
+    "oracle_csv_sha256": "b20e3fb920315968bb9e1a51e97a47eb2fa8e412a6f22e36986f209785be821d",
+    "original_nonmissing_csv_unchanged": true,
+    "packaged_function_sha256": "b0c090e9682077b5bc8927393dc041e75c1c20004a5704a974d34f0a2acd9623",
+    "packaged_policy_manifest_sha256": "eb0ee6d6e6bedc5f813c8ba317d23a3fe2befa5044cba82450cc8e251ba39539"
+  }
+]

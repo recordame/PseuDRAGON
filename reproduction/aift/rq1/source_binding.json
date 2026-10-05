@@ -1,0 +1,462 @@
+{
+  "status": "PASS",
+  "scope": "Local source binding: byte equality for every included payload except the documented unused provenance-directory conversion. Original and public hashes are retained separately. Restricted policy bodies and personal paths are not runtime inputs.",
+  "files": [
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/run_study.py",
+      "destination": "rq1/studies/family_name_exclusion/run_study.py.gz",
+      "original_sha256": "5260ac999feb897caaa23b5ad8d7afd01aa78dc00a00f171a0ab770d52c8c138",
+      "included_payload_sha256": "5260ac999feb897caaa23b5ad8d7afd01aa78dc00a00f171a0ab770d52c8c138",
+      "encoding": "gzip",
+      "bytes": 21989,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/replay_helpers.py",
+      "destination": "rq1/studies/family_name_exclusion/replay_helpers.py.gz",
+      "original_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac",
+      "included_payload_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac",
+      "encoding": "gzip",
+      "bytes": 19525,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/sources/expert_preference_manager.py",
+      "destination": "rq1/studies/family_name_exclusion/sources/expert_preference_manager.py.gz",
+      "original_sha256": "47ef0f77f9e601786a29fd43324d2cdec61442cdbb553ecf423384cc93eb4935",
+      "included_payload_sha256": "47ef0f77f9e601786a29fd43324d2cdec61442cdbb553ecf423384cc93eb4935",
+      "encoding": "gzip",
+      "bytes": 41639,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/sources/heuristic_pattern_learner.py",
+      "destination": "rq1/studies/family_name_exclusion/sources/heuristic_pattern_learner.py.gz",
+      "original_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "included_payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "encoding": "gzip",
+      "bytes": 50891,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/sources/canonical_pure_lookup.py",
+      "destination": "rq1/studies/family_name_exclusion/sources/canonical_pure_lookup.py.gz",
+      "original_sha256": "25eb3ce761d88ce7d05dab96d75117fac48436772fb481fca86aca4226852fd0",
+      "included_payload_sha256": "25eb3ce761d88ce7d05dab96d75117fac48436772fb481fca86aca4226852fd0",
+      "encoding": "gzip",
+      "bytes": 1568,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/inputs/records.json",
+      "destination": "rq1/studies/family_name_exclusion/inputs/records.json.gz",
+      "original_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "included_payload_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "encoding": "gzip",
+      "bytes": 26074,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/inputs/groups.json",
+      "destination": "rq1/studies/family_name_exclusion/inputs/groups.json.gz",
+      "original_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "included_payload_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "encoding": "gzip",
+      "bytes": 2792,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/inputs/initial_fallbacks.json",
+      "destination": "rq1/studies/family_name_exclusion/inputs/initial_fallbacks.json.gz",
+      "original_sha256": "3e1cdccac89a7901bfd992d12602ed7a06720659c8ddabfdb5e9613fe6ebae62",
+      "included_payload_sha256": "3e1cdccac89a7901bfd992d12602ed7a06720659c8ddabfdb5e9613fe6ebae62",
+      "encoding": "gzip",
+      "bytes": 3024,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/inputs/prior_fresh_routes.json",
+      "destination": "rq1/studies/family_name_exclusion/inputs/prior_fresh_routes.json.gz",
+      "original_sha256": "2ca7d9063c82e8dd45b080771ba8ea667afe66ea811f09f91e071e622176c22b",
+      "included_payload_sha256": "2ca7d9063c82e8dd45b080771ba8ea667afe66ea811f09f91e071e622176c22b",
+      "encoding": "gzip",
+      "bytes": 623141,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/inputs/prior_guard_routes.json",
+      "destination": "rq1/studies/family_name_exclusion/inputs/prior_guard_routes.json.gz",
+      "original_sha256": "faa3d0b6cd24787fd74a1af8a7ea1b379d304b4fb715264eb641ca8d4ecdd7f6",
+      "included_payload_sha256": "faa3d0b6cd24787fd74a1af8a7ea1b379d304b4fb715264eb641ca8d4ecdd7f6",
+      "encoding": "gzip",
+      "bytes": 161844,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/inputs/prior_initial_routes.json",
+      "destination": "rq1/studies/family_name_exclusion/inputs/prior_initial_routes.json.gz",
+      "original_sha256": "4c0b4c7a9d8ca7f62bd50bd75656d6984cc47304b095088873a74e9045cec426",
+      "included_payload_sha256": "4c0b4c7a9d8ca7f62bd50bd75656d6984cc47304b095088873a74e9045cec426",
+      "encoding": "gzip",
+      "bytes": 186994,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_family_name_exclusion/runs/first/results.json",
+      "destination": "rq1/studies/family_name_exclusion/expected/results.json.gz",
+      "original_sha256": "6ae13fe3c0f18c79db5cba7305807a91fc126da34215a8ea9ae3a92469d921c9",
+      "included_payload_sha256": "6ae13fe3c0f18c79db5cba7305807a91fc126da34215a8ea9ae3a92469d921c9",
+      "encoding": "gzip",
+      "bytes": 795582,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/run_experiment.py",
+      "destination": "rq1/studies/equal_maintenance/run_experiment.py.gz",
+      "original_sha256": "395d4a5ab2e2724d584932e11e4cd5e083a5b3fcf06e1b1a41cf889523d7c285",
+      "included_payload_sha256": "395d4a5ab2e2724d584932e11e4cd5e083a5b3fcf06e1b1a41cf889523d7c285",
+      "encoding": "gzip",
+      "bytes": 35237,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/sources/guarded_expert_preference_manager.py",
+      "destination": "rq1/studies/equal_maintenance/sources/guarded_expert_preference_manager.py.gz",
+      "original_sha256": "47ef0f77f9e601786a29fd43324d2cdec61442cdbb553ecf423384cc93eb4935",
+      "included_payload_sha256": "47ef0f77f9e601786a29fd43324d2cdec61442cdbb553ecf423384cc93eb4935",
+      "encoding": "gzip",
+      "bytes": 41639,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/sources/heuristic_pattern_learner.py",
+      "destination": "rq1/studies/equal_maintenance/sources/heuristic_pattern_learner.py.gz",
+      "original_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "included_payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "encoding": "gzip",
+      "bytes": 50891,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/sources/canonical_pure_lookup.py",
+      "destination": "rq1/studies/equal_maintenance/sources/canonical_pure_lookup.py.gz",
+      "original_sha256": "25eb3ce761d88ce7d05dab96d75117fac48436772fb481fca86aca4226852fd0",
+      "included_payload_sha256": "25eb3ce761d88ce7d05dab96d75117fac48436772fb481fca86aca4226852fd0",
+      "encoding": "gzip",
+      "bytes": 1568,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/inputs/records.json",
+      "destination": "rq1/studies/equal_maintenance/inputs/records.json.gz",
+      "original_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "included_payload_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "encoding": "gzip",
+      "bytes": 26074,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/inputs/groups.json",
+      "destination": "rq1/studies/equal_maintenance/inputs/groups.json.gz",
+      "original_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "included_payload_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "encoding": "gzip",
+      "bytes": 2792,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/inputs/clean_stores.json",
+      "destination": "rq1/studies/equal_maintenance/inputs/clean_stores.json.gz",
+      "original_sha256": "94c773e4c96f11f7d30c5846f2164fac0102ba5a36c5ce5fedaad7f53126f32e",
+      "included_payload_sha256": "94c773e4c96f11f7d30c5846f2164fac0102ba5a36c5ce5fedaad7f53126f32e",
+      "encoding": "gzip",
+      "bytes": 188730,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/inputs/case_stores.jsonl",
+      "destination": "rq1/studies/equal_maintenance/inputs/case_stores.jsonl.gz",
+      "original_sha256": "7a827c7f25487d45712f3f41cf04877f92c272b4d6a9b163e83128bbd9362348",
+      "included_payload_sha256": "7a14561ecd77b928c637436a36d58f35cb515a11b8408b185686de14443ff34f",
+      "encoding": "gzip",
+      "bytes": 20370476,
+      "byte_equal": false,
+      "transformation": {
+        "field": "provenance_directory",
+        "records": 1104,
+        "operation": "Remove the private checkout prefix; retain repository-relative provenance path. No other JSON field changes. This field is not read by the frozen run() function.",
+        "all_other_fields_equal": true
+      }
+    },
+    {
+      "origin": "paper/experiments/rq1/20261004_equal_maintenance_cache/runs/first/summary.json",
+      "destination": "rq1/studies/equal_maintenance/expected/summary.json.gz",
+      "original_sha256": "78ae6cc6c5c8926a69e467c2ac63067b4eb346f7cc961557700605b7c42e108b",
+      "included_payload_sha256": "78ae6cc6c5c8926a69e467c2ac63067b4eb346f7cc961557700605b7c42e108b",
+      "encoding": "gzip",
+      "bytes": 44193,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/run_growth.py",
+      "destination": "rq1/studies/growth/run_growth.py.gz",
+      "original_sha256": "fd1ab16bc0d994612b8914f465b513c71d85d864b573fd8cf6d8e151d27b76a2",
+      "included_payload_sha256": "fd1ab16bc0d994612b8914f465b513c71d85d864b573fd8cf6d8e151d27b76a2",
+      "encoding": "gzip",
+      "bytes": 15283,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/replay_helpers.py",
+      "destination": "rq1/studies/growth/replay_helpers.py.gz",
+      "original_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac",
+      "included_payload_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac",
+      "encoding": "gzip",
+      "bytes": 19525,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/verify_independent.py",
+      "destination": "rq1/studies/growth/verify_independent.py.gz",
+      "original_sha256": "9ac8a40b68a54bacdec7b1ffa0d90f51ddc307522f03ba4b546677f704d8af55",
+      "included_payload_sha256": "9ac8a40b68a54bacdec7b1ffa0d90f51ddc307522f03ba4b546677f704d8af55",
+      "encoding": "gzip",
+      "bytes": 8541,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/sources/expert_preference_manager.py",
+      "destination": "rq1/studies/growth/sources/expert_preference_manager.py.gz",
+      "original_sha256": "2cb7856c88793fd15ca59a22a16653cc3826d373779e285bdcf5e96c134db11f",
+      "included_payload_sha256": "2cb7856c88793fd15ca59a22a16653cc3826d373779e285bdcf5e96c134db11f",
+      "encoding": "gzip",
+      "bytes": 40509,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/sources/heuristic_pattern_learner.py",
+      "destination": "rq1/studies/growth/sources/heuristic_pattern_learner.py.gz",
+      "original_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "included_payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "encoding": "gzip",
+      "bytes": 50891,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/inputs/records.json",
+      "destination": "rq1/studies/growth/inputs/records.json.gz",
+      "original_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "included_payload_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "encoding": "gzip",
+      "bytes": 26074,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/inputs/groups.json",
+      "destination": "rq1/studies/growth/inputs/groups.json.gz",
+      "original_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "included_payload_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "encoding": "gzip",
+      "bytes": 2792,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/inputs/schedules.json",
+      "destination": "rq1/studies/growth/inputs/schedules.json.gz",
+      "original_sha256": "834342923e37053c1f9447ec99423e8a942b12c77a8185c51be642fd1141a9a7",
+      "included_payload_sha256": "834342923e37053c1f9447ec99423e8a942b12c77a8185c51be642fd1141a9a7",
+      "encoding": "gzip",
+      "bytes": 254613,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/inputs/previous_results.json",
+      "destination": "rq1/studies/growth/inputs/previous_results.json.gz",
+      "original_sha256": "405fe4d223cd49795e40045678c641d6c374024d43f4d593a183fa33590f61d3",
+      "included_payload_sha256": "405fe4d223cd49795e40045678c641d6c374024d43f4d593a183fa33590f61d3",
+      "encoding": "gzip",
+      "bytes": 57473,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_growth_repaired_v2/results.json",
+      "destination": "rq1/studies/growth/expected/results.json.gz",
+      "original_sha256": "ca669495cdc7c158669323c2a0ca63e528fed05af37c7aedb6997fad88fa320b",
+      "included_payload_sha256": "ca669495cdc7c158669323c2a0ca63e528fed05af37c7aedb6997fad88fa320b",
+      "encoding": "gzip",
+      "bytes": 1345236,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/run_sensitivity.py",
+      "destination": "rq1/studies/sensitivity/run_sensitivity.py.gz",
+      "original_sha256": "d240ffd28e75f0c6bc4e84075f9732173e07aabc25968ff03db99e1452cd58e1",
+      "included_payload_sha256": "d240ffd28e75f0c6bc4e84075f9732173e07aabc25968ff03db99e1452cd58e1",
+      "encoding": "gzip",
+      "bytes": 11443,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/replay_helpers.py",
+      "destination": "rq1/studies/sensitivity/replay_helpers.py.gz",
+      "original_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac",
+      "included_payload_sha256": "854291bdd11e5f8973e0d5a8e99f17c44c6f3f221de46b20669715774fe468ac",
+      "encoding": "gzip",
+      "bytes": 19525,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/verify_sensitivity.py",
+      "destination": "rq1/studies/sensitivity/verify_sensitivity.py.gz",
+      "original_sha256": "d75adc819450047a23009232dd657780a95886a868c716ad06b0a6528a8bfe62",
+      "included_payload_sha256": "d75adc819450047a23009232dd657780a95886a868c716ad06b0a6528a8bfe62",
+      "encoding": "gzip",
+      "bytes": 7137,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/sources/expert_preference_manager.py",
+      "destination": "rq1/studies/sensitivity/sources/expert_preference_manager.py.gz",
+      "original_sha256": "2cb7856c88793fd15ca59a22a16653cc3826d373779e285bdcf5e96c134db11f",
+      "included_payload_sha256": "2cb7856c88793fd15ca59a22a16653cc3826d373779e285bdcf5e96c134db11f",
+      "encoding": "gzip",
+      "bytes": 40509,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/sources/heuristic_pattern_learner.py",
+      "destination": "rq1/studies/sensitivity/sources/heuristic_pattern_learner.py.gz",
+      "original_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "included_payload_sha256": "93d97d9cb7eb34c4e2ff0d84617a09c21560163e71ddb3e37e8bdb297b47fd10",
+      "encoding": "gzip",
+      "bytes": 50891,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/inputs/records.json",
+      "destination": "rq1/studies/sensitivity/inputs/records.json.gz",
+      "original_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "included_payload_sha256": "eab80e3194191ea8487efc500b6636a34dc5037b5829d66b07575e64aa59e694",
+      "encoding": "gzip",
+      "bytes": 26074,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/inputs/groups.json",
+      "destination": "rq1/studies/sensitivity/inputs/groups.json.gz",
+      "original_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "included_payload_sha256": "676fdee10f72fe8ec239fed0c789ced53092d475ca8b989a41eba0cee19843fc",
+      "encoding": "gzip",
+      "bytes": 2792,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/inputs/schedules.json",
+      "destination": "rq1/studies/sensitivity/inputs/schedules.json.gz",
+      "original_sha256": "834342923e37053c1f9447ec99423e8a942b12c77a8185c51be642fd1141a9a7",
+      "included_payload_sha256": "834342923e37053c1f9447ec99423e8a942b12c77a8185c51be642fd1141a9a7",
+      "encoding": "gzip",
+      "bytes": 254613,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/inputs/default_growth.json",
+      "destination": "rq1/studies/sensitivity/inputs/default_growth.json.gz",
+      "original_sha256": "ca669495cdc7c158669323c2a0ca63e528fed05af37c7aedb6997fad88fa320b",
+      "included_payload_sha256": "ca669495cdc7c158669323c2a0ca63e528fed05af37c7aedb6997fad88fa320b",
+      "encoding": "gzip",
+      "bytes": 1345236,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_parameter_sensitivity/results.json",
+      "destination": "rq1/studies/sensitivity/expected/results.json.gz",
+      "original_sha256": "eda2dd0482dab0621c3d3a6ec56a61aa36777ed522a7ef9dd1788a7adeeb7fb8",
+      "included_payload_sha256": "eda2dd0482dab0621c3d3a6ec56a61aa36777ed522a7ef9dd1788a7adeeb7fb8",
+      "encoding": "gzip",
+      "bytes": 1285901,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260930_history_conflict_guard/case_routes.jsonl",
+      "destination": "rq1/historical/history_guard-case_routes.jsonl.gz",
+      "original_sha256": "067515b30226667271346ec914b2698599be11a3ab5ebaeaf8237b4f3bc68022",
+      "included_payload_sha256": "067515b30226667271346ec914b2698599be11a3ab5ebaeaf8237b4f3bc68022",
+      "encoding": "gzip",
+      "bytes": 47482545,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260930_history_conflict_guard/baseline_routes.json",
+      "destination": "rq1/historical/history_guard-baseline_routes.json.gz",
+      "original_sha256": "faa3d0b6cd24787fd74a1af8a7ea1b379d304b4fb715264eb641ca8d4ecdd7f6",
+      "included_payload_sha256": "faa3d0b6cd24787fd74a1af8a7ea1b379d304b4fb715264eb641ca8d4ecdd7f6",
+      "encoding": "gzip",
+      "bytes": 161844,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_component_ablation_final/case_routes.jsonl",
+      "destination": "rq1/historical/cache_blocker-case_routes.jsonl.gz",
+      "original_sha256": "6ee66c2a957ff61b590913b6693fa8790d61e1dd345a584cf6e9c8706971aa5e",
+      "included_payload_sha256": "6ee66c2a957ff61b590913b6693fa8790d61e1dd345a584cf6e9c8706971aa5e",
+      "encoding": "gzip",
+      "bytes": 46933126,
+      "byte_equal": true
+    },
+    {
+      "origin": "paper/experiments/rq1/20260929_reuse_component_ablation_final/baseline_routes.json",
+      "destination": "rq1/historical/cache_blocker-baseline_routes.json.gz",
+      "original_sha256": "eaa4f96e683180b8fe6c008ad8a915f7869f95bb69ba03f5a4708331962145ac",
+      "included_payload_sha256": "eaa4f96e683180b8fe6c008ad8a915f7869f95bb69ba03f5a4708331962145ac",
+      "encoding": "gzip",
+      "bytes": 206932,
+      "byte_equal": true
+    },
+    {
+      "origin": "tmp/aift-direct-revision-20261005/conservative-nonpii-replay/run_replay.py",
+      "destination": "rq1/conservative_gate/run_replay.py.gz",
+      "original_sha256": "8ae63c7c2c4a8ae6e93fa2ef5b0e45dee828855f2d348b372ee798658d88b6b7",
+      "included_payload_sha256": "8ae63c7c2c4a8ae6e93fa2ef5b0e45dee828855f2d348b372ee798658d88b6b7",
+      "encoding": "gzip",
+      "bytes": 9992,
+      "byte_equal": true
+    },
+    {
+      "origin": "tmp/aift-direct-revision-20261005/conservative-nonpii-replay/verify_and_report.py",
+      "destination": "rq1/conservative_gate/verify_and_report.py.gz",
+      "original_sha256": "486414bc314de56fb5beaa9d9a2d2a344ce75bcc7f784da0e2b83debb1953b0d",
+      "included_payload_sha256": "486414bc314de56fb5beaa9d9a2d2a344ce75bcc7f784da0e2b83debb1953b0d",
+      "encoding": "gzip",
+      "bytes": 6639,
+      "byte_equal": true
+    },
+    {
+      "origin": "tmp/aift-direct-revision-20261005/conservative-nonpii-replay/protocol.json",
+      "destination": "rq1/conservative_gate/protocol.json.gz",
+      "original_sha256": "3fbdc25c6d3b9bf94d11ae66f054d538286e801db02b008987933f62fcd51d11",
+      "included_payload_sha256": "3fbdc25c6d3b9bf94d11ae66f054d538286e801db02b008987933f62fcd51d11",
+      "encoding": "gzip",
+      "bytes": 2266,
+      "byte_equal": true
+    },
+    {
+      "origin": "tmp/aift-direct-revision-20261005/conservative-nonpii-replay/first-results.json",
+      "destination": "rq1/conservative_gate/first-results.json.gz",
+      "original_sha256": "7f3c83e50fbe8a1481e9a30ffc3dd4186f5d4078f5c6577e32a5b29cf012ac8b",
+      "included_payload_sha256": "7f3c83e50fbe8a1481e9a30ffc3dd4186f5d4078f5c6577e32a5b29cf012ac8b",
+      "encoding": "gzip",
+      "bytes": 376577,
+      "byte_equal": true
+    },
+    {
+      "origin": "tmp/aift-independent-new-experiments-20261004/audit_common.py",
+      "destination": "rq1/audit_common.py.gz",
+      "original_sha256": "10d96187ef5e9534716905f4810d111008a5d35f4b6cad5f689d7bbedb253423",
+      "included_payload_sha256": "10d96187ef5e9534716905f4810d111008a5d35f4b6cad5f689d7bbedb253423",
+      "encoding": "gzip",
+      "bytes": 7685,
+      "byte_equal": true
+    }
+  ]
+}
