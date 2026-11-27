@@ -1,26 +1,29 @@
-# PseuDRAGON
+# PseuDRAGON: Knowledge-Guided Local LLMs for Financial-Data Pseudonymization in Closed Networks
 
-Knowledge-guided local LLMs for financial-data pseudonymization in closed networks.
+[Read the paper on arXiv](https://arxiv.org/abs/2611.30353). Accepted as a full
+paper at ACM SAC 2027 in the AI for Intelligent Financial Technologies (AIFT) track.
 
-PseuDRAGON interprets column names, descriptions and table context with a local
-language model. Experts review the proposed field labels, supporting passages
-and treatments. Approved decisions are retained for reuse, while selected
-transformations are assembled into inspectable Python programs.
+PseuDRAGON uses a local language model to interpret financial database columns
+in context. Experts review the proposed PII labels, supporting passages, and
+pseudonymization methods. The workflow stores confirmed labels and corrections
+as institutional knowledge. Exact-name lookup and learned rules reuse those
+judgments while the model stays fixed. The workflow generates programs from
+reviewed methods and checks the code against the selected methods and parameters.
 
 Release: **2026.09.29**. The default model is **gpt-oss-120b**, served locally
 through an OpenAI-compatible endpoint (`gpt-oss:120b` in Ollama).
 
 ## Workflow
 
-1. **Identify fields.** Apply stored rules and approved judgments where available;
-   use the model for the remaining schema fields.
-2. **Propose treatment with evidence.** Search institutional policy, then national
-   law, then international guidance. Within each category, BM25 retrieves
-   candidate passages and the model checks relevance. Stop at the first category
-   with relevant evidence; otherwise continue to the next category.
-3. **Review and retain decisions.** Experts correct field labels, inspect the
-   evidence and select treatments. A changed label regenerates treatment
-   proposals. Approved selections and corrections support subsequent reuse.
+1. **Identify PII.** Reuse labels from exact-name approvals or learned rules.
+   Use the local model for unresolved columns or conflicting approvals.
+2. **Propose methods with evidence.** Search institutional policy, then national
+   privacy law, then international sources. Within each category, BM25 retrieves
+   candidate passages and the model checks relevance. Use the first category
+   with relevant passages.
+3. **Review and retain decisions.** Experts correct column labels, inspect the
+   evidence, and select methods. A changed label triggers a new method proposal.
+   Confirmed judgments and corrections support later reuse.
 4. **Generate programs.** Check supported code/parameter contracts, preserve
    missing inputs, and generate transformations from the selected policies.
 
